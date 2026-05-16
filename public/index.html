@@ -2,591 +2,412 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Monitor de Cortes</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/tabler-icons.min.css">
 <style>
   :root {
-    --bg: #0f172a; --bg2: #1e293b; --bg3: #334155;
-    --text: #f1f5f9; --text2: #94a3b8; --text3: #475569;
-    --border: #334155; --amber: #f59e0b; --amber2: #fbbf24;
-    --red: #ef4444; --red-bg: #450a0a; --red-border: #b91c1c;
-    --green: #22c55e; --green-bg: #052e16; --green-border: #15803d;
-    --radius: 10px; --radius-sm: 6px;
+    --bg:#0f172a;--bg2:#1e293b;--bg3:#334155;
+    --text:#f1f5f9;--text2:#94a3b8;--text3:#475569;
+    --border:#334155;--amber:#f59e0b;--amber2:#fbbf24;
+    --red-bg:#450a0a;--red-bd:#b91c1c;--red-t:#fca5a5;
+    --grn-bg:#052e16;--grn-bd:#15803d;--grn-t:#86efac;
+    --r:10px;--rs:6px;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-  a { color: inherit; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
-  /* Header */
-  .header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
-  .header-left { display: flex; align-items: center; gap: 10px; }
-  .header-title { font-size: 16px; font-weight: 600; }
-  .header-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
-  .status-badge { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-  .status-badge .dot { width: 7px; height: 7px; border-radius: 50%; }
-  .badge-on { background: var(--green-bg); border: 1px solid var(--green-border); color: #86efac; }
-  .badge-off { background: var(--red-bg); border: 1px solid var(--red-border); color: #fca5a5; }
-  .badge-on .dot { background: var(--green); }
-  .badge-off .dot { background: var(--red); animation: pulse 1.5s infinite; }
+  .header{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top,0px));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
+  .header-left{display:flex;align-items:center;gap:10px;}
+  .htitle{font-size:16px;font-weight:600;}
+  .hsub{font-size:12px;color:var(--text2);margin-top:1px;}
+  .badge{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;}
+  .badge .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .bon{background:var(--grn-bg);border:1px solid var(--grn-bd);color:var(--grn-t);}
+  .boff{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red-t);}
+  .bon .dot{background:#22c55e;}
+  .boff .dot{background:#ef4444;animation:pulse 1.5s infinite;}
 
-  /* Tabs */
-  .tabs { background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; }
-  .tab { flex: 1; min-width: 70px; padding: 10px 6px; border: none; background: transparent; color: var(--text2); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; border-bottom: 2px solid transparent; font-size: 11px; font-weight: 500; transition: color .15s; }
-  .tab i { font-size: 18px; }
-  .tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+  .tabs{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;}
+  .tab{flex:1;min-height:52px;padding:8px 4px;border:none;background:transparent;color:var(--text2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-bottom:2px solid transparent;font-size:11px;font-weight:500;touch-action:manipulation;}
+  .tab i{font-size:20px;}
+  .tab.active{color:var(--amber);border-bottom-color:var(--amber);}
 
-  /* Content */
-  .content { padding: 16px; max-width: 720px; margin: 0 auto; }
+  .content{padding:16px;max-width:720px;margin:0 auto;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));}
 
-  /* Cards */
-  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
-  .card-danger { border-color: var(--red-border); }
-  .section-label { font-size: 11px; font-weight: 600; color: var(--text2); letter-spacing: .05em; margin-bottom: 10px; }
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;}
+  .card-red{border-color:var(--red-bd);}
+  .slabel{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.05em;margin-bottom:10px;}
 
-  /* Stat grid */
-  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 14px; }
-  .stat-card { background: var(--bg2); border-radius: var(--radius-sm); padding: 12px 14px; }
-  .stat-card i { font-size: 16px; color: var(--text2); }
-  .stat-val { font-size: 22px; font-weight: 700; color: var(--amber2); margin: 6px 0 2px; }
-  .stat-label { font-size: 12px; color: var(--text2); }
-  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px;}
+  @media(min-width:520px){.sgrid{grid-template-columns:repeat(4,1fr);}}
+  .scard{background:var(--bg2);border-radius:var(--rs);padding:12px 14px;}
+  .scard i{font-size:15px;color:var(--text2);}
+  .sval{font-size:21px;font-weight:700;color:var(--amber2);margin:5px 0 2px;}
+  .slb{font-size:12px;color:var(--text2);}
+  .ssub{font-size:11px;color:var(--text3);margin-top:2px;}
 
-  /* Record cards grid */
-  .records-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 14px; }
-  .record-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
-  .record-val { font-size: 24px; font-weight: 700; margin-top: 6px; }
-  .record-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+  .rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px;}
+  .rcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;}
+  .rval{font-size:22px;font-weight:700;margin-top:6px;}
+  .rsub{font-size:12px;color:var(--text3);margin-top:4px;}
 
   /* Buttons */
-  .btn-main { width: 100%; padding: 14px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid; transition: opacity .15s; }
-  .btn-main:hover { opacity: .85; }
-  .btn-danger { background: var(--red-bg); border-color: var(--red-border); color: #fca5a5; }
-  .btn-success { background: var(--green-bg); border-color: var(--green-border); color: #86efac; }
-  .btn-sm { padding: 7px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg3); color: var(--text); font-size: 13px; font-weight: 500; cursor: pointer; }
-  .btn-icon { background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text3); cursor: pointer; padding: 4px 8px; }
-  .btn-confirm-yes { padding: 4px 10px; border-radius: var(--radius-sm); border: 1px solid var(--red-border); background: var(--red-bg); color: #fca5a5; cursor: pointer; font-size: 12px; }
-  .btn-confirm-no { padding: 4px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; color: var(--text2); cursor: pointer; font-size: 12px; }
-  .btn-ghost { background: transparent; border: none; color: var(--text2); cursor: pointer; font-size: 14px; font-weight: 500; padding: 0; display: flex; align-items: center; gap: 6px; }
+  .bmain{width:100%;min-height:50px;padding:13px;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid;touch-action:manipulation;transition:opacity .1s;}
+  .bmain:active{opacity:.7;}
+  .bdanger{background:var(--red-bg);border-color:var(--red-bd);color:var(--red-t);}
+  .bsuccess{background:var(--grn-bg);border-color:var(--grn-bd);color:var(--grn-t);}
+  .bsm{padding:9px 16px;min-height:42px;border-radius:var(--rs);border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;touch-action:manipulation;}
+  .bnow{padding:0 12px;height:40px;border-radius:var(--rs);border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;white-space:nowrap;touch-action:manipulation;align-self:flex-end;}
+  .boff2{flex:1;height:38px;border-radius:var(--rs);border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;touch-action:manipulation;}
+  .boff2:active{background:var(--bg3);}
+  .bicon{background:transparent;border:1px solid var(--border);border-radius:var(--rs);color:var(--text3);cursor:pointer;padding:8px 10px;min-height:38px;touch-action:manipulation;}
+  .byes{padding:6px 14px;min-height:36px;border-radius:var(--rs);border:1px solid var(--red-bd);background:var(--red-bg);color:var(--red-t);cursor:pointer;font-size:13px;}
+  .bno{padding:6px 14px;min-height:36px;border-radius:var(--rs);border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:13px;}
+  .bghost{background:transparent;border:none;color:var(--text2);cursor:pointer;font-size:14px;font-weight:500;padding:0;display:flex;align-items:center;gap:6px;touch-action:manipulation;}
 
-  /* Active outage banner */
-  .active-banner { padding: 10px 14px; background: var(--red-bg); border: 1px solid var(--red-border); border-radius: var(--radius-sm); margin-bottom: 14px; }
-  .active-banner .label { font-size: 13px; color: #fca5a5; }
-  .active-banner .dur { font-size: 20px; font-weight: 700; color: #fca5a5; margin-top: 4px; }
+  /* Active banner */
+  .abanner{padding:10px 14px;background:var(--red-bg);border:1px solid var(--red-bd);border-radius:var(--rs);margin-bottom:14px;}
+  .abanner .al{font-size:13px;color:var(--red-t);}
+  .abanner .ad{font-size:20px;font-weight:700;color:var(--red-t);margin-top:4px;}
 
-  /* Manual form */
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-  .form-field label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 4px; }
-  .form-field input { width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--bg); color: var(--text); }
-  input[type=date], input[type=time] { color-scheme: dark; }
+  /* Time inputs */
+  .trow{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:flex-end;margin-bottom:10px;}
+  .trow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
+  @media(max-width:480px){.trow3{grid-template-columns:1fr 1fr;}.trow3 .ff:last-child{grid-column:1/-1;}}
+  .ff label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;}
+  .ff input{width:100%;padding:9px 10px;min-height:42px;border:1px solid var(--border);border-radius:var(--rs);font-size:15px;background:var(--bg);color:var(--text);}
+  input[type=date],input[type=time]{color-scheme:dark;}
+  .offrow{display:flex;gap:6px;margin-bottom:12px;}
+  .offlabel{font-size:12px;color:var(--text3);white-space:nowrap;align-self:center;}
 
-  /* Today bar */
-  .bar-wrap { display: flex; align-items: flex-end; height: 52px; gap: 2px; }
-  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-  .bar-col .bar { width: 100%; border-radius: 2px; }
-  .bar-col .bar-label { font-size: 9px; color: var(--text3); }
+  /* Bar chart */
+  .barwrap{display:flex;align-items:flex-end;height:52px;gap:2px;}
+  .bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .bcol .b{width:100%;border-radius:2px;}
+  .bcol .bl{font-size:9px;color:var(--text3);}
 
-  /* Predict list */
-  .predict-row { display: flex; align-items: center; gap: 10px; padding: 5px 8px; border-radius: var(--radius-sm); margin-bottom: 2px; }
-  .predict-row.now { background: rgba(255,255,255,.05); }
-  .predict-hour { width: 44px; font-size: 12px; color: var(--text3); }
-  .predict-hour.now { color: var(--amber); font-weight: 600; }
-  .predict-bar-track { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
-  .predict-bar-fill { height: 100%; border-radius: 3px; }
-  .predict-pct { width: 32px; font-size: 12px; color: var(--text2); text-align: right; }
-  .predict-label { width: 70px; font-size: 11px; text-align: right; }
+  /* Predict */
+  .prow{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--rs);margin-bottom:2px;}
+  .prow.now{background:rgba(255,255,255,.05);}
+  .phour{width:46px;font-size:12px;color:var(--text3);flex-shrink:0;}
+  .phour.now{color:var(--amber);font-weight:600;}
+  .ptrack{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+  .pfill{height:100%;border-radius:3px;}
+  .ppct{width:34px;font-size:12px;color:var(--text2);text-align:right;flex-shrink:0;}
+  .plabel{width:72px;font-size:11px;text-align:right;flex-shrink:0;}
+  @media(max-width:400px){.plabel{display:none;}}
 
   /* Heatmap */
-  .heatmap-wrap { overflow-x: auto; }
-  .heatmap { min-width: 360px; }
-  .heatmap-row { display: flex; align-items: center; margin-bottom: 3px; }
-  .heatmap-day { width: 28px; font-size: 11px; color: var(--text3); flex-shrink: 0; }
-  .heatmap-day.today { color: var(--amber); font-weight: 700; }
-  .heatmap-cells { display: flex; gap: 2px; flex: 1; }
-  .heatmap-cell { flex: 1; height: 18px; border-radius: 2px; }
-  .heatmap-cell.now-cell { outline: 2px solid var(--amber); outline-offset: 1px; }
-  .heatmap-hours { display: flex; margin-left: 28px; margin-bottom: 4px; }
-  .heatmap-hours span { flex: 1; font-size: 10px; color: var(--text3); text-align: center; }
-  .heatmap-legend { display: flex; align-items: center; gap: 8px; margin-top: 10px; justify-content: flex-end; }
-  .legend-box { width: 10px; height: 10px; border-radius: 2px; }
+  .hmwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .hm{min-width:330px;}
+  .hmrow{display:flex;align-items:center;margin-bottom:3px;}
+  .hmday{width:28px;font-size:11px;color:var(--text3);flex-shrink:0;}
+  .hmday.today{color:var(--amber);font-weight:700;}
+  .hmcells{display:flex;gap:2px;flex:1;}
+  .hmcell{flex:1;height:20px;border-radius:2px;}
+  .hmcell.now{outline:2px solid var(--amber);outline-offset:1px;}
+  .hmhours{display:flex;margin-left:28px;margin-bottom:4px;}
+  .hmhours span{flex:1;font-size:10px;color:var(--text3);text-align:center;}
+  .hmleg{display:flex;align-items:center;gap:8px;margin-top:10px;justify-content:flex-end;}
+  .legbox{width:10px;height:10px;border-radius:2px;}
 
   /* History */
-  .history-list { display: flex; flex-direction: column; gap: 8px; }
-  .history-item { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
-  .history-meta { flex: 1; }
-  .history-date { font-weight: 600; font-size: 14px; }
-  .history-time { font-size: 13px; color: var(--text2); margin-top: 2px; }
-  .history-dur { font-weight: 700; font-size: 16px; color: var(--amber2); text-align: right; }
-  .history-active { font-size: 11px; color: #f87171; font-weight: 400; }
+  .hlist{display:flex;flex-direction:column;gap:8px;}
+  .hitem{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;display:flex;align-items:center;gap:10px;}
+  .hmeta{flex:1;min-width:0;}
+  .hdate{font-weight:600;font-size:14px;}
+  .htime{font-size:13px;color:var(--text2);margin-top:2px;}
+  .hdur{font-weight:700;font-size:16px;color:var(--amber2);text-align:right;flex-shrink:0;}
+  .hactive{font-size:11px;color:#f87171;font-weight:400;}
 
-  /* Empty state */
-  .empty { text-align: center; padding: 48px 24px; color: var(--text3); }
-  .empty i { font-size: 40px; display: block; margin-bottom: 12px; }
-  .empty p { font-size: 14px; }
+  .empty{text-align:center;padding:48px 24px;color:var(--text3);}
+  .empty i{font-size:40px;display:block;margin-bottom:12px;}
+  .empty p{font-size:14px;}
+  .infobox{margin-top:8px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:var(--rs);font-size:12px;color:var(--text2);}
 
-  /* Utility */
-  .gap-10 { gap: 10px; }
-  .mt-10 { margin-top: 10px; }
-  .mt-14 { margin-top: 14px; }
-  .mb-14 { margin-bottom: 14px; }
-  .flex { display: flex; }
-  .items-center { align-items: center; }
-  .info-box { margin-top: 8px; padding: 8px 10px; background: rgba(255,255,255,.04); border-radius: var(--radius-sm); font-size: 12px; color: var(--text2); }
-
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-  @media(max-width:480px) { .form-grid { grid-template-columns: 1fr; } }
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 </style>
 </head>
 <body>
-
 <div id="app"></div>
-
 <script>
-// ─────────────────────────────────────────────────────────────
-// Utilities
-// ─────────────────────────────────────────────────────────────
-const pad = n => String(n).padStart(2,'0');
-const uuid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+const pad=n=>String(n).padStart(2,'0');
+const uuid=()=>Math.random().toString(36).slice(2)+Date.now().toString(36);
+const fmtDur=m=>{if(!m||m<=0)return'0m';const h=Math.floor(m/60),mn=Math.round(m%60);return h&&mn?`${h}h ${mn}m`:h?`${h}h`:`${mn}m`;};
+const fmtDate=iso=>{if(!iso)return'';return new Date(iso).toLocaleDateString('es-ES',{weekday:'short',day:'2-digit',month:'2-digit',year:'2-digit'});};
+const fmtTime=iso=>{if(!iso)return'';const d=new Date(iso);return`${pad(d.getHours())}:${pad(d.getMinutes())}`;};
+const nowDate=()=>new Date().toISOString().slice(0,10);
+const nowTime=()=>{const d=new Date();return`${pad(d.getHours())}:${pad(d.getMinutes())}`;};
+const DAYS_S=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DAYS_F=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
-const fmtDur = m => {
-  if (!m || m <= 0) return '0m';
-  const h = Math.floor(m / 60), mn = Math.round(m % 60);
-  return h && mn ? `${h}h ${mn}m` : h ? `${h}h` : `${mn}m`;
+const api={
+  getOutages:()=>fetch('/api/outages').then(r=>r.json()),
+  addOutage:o=>fetch('/api/outages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)}),
+  deleteOutage:id=>fetch(`/api/outages/${id}`,{method:'DELETE'}),
+  getActive:()=>fetch('/api/active').then(r=>r.json()),
+  setActive:o=>fetch('/api/active',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)}),
+  clearActive:()=>fetch('/api/active',{method:'DELETE'}),
 };
 
-const fmtDate = iso => {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-ES', { weekday:'short', day:'2-digit', month:'2-digit', year:'2-digit' });
-};
+function getSlots(o){const s=[],cur=new Date(o.start);cur.setMinutes(0,0,0);const end=new Date(o.end);while(cur<end){s.push({day:cur.getDay(),hour:cur.getHours()});cur.setHours(cur.getHours()+1);}return s;}
 
-const fmtTime = iso => {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-};
-
-const DAYS_S = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-const DAYS_F = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-
-// ─────────────────────────────────────────────────────────────
-// API
-// ─────────────────────────────────────────────────────────────
-const api = {
-  async getOutages()       { return (await fetch('/api/outages')).json(); },
-  async addOutage(o)       { return fetch('/api/outages', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(o) }); },
-  async deleteOutage(id)   { return fetch(`/api/outages/${id}`, { method:'DELETE' }); },
-  async getActive()        { return (await fetch('/api/active')).json(); },
-  async setActive(o)       { return fetch('/api/active', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(o) }); },
-  async clearActive()      { return fetch('/api/active', { method:'DELETE' }); },
-};
-
-// ─────────────────────────────────────────────────────────────
-// Inference engine
-// ─────────────────────────────────────────────────────────────
-function getSlots(o) {
-  const s = [];
-  if (!o.start || !o.end) return s;
-  const cur = new Date(o.start); cur.setMinutes(0, 0, 0);
-  const end = new Date(o.end);
-  while (cur < end) {
-    s.push({ day: cur.getDay(), hour: cur.getHours() });
-    cur.setHours(cur.getHours() + 1);
-  }
-  return s;
-}
-
-function buildHeatmap(outages) {
-  const done = outages.filter(o => o.start && o.end);
-  if (!done.length) return null;
-
-  const dates = done.flatMap(o => [new Date(o.start), new Date(o.end)]);
-  const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
-  const maxDate = new Date();
-
-  // Count observations per (day, hour) slot in the window
-  const obs = {}, hits = {};
-  const cur = new Date(minDate); cur.setHours(0, 0, 0, 0);
-  while (cur <= maxDate) {
-    for (let h = 0; h < 24; h++) {
-      const k = `${cur.getDay()}_${h}`;
-      obs[k] = (obs[k] || 0) + 1;
-    }
-    cur.setDate(cur.getDate() + 1);
-  }
-
-  // Count outage hits per slot
-  done.forEach(o => getSlots(o).forEach(({ day, hour }) => {
-    const k = `${day}_${hour}`;
-    hits[k] = (hits[k] || 0) + 1;
-  }));
-
-  // Laplace-smoothed probability + confidence
-  const alpha = 0.5;
-  const hm = {};
-  for (let d = 0; d < 7; d++) for (let h = 0; h < 24; h++) {
-    const k = `${d}_${h}`;
-    const ob = obs[k] || 0, hi = hits[k] || 0;
-    hm[k] = {
-      prob: ob > 0 ? (hi + alpha) / (ob + 2 * alpha) : 0,
-      conf: Math.min(ob / 8, 1),   // confidence reaches 1.0 after 8+ observations
-      hits: hi, obs: ob
-    };
-  }
+function buildHeatmap(outages){
+  const done=outages.filter(o=>o.start&&o.end);
+  if(!done.length)return null;
+  const dates=done.flatMap(o=>[new Date(o.start),new Date(o.end)]);
+  const minDate=new Date(Math.min(...dates.map(d=>d.getTime())));
+  const obs={},hits={};
+  const cur=new Date(minDate);cur.setHours(0,0,0,0);
+  while(cur<=new Date()){for(let h=0;h<24;h++){const k=`${cur.getDay()}_${h}`;obs[k]=(obs[k]||0)+1;}cur.setDate(cur.getDate()+1);}
+  done.forEach(o=>getSlots(o).forEach(({day,hour})=>{const k=`${day}_${hour}`;hits[k]=(hits[k]||0)+1;}));
+  const hm={};
+  for(let d=0;d<7;d++)for(let h=0;h<24;h++){const k=`${d}_${h}`,ob=obs[k]||0,hi=hits[k]||0;hm[k]={prob:ob>0?(hi+.5)/(ob+1):0,conf:Math.min(ob/8,1),hits:hi,obs:ob};}
   return hm;
 }
 
-function calcStats(outages) {
-  const done = outages.filter(o => o.start && o.end && o.duration_minutes != null);
-  const now = new Date();
-  const sow = new Date(now); sow.setDate(now.getDate() - now.getDay()); sow.setHours(0,0,0,0);
-  const som = new Date(now.getFullYear(), now.getMonth(), 1);
-  const soy = new Date(now.getFullYear(), 0, 1);
-  const sum = arr => arr.reduce((s, o) => s + (o.duration_minutes || 0), 0);
-  const tw = done.filter(o => new Date(o.start) >= sow);
-  const tm = done.filter(o => new Date(o.start) >= som);
-  const ty = done.filter(o => new Date(o.start) >= soy);
-  const longest = done.reduce((mx, o) => (o.duration_minutes||0) > (mx?.duration_minutes||0) ? o : mx, null);
-  const byDay = {};
-  done.forEach(o => {
-    const dk = new Date(o.start).toDateString();
-    if (!byDay[dk]) byDay[dk] = { mins: 0, count: 0, date: new Date(o.start) };
-    byDay[dk].mins += o.duration_minutes || 0;
-    byDay[dk].count++;
-  });
-  const worst = Object.values(byDay).sort((a,b) => b.mins - a.mins)[0] || null;
-  const byH = {};
-  done.forEach(o => getSlots(o).forEach(({hour}) => { byH[hour] = (byH[hour]||0)+1; }));
-  const phE = Object.entries(byH).sort((a,b) => b[1]-a[1])[0];
-  const totalDays = done.length > 0
-    ? Math.max(1, Math.ceil((now - new Date(Math.min(...done.map(o => new Date(o.start).getTime())))) / 86400000))
-    : 1;
-  return {
-    wM: sum(tw), wC: tw.length,
-    mM: sum(tm), mC: tm.length,
-    yM: sum(ty), yC: ty.length,
-    totalMins: sum(done), totalCount: done.length,
-    longest, worst, peakH: phE ? +phE[0] : null,
-    avg: sum(done) / totalDays
-  };
+function calcStats(outages){
+  const done=outages.filter(o=>o.start&&o.end&&o.duration_minutes!=null);
+  const now=new Date();
+  const sow=new Date(now);sow.setDate(now.getDate()-now.getDay());sow.setHours(0,0,0,0);
+  const sum=arr=>arr.reduce((s,o)=>s+(o.duration_minutes||0),0);
+  const tw=done.filter(o=>new Date(o.start)>=sow);
+  const tm=done.filter(o=>new Date(o.start)>=new Date(now.getFullYear(),now.getMonth(),1));
+  const ty=done.filter(o=>new Date(o.start)>=new Date(now.getFullYear(),0,1));
+  const longest=done.reduce((mx,o)=>(o.duration_minutes||0)>(mx?.duration_minutes||0)?o:mx,null);
+  const byDay={};
+  done.forEach(o=>{const dk=new Date(o.start).toDateString();if(!byDay[dk])byDay[dk]={mins:0,count:0,date:new Date(o.start)};byDay[dk].mins+=o.duration_minutes||0;byDay[dk].count++;});
+  const worst=Object.values(byDay).sort((a,b)=>b.mins-a.mins)[0]||null;
+  const byH={};
+  done.forEach(o=>getSlots(o).forEach(({hour})=>{byH[hour]=(byH[hour]||0)+1;}));
+  const phE=Object.entries(byH).sort((a,b)=>b[1]-a[1])[0];
+  const totalDays=done.length>0?Math.max(1,Math.ceil((now-new Date(Math.min(...done.map(o=>new Date(o.start).getTime()))))/86400000)):1;
+  return{wM:sum(tw),wC:tw.length,mM:sum(tm),mC:tm.length,yM:sum(ty),yC:ty.length,longest,worst,peakH:phE?+phE[0]:null,avg:sum(done)/totalDays};
 }
+const dp=(p,c)=>c<0.1?0:p*c;
+const rc=p=>p<0.05?'#475569':p<0.2?'#639922':p<0.4?'#d97706':p<0.6?'#e24b4a':'#b91c1c';
+const rl=(p,c)=>c<0.1?'Sin datos':p<0.05?'Sin riesgo':p<0.2?'Bajo':p<0.4?'Moderado':p<0.6?'Alto':'Muy alto';
 
-const dp = (prob, conf) => conf < 0.1 ? 0 : prob * conf;
-
-function riskColor(p) {
-  if (p < 0.05) return '#475569';
-  if (p < 0.2)  return '#639922';
-  if (p < 0.4)  return '#d97706';
-  if (p < 0.6)  return '#e24b4a';
-  return '#b91c1c';
-}
-function riskLabel(p, conf) {
-  if (conf < 0.1) return 'Sin datos';
-  if (p < 0.05) return 'Sin riesgo';
-  if (p < 0.2)  return 'Bajo';
-  if (p < 0.4)  return 'Moderado';
-  if (p < 0.6)  return 'Alto';
-  return 'Muy alto';
-}
-
-// ─────────────────────────────────────────────────────────────
-// App state
-// ─────────────────────────────────────────────────────────────
-let state = {
-  outages: [],
-  active: null,
-  tab: 'dashboard',
-  showManual: false,
-  manualDate: new Date().toISOString().slice(0,10),
-  manualStart: '', manualEnd: '',
-  deleteId: null,
-  loading: true,
+let S={
+  outages:[],active:null,tab:'dashboard',loading:true,
+  startDate:nowDate(),startTime:nowTime(),
+  endDate:nowDate(),endTime:nowTime(),
+  showManual:false,manualDate:nowDate(),manualStart:'',manualEnd:'',
+  deleteId:null,
 };
 
-async function init() {
-  const [outages, active] = await Promise.all([api.getOutages(), api.getActive()]);
-  state.outages = outages;
-  state.active = active;
-  state.loading = false;
+async function init(){
+  const[outages,active]=await Promise.all([api.getOutages(),api.getActive()]);
+  S.outages=outages;S.active=active;S.loading=false;
   render();
-  setInterval(() => { if (state.active) render(); }, 15000);
+  setInterval(()=>{if(S.active)render();},30000);
 }
 
-// ─────────────────────────────────────────────────────────────
-// Actions
-// ─────────────────────────────────────────────────────────────
-async function startOut() {
-  const o = { id: uuid(), start: new Date().toISOString() };
+async function startOut(){
+  const iso=new Date(`${S.startDate}T${S.startTime}`).toISOString();
+  const o={id:uuid(),start:iso};
   await api.setActive(o);
-  state.active = o;
+  S.active=o;render();
+}
+async function endOut(){
+  if(!S.active)return;
+  const end=new Date(`${S.endDate}T${S.endTime}`),start=new Date(S.active.start);
+  if(end<=start)return alert('La hora de regreso debe ser posterior a la salida');
+  const completed={...S.active,end:end.toISOString(),duration_minutes:(end-start)/60000};
+  await Promise.all([api.addOutage(completed),api.clearActive()]);
+  S.outages.unshift(completed);S.active=null;
+  S.endDate=nowDate();S.endTime=nowTime();
   render();
 }
-
-async function endOut() {
-  if (!state.active) return;
-  const end = new Date(), start = new Date(state.active.start);
-  const completed = { ...state.active, end: end.toISOString(), duration_minutes: (end - start) / 60000 };
-  await Promise.all([api.addOutage(completed), api.clearActive()]);
-  state.outages.unshift(completed);
-  state.active = null;
-  render();
-}
-
-async function addManual() {
-  const { manualDate: d, manualStart: st, manualEnd: en } = state;
-  if (!d || !st || !en) return alert('Completa todos los campos');
-  const s = new Date(`${d}T${st}`), e = new Date(`${d}T${en}`);
-  if (isNaN(s) || isNaN(e) || e <= s) return alert('La hora de fin debe ser posterior al inicio');
-  const o = { id: uuid(), start: s.toISOString(), end: e.toISOString(), duration_minutes: (e - s) / 60000 };
+async function addManual(){
+  const{manualDate:d,manualStart:st,manualEnd:en}=S;
+  if(!d||!st||!en)return alert('Completa todos los campos');
+  const s=new Date(`${d}T${st}`),e=new Date(`${d}T${en}`);
+  if(isNaN(s)||isNaN(e)||e<=s)return alert('La hora de fin debe ser posterior al inicio');
+  const o={id:uuid(),start:s.toISOString(),end:e.toISOString(),duration_minutes:(e-s)/60000};
   await api.addOutage(o);
-  state.outages.unshift(o);
-  state.outages.sort((a,b) => new Date(b.start) - new Date(a.start));
-  state.manualStart = ''; state.manualEnd = ''; state.showManual = false;
-  render();
+  S.outages.unshift(o);S.outages.sort((a,b)=>new Date(b.start)-new Date(a.start));
+  S.manualStart='';S.manualEnd='';S.showManual=false;render();
 }
-
-async function deleteOutage(id) {
+async function deleteOutage(id){
   await api.deleteOutage(id);
-  state.outages = state.outages.filter(o => o.id !== id);
-  state.deleteId = null;
-  render();
+  S.outages=S.outages.filter(o=>o.id!==id);S.deleteId=null;render();
+}
+function applyOffset(date,time,mins){
+  const d=new Date(`${date}T${time}`);d.setMinutes(d.getMinutes()-mins);
+  return{date:d.toISOString().slice(0,10),time:`${pad(d.getHours())}:${pad(d.getMinutes())}`};
 }
 
-// ─────────────────────────────────────────────────────────────
-// Render
-// ─────────────────────────────────────────────────────────────
-function render() {
-  const now = new Date();
-  const { outages, active, tab, showManual, deleteId } = state;
-  const activeMins = active ? (now - new Date(active.start)) / 60000 : 0;
-  const hm = buildHeatmap(outages);
-  const stats = calcStats(outages);
-  const todayPreds = hm ? Array.from({length:24},(_,h) => ({hour:h,...(hm[`${now.getDay()}_${h}`]||{prob:0,conf:0})})) : [];
+function render(){
+  const now=new Date();
+  const{outages,active,tab,showManual,deleteId}=S;
+  const activeMins=active?(now-new Date(active.start))/60000:0;
+  const hm=buildHeatmap(outages);
+  const stats=calcStats(outages);
+  const todayP=hm?Array.from({length:24},(_,h)=>({hour:h,...(hm[`${now.getDay()}_${h}`]||{prob:0,conf:0})})):[];
 
-  if (state.loading) {
-    document.getElementById('app').innerHTML = `<div class="empty"><i class="ti ti-loader"></i><p>Cargando...</p></div>`;
-    return;
-  }
+  if(S.loading){document.getElementById('app').innerHTML='<div class="empty"><i class="ti ti-loader"></i><p>Cargando...</p></div>';return;}
 
-  let h = `
+  let h=`
   <div class="header">
     <div class="header-left">
       <i class="ti ti-bolt" style="font-size:22px;color:#f59e0b"></i>
-      <div>
-        <div class="header-title">Monitor de cortes</div>
-        <div class="header-sub">${now.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}</div>
-      </div>
+      <div><div class="htitle">Monitor de cortes</div><div class="hsub">${now.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}</div></div>
     </div>
-    <div class="status-badge ${active ? 'badge-off' : 'badge-on'}">
-      <div class="dot"></div>
-      ${active ? `Sin luz &middot; ${fmtDur(activeMins)}` : 'Con luz'}
+    <div class="badge ${active?'boff':'bon'}">
+      <div class="dot"></div>${active?`Sin luz &middot; ${fmtDur(activeMins)}`:'Con luz'}
     </div>
   </div>
-
   <div class="tabs">
-    ${[
-      ['dashboard','ti-layout-dashboard','Dashboard'],
-      ['log','ti-bolt','Registrar'],
-      ['predict','ti-chart-dots','Predicciones'],
-      ['history','ti-history','Historial'],
-    ].map(([id,ic,lb]) =>
-      `<button class="tab ${tab===id?'active':''}" onclick="setTab('${id}')">
-        <i class="ti ${ic}"></i>${lb}
-      </button>`
-    ).join('')}
+    ${[['dashboard','ti-layout-dashboard','Panel'],['log','ti-bolt','Registrar'],['predict','ti-chart-dots','Predicción'],['history','ti-history','Historial']]
+      .map(([id,ic,lb])=>`<button class="tab ${tab===id?'active':''}" onclick="setTab('${id}')"><i class="ti ${ic}"></i>${lb}</button>`).join('')}
   </div>
-
   <div class="content">`;
 
-  // ── DASHBOARD ──────────────────────────────────────────────
-  if (tab === 'dashboard') {
-    h += `<div class="stat-grid">
-      ${[
-        ['ti-calendar-week','Esta semana',fmtDur(stats.wM),`${stats.wC} corte${stats.wC!==1?'s':''}`],
-        ['ti-calendar','Este mes',fmtDur(stats.mM),`${stats.mC} corte${stats.mC!==1?'s':''}`],
-        ['ti-calendar-stats','Este año',fmtDur(stats.yM),`${stats.yC} corte${stats.yC!==1?'s':''}`],
-        ['ti-trending-up','Prom. diario',fmtDur(stats.avg),'histórico'],
-      ].map(([ic,lb,val,sub]) => `
-        <div class="stat-card">
-          <i class="ti ${ic}"></i>
-          <div class="stat-val">${val}</div>
-          <div class="stat-label">${lb}</div>
-          <div class="stat-sub">${sub}</div>
-        </div>`).join('')}
+  // DASHBOARD
+  if(tab==='dashboard'){
+    h+=`<div class="sgrid">
+      ${[['ti-calendar-week','Esta semana',fmtDur(stats.wM),`${stats.wC} corte${stats.wC!==1?'s':''}`],['ti-calendar','Este mes',fmtDur(stats.mM),`${stats.mC} corte${stats.mC!==1?'s':''}`],['ti-calendar-stats','Este año',fmtDur(stats.yM),`${stats.yC} corte${stats.yC!==1?'s':''}`],['ti-trending-up','Prom. diario',fmtDur(stats.avg),'histórico']]
+      .map(([ic,lb,val,sub])=>`<div class="scard"><i class="ti ${ic}"></i><div class="sval">${val}</div><div class="slb">${lb}</div><div class="ssub">${sub}</div></div>`).join('')}
     </div>`;
-
-    if (stats.longest || stats.worst || stats.peakH !== null) {
-      h += `<div class="records-grid">`;
-      if (stats.longest)
-        h += `<div class="record-card"><div class="section-label">CORTE MÁS LARGO</div>
-          <div class="record-val">${fmtDur(stats.longest.duration_minutes)}</div>
-          <div class="record-sub">${fmtDate(stats.longest.start)} &middot; ${fmtTime(stats.longest.start)}&ndash;${fmtTime(stats.longest.end)}</div></div>`;
-      if (stats.worst)
-        h += `<div class="record-card"><div class="section-label">DÍA MÁS AFECTADO</div>
-          <div class="record-val" style="font-size:18px">${stats.worst.date.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'short'})}</div>
-          <div class="record-sub" style="color:var(--amber2)">${fmtDur(stats.worst.mins)} &middot; ${stats.worst.count} corte${stats.worst.count!==1?'s':''}</div></div>`;
-      if (stats.peakH !== null)
-        h += `<div class="record-card"><div class="section-label">HORA PICO HISTÓRICA</div>
-          <div class="record-val">${pad(stats.peakH)}:00</div>
-          <div class="record-sub">hora con más cortes registrados</div></div>`;
-      h += `</div>`;
+    if(stats.longest||stats.worst||stats.peakH!==null){
+      h+=`<div class="rgrid">`;
+      if(stats.longest)h+=`<div class="rcard"><div class="slabel">CORTE MÁS LARGO</div><div class="rval">${fmtDur(stats.longest.duration_minutes)}</div><div class="rsub">${fmtDate(stats.longest.start)} &middot; ${fmtTime(stats.longest.start)}&ndash;${fmtTime(stats.longest.end)}</div></div>`;
+      if(stats.worst)h+=`<div class="rcard"><div class="slabel">DÍA MÁS AFECTADO</div><div class="rval" style="font-size:18px">${stats.worst.date.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'short'})}</div><div class="rsub" style="color:var(--amber2)">${fmtDur(stats.worst.mins)} &middot; ${stats.worst.count} corte${stats.worst.count!==1?'s':''}</div></div>`;
+      if(stats.peakH!==null)h+=`<div class="rcard"><div class="slabel">HORA PICO HISTÓRICA</div><div class="rval">${pad(stats.peakH)}:00</div><div class="rsub">hora con más cortes registrados</div></div>`;
+      h+=`</div>`;
     }
-
-    if (hm) {
-      const curSlot = hm[`${now.getDay()}_${now.getHours()}`] || {prob:0,conf:0};
-      const p0 = dp(curSlot.prob, curSlot.conf);
-      h += `<div class="card mb-14">
-        <div class="section-label">Probabilidad de corte hoy &mdash; ${DAYS_F[now.getDay()]}</div>
-        <div class="bar-wrap">
-          ${todayPreds.map(({hour,prob,conf}) => {
-            const p = dp(prob,conf), isN = hour===now.getHours();
-            return `<div class="bar-col">
-              <div class="bar" style="height:${Math.max(3,p*48)}px;background:${isN?'#f59e0b':`rgba(239,68,68,${p*0.85+0.05})`};${isN?'outline:2px solid #f59e0b;outline-offset:1px':''}"></div>
-              ${hour%6===0?`<span class="bar-label">${pad(hour)}</span>`:''}
-            </div>`;
-          }).join('')}
-        </div>
-        <div class="mt-10" style="font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:6px">
+    if(hm){
+      const cur=hm[`${now.getDay()}_${now.getHours()}`]||{prob:0,conf:0};const p0=dp(cur.prob,cur.conf);
+      h+=`<div class="card"><div class="slabel">Probabilidad hoy &mdash; ${DAYS_F[now.getDay()]}</div>
+        <div class="barwrap">${todayP.map(({hour,prob,conf})=>{const p=dp(prob,conf),isN=hour===now.getHours();return`<div class="bcol"><div class="b" style="height:${Math.max(3,p*48)}px;background:${isN?'#f59e0b':`rgba(239,68,68,${p*0.85+0.05})`};${isN?'outline:2px solid #f59e0b;outline-offset:1px':''}"></div>${hour%6===0?`<span class="bl">${pad(hour)}</span>`:''}</div>`;}).join('')}</div>
+        <div style="margin-top:10px;font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:6px">
           <span>Ahora (${pad(now.getHours())}:00):</span>
-          <span style="font-weight:600;color:${riskColor(p0)}">${riskLabel(p0,curSlot.conf)}${curSlot.conf>=0.1?' &middot; '+Math.round(p0*100)+'%':''}</span>
-        </div>
-      </div>`;
+          <span style="font-weight:600;color:${rc(p0)}">${rl(p0,cur.conf)}${cur.conf>=0.1?' &middot; '+Math.round(p0*100)+'%':''}</span>
+        </div></div>`;
     }
-
-    if (!outages.length)
-      h += `<div class="empty"><i class="ti ti-plug-x"></i><p>Sin registros. Ve a <strong>Registrar</strong> para comenzar.</p></div>`;
+    if(!outages.length)h+=`<div class="empty"><i class="ti ti-plug-x"></i><p>Sin registros. Ve a <strong>Registrar</strong> para comenzar.</p></div>`;
   }
 
-  // ── LOG ────────────────────────────────────────────────────
-  if (tab === 'log') {
-    h += `<div class="card ${active?'card-danger':''} mb-14">
-      <div style="font-size:15px;font-weight:600;margin-bottom:14px">Control rápido</div>`;
-    if (active) {
-      h += `<div class="active-banner">
-        <div class="label"><i class="ti ti-bolt-off"></i> Corte activo desde las ${fmtTime(active.start)}</div>
-        <div class="dur">${fmtDur(activeMins)} sin luz</div>
-      </div>
-      <button class="btn-main btn-success" onclick="endOut()"><i class="ti ti-bulb"></i>Volvió la luz</button>`;
-    } else {
-      h += `<button class="btn-main btn-danger" onclick="startOut()"><i class="ti ti-bolt-off"></i>Se fue la luz</button>`;
+  // REGISTRAR
+  if(tab==='log'){
+    if(!active){
+      h+=`<div class="card card-red">
+        <div class="slabel">REGISTRAR SALIDA DE LUZ</div>
+        <div class="trow">
+          <div class="ff"><label>Fecha</label><input type="date" value="${S.startDate}" onchange="setS('startDate',this.value)"></div>
+          <div class="ff"><label>Hora</label><input type="time" value="${S.startTime}" onchange="setS('startTime',this.value)"></div>
+          <button class="bnow" onclick="resetStart()"><i class="ti ti-clock" style="font-size:13px"></i> Ahora</button>
+        </div>
+        <div class="offrow">
+          <span class="offlabel">Hace:</span>
+          ${[15,30,60].map(m=>`<button class="boff2" onclick="offsetStart(${m})">&minus;${m<60?m+'m':'1h'}</button>`).join('')}
+        </div>
+        <button class="bmain bdanger" onclick="startOut()"><i class="ti ti-bolt-off"></i>Se fue la luz</button>
+      </div>`;
+    }else{
+      h+=`<div class="card card-red">
+        <div class="abanner">
+          <div class="al"><i class="ti ti-bolt-off"></i> Corte activo desde las ${fmtTime(active.start)}</div>
+          <div class="ad">${fmtDur(activeMins)} sin luz</div>
+        </div>
+        <div class="slabel">REGISTRAR REGRESO DE LUZ</div>
+        <div class="trow">
+          <div class="ff"><label>Fecha</label><input type="date" value="${S.endDate}" onchange="setS('endDate',this.value)"></div>
+          <div class="ff"><label>Hora</label><input type="time" value="${S.endTime}" onchange="setS('endTime',this.value)"></div>
+          <button class="bnow" onclick="resetEnd()"><i class="ti ti-clock" style="font-size:13px"></i> Ahora</button>
+        </div>
+        <div class="offrow">
+          <span class="offlabel">Hace:</span>
+          ${[15,30,60].map(m=>`<button class="boff2" onclick="offsetEnd(${m})">&minus;${m<60?m+'m':'1h'}</button>`).join('')}
+        </div>
+        <button class="bmain bsuccess" onclick="endOut()"><i class="ti ti-bulb"></i>Volvió la luz</button>
+      </div>`;
     }
-    h += `</div>
-
-    <div class="card">
-      <button class="btn-ghost" onclick="toggle('showManual')">
-        <i class="ti ${showManual?'ti-chevron-up':'ti-chevron-down'}"></i>Registrar corte pasado
+    h+=`<div class="card" style="margin-bottom:0">
+      <button class="bghost" onclick="toggle('showManual')">
+        <i class="ti ${showManual?'ti-chevron-up':'ti-chevron-down'}"></i>Registrar corte pasado completo
       </button>`;
-    if (showManual) {
-      const dur = state.manualStart && state.manualEnd && state.manualDate
-        ? (new Date(`${state.manualDate}T${state.manualEnd}`) - new Date(`${state.manualDate}T${state.manualStart}`)) / 60000 : 0;
-      h += `<div class="mt-14">
-        <div class="form-grid">
-          <div class="form-field"><label>Fecha</label><input type="date" value="${state.manualDate}" onchange="setS('manualDate',this.value)"></div>
-          <div class="form-field"><label>Hora inicio</label><input type="time" value="${state.manualStart}" onchange="setS('manualStart',this.value)"></div>
-          <div class="form-field"><label>Hora fin</label><input type="time" value="${state.manualEnd}" onchange="setS('manualEnd',this.value)"></div>
+    if(showManual){
+      const dur=S.manualStart&&S.manualEnd&&S.manualDate?(new Date(`${S.manualDate}T${S.manualEnd}`)-new Date(`${S.manualDate}T${S.manualStart}`))/60000:0;
+      h+=`<div style="margin-top:14px">
+        <div class="trow3">
+          <div class="ff"><label>Fecha</label><input type="date" value="${S.manualDate}" onchange="setS('manualDate',this.value)"></div>
+          <div class="ff"><label>Hora inicio</label><input type="time" value="${S.manualStart}" onchange="setS('manualStart',this.value)"></div>
+          <div class="ff"><label>Hora fin</label><input type="time" value="${S.manualEnd}" onchange="setS('manualEnd',this.value)"></div>
         </div>
-        ${dur > 0 ? `<div style="font-size:12px;color:#94a3b8;margin-bottom:10px">Duración: ${fmtDur(dur)}</div>` : ''}
-        <button class="btn-sm" onclick="addManual()">Guardar registro</button>
+        ${dur>0?`<div style="font-size:12px;color:#94a3b8;margin-bottom:10px">Duración: ${fmtDur(dur)}</div>`:''}
+        <button class="bsm" onclick="addManual()">Guardar</button>
       </div>`;
     }
-    h += `</div>`;
+    h+=`</div>`;
   }
 
-  // ── PREDICCIONES ───────────────────────────────────────────
-  if (tab === 'predict') {
-    if (!hm) {
-      h += `<div class="empty"><i class="ti ti-chart-dots"></i><p>Necesitas al menos 1 registro para ver predicciones.</p></div>`;
-    } else {
-      h += `<div class="card mb-14">
-        <div class="section-label">Hoy &mdash; ${DAYS_F[now.getDay()]} &mdash; riesgo por hora</div>`;
-      todayPreds.filter(p => p.hour >= 5 && p.hour <= 23).forEach(({hour,prob,conf}) => {
-        const p = dp(prob,conf), isN = hour===now.getHours();
-        h += `<div class="predict-row ${isN?'now':''}">
-          <div class="predict-hour ${isN?'now':''}">${pad(hour)}:00${isN?' ◀':''}</div>
-          <div class="predict-bar-track"><div class="predict-bar-fill" style="width:${Math.round(p*100)}%;background:${riskColor(p)}"></div></div>
-          <div class="predict-pct">${conf>=0.1?Math.round(p*100)+'%':'—'}</div>
-          <div class="predict-label" style="color:${riskColor(p)}">${riskLabel(p,conf)}</div>
+  // PREDICCIONES
+  if(tab==='predict'){
+    if(!hm){h+=`<div class="empty"><i class="ti ti-chart-dots"></i><p>Necesitas al menos 1 registro para ver predicciones.</p></div>`;}
+    else{
+      h+=`<div class="card"><div class="slabel">Hoy &mdash; ${DAYS_F[now.getDay()]} &mdash; riesgo por hora</div>`;
+      todayP.filter(p=>p.hour>=5&&p.hour<=23).forEach(({hour,prob,conf})=>{
+        const p=dp(prob,conf),isN=hour===now.getHours();
+        h+=`<div class="prow ${isN?'now':''}">
+          <div class="phour ${isN?'now':''}">${pad(hour)}:00${isN?' ◀':''}</div>
+          <div class="ptrack"><div class="pfill" style="width:${Math.round(p*100)}%;background:${rc(p)}"></div></div>
+          <div class="ppct">${prob>0&&conf>=0.1?Math.round(p*100)+'%':'—'}</div>
+          <div class="plabel" style="color:${rc(p)}">${rl(p,conf)}</div>
         </div>`;
       });
-      h += `</div>
-
-      <div class="card">
-        <div class="section-label">Mapa de calor semanal</div>
-        <div class="heatmap-wrap"><div class="heatmap">
-          <div class="heatmap-hours">${[0,4,8,12,16,20].map(x=>`<span>${pad(x)}</span>`).join('')}</div>
-          ${DAYS_S.map((day,di) => `
-            <div class="heatmap-row">
-              <div class="heatmap-day ${di===now.getDay()?'today':''}">${day}</div>
-              <div class="heatmap-cells">
-                ${Array.from({length:24},(_,h2) => {
-                  const d = hm[`${di}_${h2}`]||{prob:0,conf:0};
-                  const p = dp(d.prob,d.conf);
-                  const isNow = di===now.getDay()&&h2===now.getHours();
-                  return `<div class="heatmap-cell ${isNow?'now-cell':''}" title="${day} ${pad(h2)}:00 — ${Math.round(p*100)}%"
-                    style="background:${p<0.03?'rgba(255,255,255,.05)':`rgba(239,68,68,${Math.min(p*2,0.9)})`}"></div>`;
-                }).join('')}
-              </div>
-            </div>`).join('')}
-          <div class="heatmap-legend">
-            <span style="font-size:10px;color:#475569">Riesgo:</span>
-            ${[['Bajo','0.2'],['Medio','0.5'],['Alto','0.85']].map(([l,op])=>
-              `<div style="display:flex;align-items:center;gap:3px"><div class="legend-box" style="background:rgba(239,68,68,${op})"></div><span style="font-size:10px;color:#475569">${l}</span></div>`
-            ).join('')}
-          </div>
-          <div class="info-box">Las predicciones mejoran con más datos. Las celdas oscuras indican menos de 8 observaciones para esa combinación día/hora.</div>
+      h+=`</div><div class="card" style="margin-bottom:0"><div class="slabel">Mapa de calor semanal</div>
+        <div class="hmwrap"><div class="hm">
+          <div class="hmhours">${[0,4,8,12,16,20].map(x=>`<span>${pad(x)}</span>`).join('')}</div>
+          ${DAYS_S.map((day,di)=>`<div class="hmrow"><div class="hmday ${di===now.getDay()?'today':''}">${day}</div><div class="hmcells">${Array.from({length:24},(_,h2)=>{const d=hm[`${di}_${h2}`]||{prob:0,conf:0},p=dp(d.prob,d.conf),isN=di===now.getDay()&&h2===now.getHours();return`<div class="hmcell ${isN?'now':''}" title="${day} ${pad(h2)}:00 — ${Math.round(p*100)}%" style="background:${p<0.03?'rgba(255,255,255,.05)':`rgba(239,68,68,${Math.min(p*2,0.9)})`}"></div>`;}).join('')}</div></div>`).join('')}
+          <div class="hmleg"><span style="font-size:10px;color:#475569">Riesgo:</span>${[['Bajo','0.2'],['Medio','0.5'],['Alto','0.85']].map(([l,o])=>`<div style="display:flex;align-items:center;gap:3px"><div class="legbox" style="background:rgba(239,68,68,${o})"></div><span style="font-size:10px;color:#475569">${l}</span></div>`).join('')}</div>
+          <div class="infobox">Las predicciones mejoran con más datos. Celdas oscuras = menos de 8 observaciones para esa combinación día/hora.</div>
         </div></div>
       </div>`;
     }
   }
 
-  // ── HISTORIAL ──────────────────────────────────────────────
-  if (tab === 'history') {
-    const done = outages.filter(o => o.end);
-    const totalMins = done.reduce((s,o) => s+(o.duration_minutes||0), 0);
-    h += `<div style="font-size:13px;color:#94a3b8;margin-bottom:12px">
-      ${done.length} registro${done.length!==1?'s':''} &middot; ${fmtDur(totalMins)} total sin luz
-    </div>`;
-    if (!outages.length) {
-      h += `<div class="empty"><i class="ti ti-history"></i><p>Sin registros aún.</p></div>`;
-    } else {
-      h += `<div class="history-list">`;
-      outages.forEach(o => {
-        const activeMinsO = active && o.id===active.id ? (now - new Date(o.start))/60000 : 0;
-        h += `<div class="history-item">
-          <div class="history-meta">
-            <div class="history-date">${fmtDate(o.start)}</div>
-            <div class="history-time">${fmtTime(o.start)} &ndash; ${o.end?fmtTime(o.end):'en curso'}</div>
-          </div>
-          <div class="history-dur">
-            ${o.end ? fmtDur(o.duration_minutes) : fmtDur(activeMinsO)}
-            ${!o.end?'<div class="history-active">en curso</div>':''}
-          </div>
+  // HISTORIAL
+  if(tab==='history'){
+    const done=outages.filter(o=>o.end),totalMins=done.reduce((s,o)=>s+(o.duration_minutes||0),0);
+    h+=`<div style="font-size:13px;color:#94a3b8;margin-bottom:12px">${done.length} registro${done.length!==1?'s':''} &middot; ${fmtDur(totalMins)} total sin luz</div>`;
+    if(!outages.length){h+=`<div class="empty"><i class="ti ti-history"></i><p>Sin registros aún.</p></div>`;}
+    else{
+      h+=`<div class="hlist">`;
+      outages.forEach(o=>{
+        const am=active&&o.id===active.id?(now-new Date(o.start))/60000:0;
+        h+=`<div class="hitem">
+          <div class="hmeta"><div class="hdate">${fmtDate(o.start)}</div><div class="htime">${fmtTime(o.start)} &ndash; ${o.end?fmtTime(o.end):'en curso'}</div></div>
+          <div class="hdur">${o.end?fmtDur(o.duration_minutes):fmtDur(am)}${!o.end?'<div class="hactive">en curso</div>':''}</div>
           ${deleteId===o.id
-            ?`<div style="display:flex;gap:4px">
-                <button class="btn-confirm-yes" onclick="deleteOutage('${o.id}')">Sí</button>
-                <button class="btn-confirm-no" onclick="cancelDel()">No</button>
-              </div>`
-            :`<button class="btn-icon" onclick="askDel('${o.id}')" title="Eliminar"><i class="ti ti-trash" style="font-size:14px"></i></button>`}
+            ?`<div style="display:flex;gap:4px"><button class="byes" onclick="deleteOutage('${o.id}')">Sí</button><button class="bno" onclick="cancelDel()">No</button></div>`
+            :`<button class="bicon" onclick="askDel('${o.id}')" title="Eliminar"><i class="ti ti-trash" style="font-size:14px"></i></button>`}
         </div>`;
       });
-      h += `</div>`;
+      h+=`</div>`;
     }
   }
 
-  h += `</div>`;
-  document.getElementById('app').innerHTML = h;
+  h+=`</div>`;
+  document.getElementById('app').innerHTML=h;
 }
 
-// ─────────────────────────────────────────────────────────────
-// Event helpers (called from inline onclick)
-// ─────────────────────────────────────────────────────────────
-function setTab(t)       { state.tab = t; state.deleteId = null; render(); }
-function toggle(k)       { state[k] = !state[k]; render(); }
-function setS(k, v)      { state[k] = v; render(); }
-function askDel(id)      { state.deleteId = id; render(); }
-function cancelDel()     { state.deleteId = null; render(); }
+function setTab(t){S.tab=t;S.deleteId=null;render();}
+function toggle(k){S[k]=!S[k];render();}
+function setS(k,v){S[k]=v;render();}
+function askDel(id){S.deleteId=id;render();}
+function cancelDel(){S.deleteId=null;render();}
+function resetStart(){S.startDate=nowDate();S.startTime=nowTime();render();}
+function resetEnd(){S.endDate=nowDate();S.endTime=nowTime();render();}
+function offsetStart(m){const r=applyOffset(S.startDate,S.startTime,m);S.startDate=r.date;S.startTime=r.time;render();}
+function offsetEnd(m){const r=applyOffset(S.endDate,S.endTime,m);S.endDate=r.date;S.endTime=r.time;render();}
 
-// Init
 init();
 </script>
 </body>
