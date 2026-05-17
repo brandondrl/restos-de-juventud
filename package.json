@@ -1,7 +1,9 @@
 {
-  "name": "monitor-cortes",
-  "version": "1.0.0",
+  "name": "restos-de-juventud",
+  "version": "2.0.0",
   "dependencies": {
-    "@neondatabase/serverless": "^0.9.0"
+    "@neondatabase/serverless": "^0.9.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.0"
   }
 }
