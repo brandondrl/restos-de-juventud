@@ -21,7 +21,10 @@
 html,body{height:100%;}
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
-/* ── Header ── */
+/* All SVGs default — prevents expansion */
+svg{overflow:hidden;flex-shrink:0;}
+
+/* Header */
 .header{background:var(--bg2);border-bottom:1px solid var(--border);padding:13px 16px;padding-top:calc(13px + env(safe-area-inset-top,0px));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
 .hleft{display:flex;align-items:center;gap:10px;}
 .htitle{font-size:15px;font-weight:600;line-height:1.2;}
@@ -33,25 +36,26 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .bon .dot{background:#22c55e;}
 .boff .dot{background:#ef4444;animation:pulse 1.5s infinite;}
 
-/* ── Tabs ── */
+/* Tabs */
 .tabs{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;}
 .tab{flex:1;min-height:50px;padding:6px 4px;border:none;background:transparent;color:var(--text2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-bottom:2px solid transparent;font-size:11px;font-weight:500;touch-action:manipulation;}
 .tab svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
 .tab.active{color:var(--amber);border-bottom-color:var(--amber);}
 
-/* ── Content ── */
+/* Content */
 .content{padding:16px;max-width:720px;margin:0 auto;padding-bottom:calc(90px + env(safe-area-inset-bottom,0px));}
 
-/* ── Cards ── */
+/* Cards */
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;}
 .card-red{border-color:var(--red-bd);}
+.card-ora{border-color:var(--ora-bd);}
 .card-last{margin-bottom:0;}
 .slabel{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.05em;margin-bottom:10px;}
 
-/* ── Stat grids ── */
+/* Stat grids */
 .sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px;}
 @media(min-width:520px){.sgrid{grid-template-columns:repeat(4,1fr);}}
-.sgrid2{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}
+.sgrid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .scard{background:var(--bg2);border-radius:var(--rs);padding:11px 13px;}
 .scard svg{width:15px;height:15px;stroke:var(--text2);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
 .sval{font-size:21px;font-weight:700;color:var(--amber2);margin:5px 0 2px;}
@@ -59,53 +63,78 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .slb{font-size:12px;color:var(--text2);}
 .ssub{font-size:11px;color:var(--text3);margin-top:2px;}
 
-/* ── Record cards ── */
+/* Record cards */
 .rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px;}
 .rcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;}
 .rval{font-size:21px;font-weight:700;margin-top:6px;}
 .rsub{font-size:12px;color:var(--text3);margin-top:4px;}
 
-/* ── Buttons ── */
-.bmain{width:100%;min-height:50px;padding:12px;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid;touch-action:manipulation;transition:opacity .1s;}
+/* ── Buttons — SVG size locked ── */
+.bmain{
+  width:100%;min-height:50px;padding:12px 16px;border-radius:var(--rs);
+  font-size:15px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  border:1px solid;touch-action:manipulation;transition:opacity .1s;
+}
 .bmain:active{opacity:.7;}
+/* Critical: lock SVG size inside main buttons */
+.bmain svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
 .bdanger {background:var(--red-bg);border-color:var(--red-bd);color:var(--red-t);}
 .bsuccess{background:var(--grn-bg);border-color:var(--grn-bd);color:var(--grn-t);}
 .borange {background:var(--ora-bg);border-color:var(--ora-bd);color:var(--ora-t);}
-.bsm{padding:9px 16px;min-height:42px;border-radius:var(--rs);border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;touch-action:manipulation;}
+
+.bsm{padding:9px 18px;min-height:42px;border-radius:var(--rs);border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;touch-action:manipulation;}
+
 .bicon{background:transparent;border:1px solid var(--border);border-radius:var(--rs);color:var(--text3);cursor:pointer;padding:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;touch-action:manipulation;flex-shrink:0;}
-.bicon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+.bicon svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+
 .byes{padding:6px 14px;min-height:36px;border-radius:var(--rs);border:1px solid var(--red-bd);background:var(--red-bg);color:var(--red-t);cursor:pointer;font-size:13px;}
 .bno {padding:6px 14px;min-height:36px;border-radius:var(--rs);border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:13px;}
-.bghost{background:transparent;border:none;color:var(--text2);cursor:pointer;font-size:14px;font-weight:500;padding:0;display:flex;align-items:center;gap:6px;touch-action:manipulation;}
 
-/* ── FAB ── */
-.fab{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));right:20px;width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;touch-action:manipulation;transition:transform .15s,opacity .15s;box-shadow:0 4px 20px rgba(0,0,0,.5);}
-.fab:active{transform:scale(.92);}
+.bghost{background:transparent;border:none;color:var(--text2);cursor:pointer;font-size:14px;font-weight:500;padding:0;display:flex;align-items:center;gap:6px;touch-action:manipulation;}
+.bghost svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+
+/* Load more */
+.bmore{width:100%;padding:10px;border-radius:var(--rs);border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;margin-top:10px;touch-action:manipulation;}
+.bmore:active{background:var(--bg3);}
+
+/* FAB */
+.fab{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));right:20px;width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;touch-action:manipulation;transition:transform .15s;box-shadow:0 4px 20px rgba(0,0,0,.5);}
+.fab:active{transform:scale(.9);}
 .fab-on {background:#f59e0b;color:#0f172a;}
 .fab-off{background:#b91c1c;color:#fca5a5;}
-.fab svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.fab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 
-/* ── Active banner ── */
+/* Active banner */
 .abanner{padding:10px 14px;background:var(--red-bg);border:1px solid var(--red-bd);border-radius:var(--rs);margin-bottom:14px;}
 .abanner .al{font-size:13px;color:var(--red-t);}
 .abanner .ad{font-size:20px;font-weight:700;color:var(--red-t);margin-top:4px;}
 
-/* ── Time inputs ── */
+/* Time inputs */
 .trow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
 .trow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
 @media(max-width:480px){.trow3{grid-template-columns:1fr 1fr;}.trow3 .ff:last-child{grid-column:1/-1;}}
 .ff label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;}
 .ff input{width:100%;padding:9px 10px;min-height:42px;border:1px solid var(--border);border-radius:var(--rs);font-size:15px;background:var(--bg);color:var(--text);}
 input[type=date],input[type=time]{color-scheme:dark;}
-.divider{border:none;border-top:1px solid var(--border);margin:14px 0;}
 
-/* ── Bar chart ── */
-.barwrap{display:flex;align-items:flex-end;height:52px;gap:2px;}
+/* Forecast card */
+.forecast-card{background:linear-gradient(135deg,rgba(30,41,59,.9),rgba(15,23,42,.9));border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;}
+.forecast-main{font-size:15px;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:6px;}
+.forecast-peak{font-size:12px;color:var(--text2);}
+.forecast-safe{font-size:14px;color:var(--grn-t);}
+.forecast-nodata{font-size:14px;color:var(--text3);}
+.forecast-risk-high{color:#e24b4a;}
+.forecast-risk-med {color:#d97706;}
+.forecast-risk-low {color:var(--grn-t);}
+
+/* Bar chart */
+.barwrap{display:flex;align-items:flex-end;height:48px;gap:2px;margin-bottom:8px;}
 .bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
 .bcol .b{width:100%;border-radius:2px;}
 .bcol .bl{font-size:9px;color:var(--text3);}
 
-/* ── Predict ── */
+/* Predict */
 .prow{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--rs);margin-bottom:2px;}
 .prow.now{background:rgba(255,255,255,.05);}
 .phour{width:46px;font-size:12px;color:var(--text3);flex-shrink:0;}
@@ -116,92 +145,95 @@ input[type=date],input[type=time]{color-scheme:dark;}
 .plabel{width:72px;font-size:11px;text-align:right;flex-shrink:0;}
 @media(max-width:400px){.plabel{display:none;}}
 
-/* ── Heatmap ── */
+/* Heatmap */
 .hmwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .hm{min-width:330px;}
 .hmrow{display:flex;align-items:center;margin-bottom:3px;}
 .hmday{width:28px;font-size:11px;color:var(--text3);flex-shrink:0;}
 .hmday.today{color:var(--amber);font-weight:700;}
 .hmcells{display:flex;gap:2px;flex:1;}
-.hmcell{flex:1;height:20px;border-radius:2px;}
+.hmcell{flex:1;height:20px;border-radius:2px;cursor:default;}
 .hmcell.now{outline:2px solid var(--amber);outline-offset:1px;}
 .hmhours{display:flex;margin-left:28px;margin-bottom:4px;}
 .hmhours span{flex:1;font-size:10px;color:var(--text3);text-align:center;}
 .hmleg{display:flex;align-items:center;gap:8px;margin-top:10px;justify-content:flex-end;}
 .legbox{width:10px;height:10px;border-radius:2px;}
 
-/* ── History ── */
+/* History */
 .hlist{display:flex;flex-direction:column;gap:8px;}
 .hitem{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;display:flex;align-items:center;gap:10px;}
 .hitem-fluc{border-color:var(--ora-bd);background:rgba(67,20,7,.25);}
 .hmeta{flex:1;min-width:0;}
-.hdate{font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px;}
+.hdate{font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .htime{font-size:13px;color:var(--text2);margin-top:2px;}
 .hdur{font-weight:700;font-size:16px;color:var(--amber2);text-align:right;flex-shrink:0;}
-.hdur-fluc{font-weight:600;font-size:13px;color:var(--ora-t);text-align:right;flex-shrink:0;}
+.hdur-fluc{font-size:20px;color:var(--ora-t);text-align:right;flex-shrink:0;}
 .hactive{font-size:11px;color:#f87171;font-weight:400;}
 .tag{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;letter-spacing:.04em;}
 .tag-fluc{background:var(--ora-bg);color:var(--ora-t);border:1px solid var(--ora-bd);}
 
-/* ── Misc ── */
+/* Misc */
 .empty{text-align:center;padding:48px 24px;color:var(--text3);}
 .empty svg{width:40px;height:40px;stroke:currentColor;fill:none;stroke-width:1.2;margin:0 auto 12px;display:block;}
 .empty p{font-size:14px;}
 .infobox{margin-top:8px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:var(--rs);font-size:12px;color:var(--text2);}
+.divider{border:none;border-top:1px solid var(--border);margin:14px 0;}
 
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 </style>
 </head>
 <body>
 <div id="app"></div>
-
 <script>
-// ── SVG icons (inline, no webfont dependency) ─────────────────
-const ICONS = {
-  bolt:       `<svg viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
-  boltOff:    `<svg viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22"/><path d="M11.5 4H13L12 10h7L12 21v-7H5l6.5-10z"/></svg>`,
-  bulb:       `<svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/></svg>`,
-  dash:       `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>`,
-  register:   `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`,
-  predict:    `<svg viewBox="0 0 24 24"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M7 19h8a4 4 0 0 0 4-4V7"/></svg>`,
-  history:    `<svg viewBox="0 0 24 24"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg>`,
-  trash:      `<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>`,
-  zap:        `<svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
-  chevDown:   `<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>`,
-  chevUp:     `<svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>`,
-  plugX:      `<svg viewBox="0 0 24 24"><path d="M12 22V11M5 11l-.75-3M19 11l.75-3M8 11V5h8v6"/><line x1="3" y1="3" x2="21" y2="21"/></svg>`,
+// ── SVG icons ────────────────────────────────────────────────
+const ICONS={
+  bolt:    `<svg viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+  boltOff: `<svg viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22"/><path d="M11.5 4H13L12 10h7L12 21v-7H5z"/></svg>`,
+  bulb:    `<svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/></svg>`,
+  dash:    `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`,
+  plus:    `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`,
+  predict: `<svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+  history: `<svg viewBox="0 0 24 24"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg>`,
+  trash:   `<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>`,
+  zap:     `<svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+  chevD:   `<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>`,
+  chevU:   `<svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>`,
+  plugX:   `<svg viewBox="0 0 24 24"><path d="M12 22V11M5 11l-.75-3M19 11l.75-3M8 11V5h8v6"/><line x1="3" y1="3" x2="21" y2="21"/></svg>`,
+  sun:     `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
 };
-const ic = k => ICONS[k] || '';
+const ic=k=>ICONS[k]||'';
 
-// ── Utils ─────────────────────────────────────────────────────
-const pad = n => String(n).padStart(2,'0');
-const uuid = () => Math.random().toString(36).slice(2)+Date.now().toString(36);
-const fmtDur = m => { if(!m||m<=0)return'0m'; const h=Math.floor(m/60),mn=Math.round(m%60); return h&&mn?`${h}h ${mn}m`:h?`${h}h`:`${mn}m`; };
-const fmtDate = iso => { if(!iso)return''; return new Date(iso).toLocaleDateString('es-ES',{weekday:'short',day:'2-digit',month:'2-digit',year:'2-digit'}); };
-const fmtTime = iso => { if(!iso)return''; const d=new Date(iso); return`${pad(d.getHours())}:${pad(d.getMinutes())}`; };
-const nowDate = () => new Date().toISOString().slice(0,10);
-const nowTime = () => { const d=new Date(); return`${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+// ── Utils ────────────────────────────────────────────────────
+const pad=n=>String(n).padStart(2,'0');
+const uuid=()=>Math.random().toString(36).slice(2)+Date.now().toString(36);
+const fmtDur=m=>{if(!m||m<=0)return'0m';const h=Math.floor(m/60),mn=Math.round(m%60);return h&&mn?`${h}h ${mn}m`:h?`${h}h`:`${mn}m`;};
+const fmtDate=iso=>{if(!iso)return'';return new Date(iso).toLocaleDateString('es-ES',{weekday:'short',day:'2-digit',month:'2-digit',year:'2-digit'});};
+const fmtTime=iso=>{if(!iso)return'';const d=new Date(iso);return`${pad(d.getHours())}:${pad(d.getMinutes())}`;};
+
+// ── FIX: local date/time (NOT UTC) ───────────────────────────
+const nowDate=()=>{const d=new Date();return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;};
+const nowTime=()=>{const d=new Date();return`${pad(d.getHours())}:${pad(d.getMinutes())}`;};
+
 const DAYS_S=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const DAYS_F=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
-// ── API ───────────────────────────────────────────────────────
-const api = {
-  getOutages:  ()  => fetch('/api/outages').then(r=>r.json()),
-  addOutage:   o   => fetch('/api/outages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)}),
-  deleteOutage:id  => fetch(`/api/outages/${id}`,{method:'DELETE'}),
-  getActive:   ()  => fetch('/api/active').then(r=>r.json()),
-  setActive:   o   => fetch('/api/active',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)}),
-  clearActive: ()  => fetch('/api/active',{method:'DELETE'}),
+// ── API ──────────────────────────────────────────────────────
+const api={
+  getOutages: ()  =>fetch('/api/outages').then(r=>r.json()),
+  addOutage:  o   =>fetch('/api/outages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)}),
+  deleteOutage:id =>fetch(`/api/outages/${id}`,{method:'DELETE'}),
+  getActive:  ()  =>fetch('/api/active').then(r=>r.json()),
+  setActive:  o   =>fetch('/api/active',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)}),
+  clearActive:()  =>fetch('/api/active',{method:'DELETE'}),
 };
 
-// ── Inference ─────────────────────────────────────────────────
+// ── Inference ────────────────────────────────────────────────
 function getSlots(o){
   const s=[],cur=new Date(o.start);cur.setMinutes(0,0,0);const end=new Date(o.end);
   while(cur<end){s.push({day:cur.getDay(),hour:cur.getHours()});cur.setHours(cur.getHours()+1);}
   return s;
 }
 function buildHeatmap(outages){
-  // Only cortes (not fluctuaciones) for the inference model
   const done=outages.filter(o=>o.start&&o.end&&(o.type||'corte')==='corte');
   if(!done.length)return null;
   const dates=done.flatMap(o=>[new Date(o.start),new Date(o.end)]);
@@ -220,6 +252,44 @@ function buildHeatmap(outages){
   }
   return hm;
 }
+const dp=(p,c)=>c<0.15?0:p*c;
+const rc=p=>p<0.05?'#475569':p<0.2?'#639922':p<0.4?'#d97706':p<0.6?'#e24b4a':'#b91c1c';
+const rl=(p,c)=>c<0.15?'Sin datos':p<0.05?'Sin riesgo':p<0.2?'Bajo':p<0.4?'Moderado':p<0.6?'Alto':'Muy alto';
+
+// ── Natural language day forecast ────────────────────────────
+function getDayForecast(todayPreds){
+  const hasEnoughData=todayPreds.some(p=>p.conf>=0.15);
+  if(!hasEnoughData)return{type:'nodata'};
+
+  const THRESH=0.18;
+  const risky=todayPreds.filter(({prob,conf})=>dp(prob,conf)>=THRESH);
+  if(!risky.length)return{type:'safe'};
+
+  // Group consecutive hours into ranges
+  const ranges=[];
+  let rs=null,re=null;
+  risky.forEach(({hour})=>{
+    if(rs===null){rs=hour;re=hour;}
+    else if(hour===re+1){re=hour;}
+    else{ranges.push([rs,re]);rs=hour;re=hour;}
+  });
+  if(rs!==null)ranges.push([rs,re]);
+
+  // Peak
+  const peak=risky.reduce((mx,p)=>dp(p.prob,p.conf)>dp(mx.prob,mx.conf)?p:mx,risky[0]);
+  const peakP=Math.round(dp(peak.prob,peak.conf)*100);
+  const peakLevel=peak.prob<0.4?'moderado':'alto';
+
+  // Build readable range text
+  const rText=ranges.map(([s,e])=>
+    s===e?`las ${pad(s)}:00`:`las ${pad(s)}:00–${pad(e+1)}:00`
+  );
+  const joined=rText.length===1?rText[0]:rText.slice(0,-1).join(', ')+' y '+rText.slice(-1);
+
+  return{type:'risk',text:`Es probable que se vaya la luz entre ${joined}.`,peakH:peak.hour,peakP,peakLevel,ranges};
+}
+
+// ── Stats ────────────────────────────────────────────────────
 function calcStats(outages){
   const now=new Date();
   const sow=new Date(now);sow.setDate(now.getDate()-now.getDay());sow.setHours(0,0,0,0);
@@ -228,14 +298,12 @@ function calcStats(outages){
   const soy=new Date(now.getFullYear(),0,1);
 
   const cortes=outages.filter(o=>o.start&&o.end&&(o.type||'corte')==='corte'&&o.duration_minutes!=null);
-  const flucs=outages.filter(o=>(o.type||'corte')==='fluctuacion');
-
+  const flucs =outages.filter(o=>(o.type||'corte')==='fluctuacion');
   const sum=arr=>arr.reduce((s,o)=>s+(o.duration_minutes||0),0);
+
   const tw=cortes.filter(o=>new Date(o.start)>=sow);
   const tm=cortes.filter(o=>new Date(o.start)>=som);
   const ty=cortes.filter(o=>new Date(o.start)>=soy);
-
-  // Fluctuaciones by period
   const ftd=flucs.filter(o=>new Date(o.start)>=sod);
   const ftw=flucs.filter(o=>new Date(o.start)>=sow);
   const ftm=flucs.filter(o=>new Date(o.start)>=som);
@@ -248,23 +316,18 @@ function calcStats(outages){
   cortes.forEach(o=>getSlots(o).forEach(({hour})=>{byH[hour]=(byH[hour]||0)+1;}));
   const phE=Object.entries(byH).sort((a,b)=>b[1]-a[1])[0];
   const totalDays=cortes.length>0?Math.max(1,Math.ceil((now-new Date(Math.min(...cortes.map(o=>new Date(o.start).getTime()))))/86400000)):1;
-  return{
-    wM:sum(tw),wC:tw.length,mM:sum(tm),mC:tm.length,yM:sum(ty),yC:ty.length,
-    longest,worst,peakH:phE?+phE[0]:null,avg:sum(cortes)/totalDays,
-    ftd:ftd.length,ftw:ftw.length,ftm:ftm.length,
-  };
+  return{wM:sum(tw),wC:tw.length,mM:sum(tm),mC:tm.length,yM:sum(ty),yC:ty.length,longest,worst,peakH:phE?+phE[0]:null,avg:sum(cortes)/totalDays,ftd:ftd.length,ftw:ftw.length,ftm:ftm.length};
 }
-const dp=(p,c)=>c<0.1?0:p*c;
-const rc=p=>p<0.05?'#475569':p<0.2?'#639922':p<0.4?'#d97706':p<0.6?'#e24b4a':'#b91c1c';
-const rl=(p,c)=>c<0.1?'Sin datos':p<0.05?'Sin riesgo':p<0.2?'Bajo':p<0.4?'Moderado':p<0.6?'Alto':'Muy alto';
 
-// ── State ─────────────────────────────────────────────────────
+// ── State ────────────────────────────────────────────────────
+const PAGE_SIZE=20;
 let S={
   outages:[],active:null,tab:'dashboard',loading:true,
   startDate:nowDate(),startTime:nowTime(),
   endDate:nowDate(),endTime:nowTime(),
   showManual:false,manualDate:nowDate(),manualStart:'',manualEnd:'',
   deleteId:null,
+  histPage:1,   // pagination
 };
 
 async function init(){
@@ -274,7 +337,7 @@ async function init(){
   setInterval(()=>{if(S.active)render();},30000);
 }
 
-// ── Actions ───────────────────────────────────────────────────
+// ── Actions ──────────────────────────────────────────────────
 async function startOut(){
   const iso=new Date(`${S.startDate}T${S.startTime}`).toISOString();
   const o={id:uuid(),start:iso};
@@ -293,11 +356,9 @@ async function logFluc(){
   const iso=new Date(`${S.startDate}T${S.startTime}`).toISOString();
   const o={id:uuid(),start:iso,end:iso,duration_minutes:0,type:'fluctuacion'};
   await api.addOutage(o);
-  S.outages.unshift(o);
-  S.outages.sort((a,b)=>new Date(b.start)-new Date(a.start));
-  // Quick visual feedback
+  S.outages.unshift(o);S.outages.sort((a,b)=>new Date(b.start)-new Date(a.start));
   const btn=document.getElementById('fluc-btn');
-  if(btn){btn.textContent='✓ Registrada';btn.disabled=true;setTimeout(render,1000);}
+  if(btn){btn.innerHTML='&#10003; Registrada';btn.disabled=true;btn.style.opacity='.6';setTimeout(render,1200);}
   else render();
 }
 async function addManual(){
@@ -314,7 +375,7 @@ async function deleteOutage(id){
   await api.deleteOutage(id);S.outages=S.outages.filter(o=>o.id!==id);S.deleteId=null;render();
 }
 
-// ── Render ────────────────────────────────────────────────────
+// ── Render ───────────────────────────────────────────────────
 function render(){
   const now=new Date();
   const{outages,active,tab,showManual,deleteId}=S;
@@ -322,13 +383,14 @@ function render(){
   const hm=buildHeatmap(outages);
   const stats=calcStats(outages);
   const todayP=hm?Array.from({length:24},(_,h)=>({hour:h,...(hm[`${now.getDay()}_${h}`]||{prob:0,conf:0})})):[];
+  const forecast=hm?getDayForecast(todayP):{type:'nodata'};
 
   if(S.loading){document.getElementById('app').innerHTML='<div class="empty"><p>Cargando...</p></div>';return;}
 
   let h=`
   <div class="header">
     <div class="hleft">
-      ${ic('bolt').replace('<svg','<svg style="width:22px;height:22px;stroke:#f59e0b;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"')}
+      <svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:#f59e0b;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
       <div>
         <div class="htitle">Monitor de Cortes</div>
         <div class="hsub">${now.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}</div>
@@ -339,58 +401,73 @@ function render(){
     </div>
   </div>
   <div class="tabs">
-    ${[['dashboard',ic('dash'),'Panel'],['log',ic('register'),'Registrar'],['predict',ic('predict'),'Predicción'],['history',ic('history'),'Historial']]
+    ${[['dashboard',ic('dash'),'Panel'],['log',ic('plus'),'Registrar'],['predict',ic('predict'),'Predicción'],['history',ic('history'),'Historial']]
       .map(([id,svg,lb])=>`<button class="tab ${tab===id?'active':''}" onclick="setTab('${id}')">${svg}${lb}</button>`).join('')}
   </div>
   <div class="content">`;
 
-  // ── DASHBOARD ──────────────────────────────────────────────
+  // ─── DASHBOARD ───────────────────────────────────────────
   if(tab==='dashboard'){
+
+    // Forecast card
+    h+=`<div class="forecast-card">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.05em;margin-bottom:8px">PRONÓSTICO HOY &mdash; ${DAYS_F[now.getDay()].toUpperCase()}</div>`;
+    if(forecast.type==='nodata'){
+      h+=`<div class="forecast-nodata">Registra algunos cortes para ver predicciones.</div>`;
+    }else if(forecast.type==='safe'){
+      h+=`<div class="forecast-safe">&#10003; Hoy no hay periodos de riesgo significativo registrados.</div>`;
+    }else{
+      const lvlColor=forecast.peakLevel==='alto'?'var(--red-t)':'#fdba74';
+      h+=`<div class="forecast-main">${forecast.text}</div>
+          <div class="forecast-peak" style="color:${lvlColor}">Pico de riesgo: ${pad(forecast.peakH)}:00 (${forecast.peakP}% &mdash; riesgo ${forecast.peakLevel})</div>`;
+    }
+    h+=`</div>`;
+
+    // Cortes stats
     h+=`<div class="sgrid">
       ${[
-        [ic('history'),'Esta semana',fmtDur(stats.wM),`${stats.wC} corte${stats.wC!==1?'s':''}`,false],
-        [ic('history'),'Este mes',fmtDur(stats.mM),`${stats.mC} corte${stats.mC!==1?'s':''}`,false],
-        [ic('history'),'Este año',fmtDur(stats.yM),`${stats.yC} corte${stats.yC!==1?'s':''}`,false],
-        [ic('predict'),'Prom. diario',fmtDur(stats.avg),'histórico',false],
+        [ic('history'),'Esta semana',fmtDur(stats.wM),`${stats.wC} corte${stats.wC!==1?'s':''}`],
+        [ic('history'),'Este mes',fmtDur(stats.mM),`${stats.mC} corte${stats.mC!==1?'s':''}`],
+        [ic('history'),'Este año',fmtDur(stats.yM),`${stats.yC} corte${stats.yC!==1?'s':''}`],
+        [ic('predict'),'Prom. diario',fmtDur(stats.avg),'histórico'],
       ].map(([svg,lb,val,sub])=>`<div class="scard">${svg}<div class="sval">${val}</div><div class="slb">${lb}</div><div class="ssub">${sub}</div></div>`).join('')}
     </div>`;
 
     // Fluctuaciones stats
-    h+=`<div class="card" style="margin-bottom:12px;border-color:var(--ora-bd)">
+    h+=`<div class="card card-ora" style="margin-bottom:12px">
       <div class="slabel" style="color:var(--ora-t)">FLUCTUACIONES / MICROCORTES</div>
-      <div class="sgrid2">
+      <div class="sgrid3">
         ${[['Hoy',stats.ftd],['Esta semana',stats.ftw],['Este mes',stats.ftm]].map(([lb,n])=>`
-          <div class="scard">
-            <div class="sval-ora">${n}</div>
-            <div class="slb">${lb}</div>
-          </div>`).join('')}
+          <div class="scard"><div class="sval-ora">${n}</div><div class="slb">${lb}</div></div>`).join('')}
       </div>
-      ${stats.ftd>0?`<div style="font-size:12px;color:var(--text3)">Hoy: ${stats.ftd} fluctuación${stats.ftd!==1?'es':''} registrada${stats.ftd!==1?'s':''}</div>`:''}
     </div>`;
 
+    // Records
     if(stats.longest||stats.worst||stats.peakH!==null){
       h+=`<div class="rgrid">`;
       if(stats.longest)h+=`<div class="rcard"><div class="slabel">CORTE MÁS LARGO</div><div class="rval">${fmtDur(stats.longest.duration_minutes)}</div><div class="rsub">${fmtDate(stats.longest.start)} &middot; ${fmtTime(stats.longest.start)}&ndash;${fmtTime(stats.longest.end)}</div></div>`;
       if(stats.worst)h+=`<div class="rcard"><div class="slabel">DÍA MÁS AFECTADO</div><div class="rval" style="font-size:18px">${stats.worst.date.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'short'})}</div><div class="rsub" style="color:var(--amber2)">${fmtDur(stats.worst.mins)} &middot; ${stats.worst.count} corte${stats.worst.count!==1?'s':''}</div></div>`;
-      if(stats.peakH!==null)h+=`<div class="rcard"><div class="slabel">HORA PICO HISTÓRICA</div><div class="rval">${pad(stats.peakH)}:00</div><div class="rsub">hora con más cortes registrados</div></div>`;
+      if(stats.peakH!==null)h+=`<div class="rcard"><div class="slabel">HORA PICO HISTÓRICA</div><div class="rval">${pad(stats.peakH)}:00</div><div class="rsub">hora con más cortes</div></div>`;
       h+=`</div>`;
     }
 
+    // Bar chart
     if(hm){
       const cur=hm[`${now.getDay()}_${now.getHours()}`]||{prob:0,conf:0};const p0=dp(cur.prob,cur.conf);
-      h+=`<div class="card">
-        <div class="slabel">Probabilidad de corte hoy &mdash; ${DAYS_F[now.getDay()]}</div>
-        <div class="barwrap">${todayP.map(({hour,prob,conf})=>{const p=dp(prob,conf),isN=hour===now.getHours();return`<div class="bcol"><div class="b" style="height:${Math.max(3,p*48)}px;background:${isN?'#f59e0b':`rgba(239,68,68,${p*0.85+0.05})`};${isN?'outline:2px solid #f59e0b;outline-offset:1px':''}"></div>${hour%6===0?`<span class="bl">${pad(hour)}</span>`:''}</div>`;}).join('')}</div>
-        <div style="margin-top:10px;font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:6px">
-          <span>Ahora (${pad(now.getHours())}:00):</span>
-          <span style="font-weight:600;color:${rc(p0)}">${rl(p0,cur.conf)}${cur.conf>=0.1?' &middot; '+Math.round(p0*100)+'%':''}</span>
-        </div>
+      h+=`<div class="card card-last">
+        <div class="slabel">Detalle por hora &mdash; hoy</div>
+        <div class="barwrap">${todayP.map(({hour,prob,conf})=>{const p=dp(prob,conf),isN=hour===now.getHours();return`<div class="bcol"><div class="b" style="height:${Math.max(3,p*44)}px;background:${isN?'#f59e0b':`rgba(239,68,68,${p*0.85+0.05})`};${isN?'outline:2px solid #f59e0b;outline-offset:1px':''}"></div>${hour%6===0?`<span class="bl">${pad(hour)}</span>`:''}</div>`;}).join('')}</div>
+        <div style="margin-top:8px;font-size:12px;color:#94a3b8">Ahora (${pad(now.getHours())}:00): <span style="font-weight:600;color:${rc(p0)}">${rl(p0,cur.conf)}${cur.conf>=0.15?' &middot; '+Math.round(p0*100)+'%':''}</span></div>
       </div>`;
     }
+
     if(!outages.length)h+=`<div class="empty">${ic('plugX')}<p>Sin registros. Toca <strong>+</strong> para comenzar.</p></div>`;
+
+    // FAB
+    h+=`<button class="fab ${active?'fab-off':'fab-on'}" onclick="setTab('log')" title="Registrar">${active?ic('bulb'):ic('plus')}</button>`;
   }
 
-  // ── REGISTRAR ─────────────────────────────────────────────
+  // ─── REGISTRAR ───────────────────────────────────────────
   if(tab==='log'){
     if(!active){
       h+=`<div class="card card-red">
@@ -399,21 +476,12 @@ function render(){
           <div class="ff"><label>Fecha</label><input type="date" value="${S.startDate}" onchange="setS('startDate',this.value)"></div>
           <div class="ff"><label>Hora</label><input type="time" value="${S.startTime}" onchange="setS('startTime',this.value)"></div>
         </div>
-        <button class="bmain bdanger" onclick="startOut()" style="margin-bottom:8px">${ic('boltOff')}Se fue la luz</button>
-      </div>
-      <div class="card" style="border-color:var(--ora-bd);margin-bottom:12px">
-        <div class="slabel" style="color:var(--ora-t)">REGISTRAR FLUCTUACIÓN</div>
-        <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Bajón, pico de tensión o microcorte que disparó el protector (&lt;1 min).</p>
-        <div class="trow">
-          <div class="ff"><label>Fecha</label><input type="date" value="${S.startDate}" onchange="setS('startDate',this.value)"></div>
-          <div class="ff"><label>Hora</label><input type="time" value="${S.startTime}" onchange="setS('startTime',this.value)"></div>
-        </div>
-        <button id="fluc-btn" class="bmain borange" onclick="logFluc()">${ic('zap')}Registrar fluctuación</button>
+        <button class="bmain bdanger" onclick="startOut()">${ic('boltOff')}Se fue la luz</button>
       </div>`;
-    } else {
+    }else{
       h+=`<div class="card card-red">
         <div class="abanner">
-          <div class="al">${ic('boltOff').replace('<svg','<svg style="width:14px;height:14px;display:inline;vertical-align:middle;stroke:currentColor;fill:none;stroke-width:1.5"')} Corte activo desde las ${fmtTime(active.start)}</div>
+          <div class="al">Corte activo desde las ${fmtTime(active.start)}</div>
           <div class="ad">${fmtDur(activeMins)} sin luz</div>
         </div>
         <div class="slabel">REGISTRAR REGRESO DE LUZ</div>
@@ -421,28 +489,29 @@ function render(){
           <div class="ff"><label>Fecha</label><input type="date" value="${S.endDate}" onchange="setS('endDate',this.value)"></div>
           <div class="ff"><label>Hora</label><input type="time" value="${S.endTime}" onchange="setS('endTime',this.value)"></div>
         </div>
-        <button class="bmain bsuccess" style="margin-bottom:8px" onclick="endOut()">${ic('bulb')}Volvió la luz</button>
-      </div>
-      <div class="card" style="border-color:var(--ora-bd);margin-bottom:12px">
-        <div class="slabel" style="color:var(--ora-t)">REGISTRAR FLUCTUACIÓN (durante el corte)</div>
-        <div class="trow">
-          <div class="ff"><label>Fecha</label><input type="date" value="${S.startDate}" onchange="setS('startDate',this.value)"></div>
-          <div class="ff"><label>Hora</label><input type="time" value="${S.startTime}" onchange="setS('startTime',this.value)"></div>
-        </div>
-        <button id="fluc-btn" class="bmain borange" onclick="logFluc()">${ic('zap')}Registrar fluctuación</button>
+        <button class="bmain bsuccess" onclick="endOut()">${ic('bulb')}Volvió la luz</button>
       </div>`;
     }
-    h+=`<div class="card card-last">
-      <button class="bghost" onclick="toggle('showManual')">
-        ${showManual?ic('chevUp'):ic('chevDown')}Registrar corte pasado completo
-      </button>`;
+
+    h+=`<div class="card card-ora">
+      <div class="slabel" style="color:var(--ora-t)">REGISTRAR FLUCTUACIÓN</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Bajón, pico de tensión o microcorte que disparó el protector (&lt;1 min).</p>
+      <div class="trow">
+        <div class="ff"><label>Fecha</label><input type="date" value="${S.startDate}" onchange="setS('startDate',this.value)"></div>
+        <div class="ff"><label>Hora</label><input type="time" value="${S.startTime}" onchange="setS('startTime',this.value)"></div>
+      </div>
+      <button id="fluc-btn" class="bmain borange" onclick="logFluc()">${ic('zap')}Registrar fluctuación</button>
+    </div>
+
+    <div class="card card-last">
+      <button class="bghost" onclick="toggle('showManual')">${S.showManual?ic('chevU'):ic('chevD')}Registrar corte pasado completo</button>`;
     if(showManual){
       const dur=S.manualStart&&S.manualEnd&&S.manualDate?(new Date(`${S.manualDate}T${S.manualEnd}`)-new Date(`${S.manualDate}T${S.manualStart}`))/60000:0;
       h+=`<div style="margin-top:14px">
         <div class="trow3">
           <div class="ff"><label>Fecha</label><input type="date" value="${S.manualDate}" onchange="setS('manualDate',this.value)"></div>
-          <div class="ff"><label>Hora inicio</label><input type="time" value="${S.manualStart}" onchange="setS('manualStart',this.value)"></div>
-          <div class="ff"><label>Hora fin</label><input type="time" value="${S.manualEnd}" onchange="setS('manualEnd',this.value)"></div>
+          <div class="ff"><label>Inicio</label><input type="time" value="${S.manualStart}" onchange="setS('manualStart',this.value)"></div>
+          <div class="ff"><label>Fin</label><input type="time" value="${S.manualEnd}" onchange="setS('manualEnd',this.value)"></div>
         </div>
         ${dur>0?`<div style="font-size:12px;color:#94a3b8;margin-bottom:10px">Duración: ${fmtDur(dur)}</div>`:''}
         <button class="bsm" onclick="addManual()">Guardar</button>
@@ -451,17 +520,18 @@ function render(){
     h+=`</div>`;
   }
 
-  // ── PREDICCIONES ──────────────────────────────────────────
+  // ─── PREDICCIONES ────────────────────────────────────────
   if(tab==='predict'){
     if(!hm){h+=`<div class="empty">${ic('predict')}<p>Necesitas al menos 1 corte registrado para ver predicciones.</p></div>`;}
     else{
-      h+=`<div class="card"><div class="slabel">Hoy &mdash; ${DAYS_F[now.getDay()]} &mdash; riesgo por hora</div>`;
+      h+=`<div class="card">
+        <div class="slabel">Hoy &mdash; ${DAYS_F[now.getDay()]} &mdash; riesgo por hora</div>`;
       todayP.filter(p=>p.hour>=5&&p.hour<=23).forEach(({hour,prob,conf})=>{
         const p=dp(prob,conf),isN=hour===now.getHours();
         h+=`<div class="prow ${isN?'now':''}">
           <div class="phour ${isN?'now':''}">${pad(hour)}:00${isN?' ◀':''}</div>
           <div class="ptrack"><div class="pfill" style="width:${Math.round(p*100)}%;background:${rc(p)}"></div></div>
-          <div class="ppct">${prob>0&&conf>=0.1?Math.round(p*100)+'%':'—'}</div>
+          <div class="ppct">${prob>0&&conf>=0.15?Math.round(p*100)+'%':'—'}</div>
           <div class="plabel" style="color:${rc(p)}">${rl(p,conf)}</div>
         </div>`;
       });
@@ -470,25 +540,31 @@ function render(){
           <div class="hmhours">${[0,4,8,12,16,20].map(x=>`<span>${pad(x)}</span>`).join('')}</div>
           ${DAYS_S.map((day,di)=>`<div class="hmrow"><div class="hmday ${di===now.getDay()?'today':''}">${day}</div><div class="hmcells">${Array.from({length:24},(_,h2)=>{const d=hm[`${di}_${h2}`]||{prob:0,conf:0},p=dp(d.prob,d.conf),isN=di===now.getDay()&&h2===now.getHours();return`<div class="hmcell ${isN?'now':''}" title="${day} ${pad(h2)}:00 — ${Math.round(p*100)}%" style="background:${p<0.03?'rgba(255,255,255,.05)':`rgba(239,68,68,${Math.min(p*2,0.9)})`}"></div>`;}).join('')}</div></div>`).join('')}
           <div class="hmleg"><span style="font-size:10px;color:#475569">Riesgo:</span>${[['Bajo','0.2'],['Medio','0.5'],['Alto','0.85']].map(([l,o])=>`<div style="display:flex;align-items:center;gap:3px"><div class="legbox" style="background:rgba(239,68,68,${o})"></div><span style="font-size:10px;color:#475569">${l}</span></div>`).join('')}</div>
-          <div class="infobox">Solo cortes (no fluctuaciones) alimentan el modelo de predicción. Las celdas oscuras = menos de 8 observaciones.</div>
+          <div class="infobox">Solo cortes alimentan el modelo. Las fluctuaciones no se incluyen para no distorsionar las predicciones.</div>
         </div></div>
       </div>`;
     }
   }
 
-  // ── HISTORIAL ─────────────────────────────────────────────
+  // ─── HISTORIAL (paginado) ─────────────────────────────────
   if(tab==='history'){
     const cortes=outages.filter(o=>o.end&&(o.type||'corte')==='corte');
-    const flucs=outages.filter(o=>(o.type||'corte')==='fluctuacion');
+    const flucs =outages.filter(o=>(o.type||'corte')==='fluctuacion');
     const totalMins=cortes.reduce((s,o)=>s+(o.duration_minutes||0),0);
+
     h+=`<div style="font-size:13px;color:#94a3b8;margin-bottom:12px">
-      ${cortes.length} corte${cortes.length!==1?'s':''} &middot; ${fmtDur(totalMins)} total sin luz
-      &nbsp;&nbsp;·&nbsp;&nbsp; ${flucs.length} fluctuación${flucs.length!==1?'es':''}
+      ${cortes.length} corte${cortes.length!==1?'s':''} &middot; ${fmtDur(totalMins)} sin luz
+      &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+      ${flucs.length} fluctuación${flucs.length!==1?'es':''}
     </div>`;
+
     if(!outages.length){h+=`<div class="empty">${ic('history')}<p>Sin registros aún.</p></div>`;}
     else{
+      const visible=outages.slice(0,S.histPage*PAGE_SIZE);
+      const hasMore=outages.length>visible.length;
+
       h+=`<div class="hlist">`;
-      outages.forEach(o=>{
+      visible.forEach(o=>{
         const isFluc=(o.type||'corte')==='fluctuacion';
         const am=active&&o.id===active.id?(now-new Date(o.start))/60000:0;
         h+=`<div class="hitem ${isFluc?'hitem-fluc':''}">
@@ -497,7 +573,7 @@ function render(){
             <div class="htime">${fmtTime(o.start)}${!isFluc?` &ndash; ${o.end?fmtTime(o.end):'en curso'}`:''}</div>
           </div>
           ${isFluc
-            ?`<div class="hdur-fluc">⚡</div>`
+            ?`<div class="hdur-fluc">&#9889;</div>`
             :`<div class="hdur">${o.end?fmtDur(o.duration_minutes):fmtDur(am)}${!o.end?'<div class="hactive">en curso</div>':''}</div>`}
           ${deleteId===o.id
             ?`<div style="display:flex;gap:4px"><button class="byes" onclick="deleteOutage('${o.id}')">Sí</button><button class="bno" onclick="cancelDel()">No</button></div>`
@@ -505,27 +581,25 @@ function render(){
         </div>`;
       });
       h+=`</div>`;
+
+      if(hasMore){
+        const remaining=outages.length-visible.length;
+        h+=`<button class="bmore" onclick="loadMore()">Cargar ${Math.min(remaining,PAGE_SIZE)} más de ${remaining} restantes</button>`;
+      }
     }
   }
 
   h+=`</div>`;
-
-  // FAB — only show on dashboard
-  if(tab==='dashboard'){
-    const fabClass=active?'fab fab-off':'fab fab-on';
-    const fabIcon=active?ic('bulb'):ic('register');
-    h+=`<button class="${fabClass}" onclick="setTab('log')" title="Registrar">${fabIcon}</button>`;
-  }
-
   document.getElementById('app').innerHTML=h;
 }
 
-// ── Helpers ───────────────────────────────────────────────────
-function setTab(t) { S.tab=t; S.deleteId=null; S.startDate=nowDate(); S.startTime=nowTime(); render(); }
-function toggle(k) { S[k]=!S[k]; render(); }
-function setS(k,v) { S[k]=v; render(); }
-function askDel(id){ S.deleteId=id; render(); }
-function cancelDel(){ S.deleteId=null; render(); }
+// ── Helpers ──────────────────────────────────────────────────
+function setTab(t){S.tab=t;S.deleteId=null;S.histPage=1;S.startDate=nowDate();S.startTime=nowTime();render();}
+function toggle(k){S[k]=!S[k];render();}
+function setS(k,v){S[k]=v;render();}
+function askDel(id){S.deleteId=id;render();}
+function cancelDel(){S.deleteId=null;render();}
+function loadMore(){S.histPage++;render();}
 
 init();
 </script>
