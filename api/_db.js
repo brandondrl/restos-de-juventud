@@ -11,9 +11,14 @@ async function initDb(sql) {
       start_time TEXT NOT NULL,
       end_time TEXT,
       duration_minutes REAL,
+      type TEXT DEFAULT 'corte',
       notes TEXT,
       created_at TEXT DEFAULT NOW()::text
     )
+  `;
+  // Migration: add type column for existing deployments
+  await sql`
+    ALTER TABLE outages ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'corte'
   `;
   await sql`
     CREATE TABLE IF NOT EXISTS active_outage (
