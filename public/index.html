@@ -20,146 +20,157 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;}
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-
-/* All SVGs default — prevents expansion */
 svg{overflow:hidden;flex-shrink:0;}
 
-/* Header */
-.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:13px 16px;padding-top:calc(13px + env(safe-area-inset-top,0px));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
+/* ── Auth screen ── */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.auth-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:28px 24px;width:100%;max-width:380px;}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;justify-content:center;}
+.auth-title{font-size:20px;font-weight:700;}
+.auth-subtitle{font-size:13px;color:var(--text2);margin-top:2px;text-align:center;}
+.auth-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px;}
+.auth-tab{flex:1;padding:10px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-size:14px;font-weight:500;border-bottom:2px solid transparent;}
+.auth-tab.active{color:var(--amber);border-bottom-color:var(--amber);}
+.auth-err{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red-t);padding:8px 12px;border-radius:var(--rs);font-size:13px;margin-bottom:12px;}
+.auth-note{font-size:11px;color:var(--text3);margin-top:16px;line-height:1.5;text-align:center;}
+
+/* ── Header ── */
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top,0px));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
 .hleft{display:flex;align-items:center;gap:10px;}
-.htitle{font-size:15px;font-weight:600;line-height:1.2;}
+.htitle{font-size:15px;font-weight:600;}
 .hsub{font-size:11px;color:var(--text2);margin-top:1px;}
-.badge{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;}
+.hright{display:flex;align-items:center;gap:8px;}
+.badge{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;}
 .badge .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .bon{background:var(--grn-bg);border:1px solid var(--grn-bd);color:var(--grn-t);}
 .boff{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red-t);}
 .bon .dot{background:#22c55e;}
 .boff .dot{background:#ef4444;animation:pulse 1.5s infinite;}
+.profile-btn{background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:5px 10px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;touch-action:manipulation;}
+.profile-btn:active{opacity:.7;}
 
-/* Tabs */
+/* ── Tabs ── */
 .tabs{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;}
-.tab{flex:1;min-height:50px;padding:6px 4px;border:none;background:transparent;color:var(--text2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-bottom:2px solid transparent;font-size:11px;font-weight:500;touch-action:manipulation;}
-.tab svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+.tab{flex:1;min-height:50px;padding:6px 2px;border:none;background:transparent;color:var(--text2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-bottom:2px solid transparent;font-size:10px;font-weight:500;touch-action:manipulation;}
+.tab svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
 .tab.active{color:var(--amber);border-bottom-color:var(--amber);}
 
-/* Content */
+/* ── Content ── */
 .content{padding:16px;max-width:720px;margin:0 auto;padding-bottom:calc(90px + env(safe-area-inset-bottom,0px));}
 
-/* Cards */
+/* ── Cards ── */
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;}
 .card-red{border-color:var(--red-bd);}
 .card-ora{border-color:var(--ora-bd);}
+.card-grn{border-color:var(--grn-bd);}
 .card-last{margin-bottom:0;}
-.slabel{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.05em;margin-bottom:10px;}
+.slabel{font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:10px;}
 
-/* Stat grids */
+/* ── Stat grids ── */
 .sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px;}
 @media(min-width:520px){.sgrid{grid-template-columns:repeat(4,1fr);}}
 .sgrid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .scard{background:var(--bg2);border-radius:var(--rs);padding:11px 13px;}
-.scard svg{width:15px;height:15px;stroke:var(--text2);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
-.sval{font-size:21px;font-weight:700;color:var(--amber2);margin:5px 0 2px;}
-.sval-ora{font-size:21px;font-weight:700;color:var(--ora-t);margin:5px 0 2px;}
+.sval{font-size:20px;font-weight:700;color:var(--amber2);margin:4px 0 2px;}
+.sval-ora{font-size:20px;font-weight:700;color:var(--ora-t);margin:4px 0 2px;}
+.sval-grn{font-size:20px;font-weight:700;color:var(--grn-t);margin:4px 0 2px;}
 .slb{font-size:12px;color:var(--text2);}
 .ssub{font-size:11px;color:var(--text3);margin-top:2px;}
-
-/* Record cards */
-.rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px;}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px;}
 .rcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;}
-.rval{font-size:21px;font-weight:700;margin-top:6px;}
-.rsub{font-size:12px;color:var(--text3);margin-top:4px;}
+.rval{font-size:20px;font-weight:700;margin-top:5px;}
+.rsub{font-size:12px;color:var(--text3);margin-top:3px;}
 
-/* ── Buttons — SVG size locked ── */
-.bmain{
-  width:100%;min-height:50px;padding:12px 16px;border-radius:var(--rs);
-  font-size:15px;font-weight:600;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  border:1px solid;touch-action:manipulation;transition:opacity .1s;
-}
+/* ── Buttons ── */
+.bmain{width:100%;min-height:50px;padding:12px 16px;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid;touch-action:manipulation;transition:opacity .1s;}
 .bmain:active{opacity:.7;}
-/* Critical: lock SVG size inside main buttons */
 .bmain svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
 .bdanger {background:var(--red-bg);border-color:var(--red-bd);color:var(--red-t);}
 .bsuccess{background:var(--grn-bg);border-color:var(--grn-bd);color:var(--grn-t);}
 .borange {background:var(--ora-bg);border-color:var(--ora-bd);color:var(--ora-t);}
-
 .bsm{padding:9px 18px;min-height:42px;border-radius:var(--rs);border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;touch-action:manipulation;}
-
-.bicon{background:transparent;border:1px solid var(--border);border-radius:var(--rs);color:var(--text3);cursor:pointer;padding:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;touch-action:manipulation;flex-shrink:0;}
+.bsm:active{opacity:.7;}
+.blink{background:transparent;border:none;color:var(--amber);cursor:pointer;font-size:13px;font-weight:500;padding:0;touch-action:manipulation;}
+.bicon{background:transparent;border:1px solid var(--border);border-radius:var(--rs);color:var(--text3);cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;touch-action:manipulation;flex-shrink:0;}
 .bicon svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
-
 .byes{padding:6px 14px;min-height:36px;border-radius:var(--rs);border:1px solid var(--red-bd);background:var(--red-bg);color:var(--red-t);cursor:pointer;font-size:13px;}
 .bno {padding:6px 14px;min-height:36px;border-radius:var(--rs);border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:13px;}
-
 .bghost{background:transparent;border:none;color:var(--text2);cursor:pointer;font-size:14px;font-weight:500;padding:0;display:flex;align-items:center;gap:6px;touch-action:manipulation;}
 .bghost svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
-
-/* Load more */
 .bmore{width:100%;padding:10px;border-radius:var(--rs);border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;margin-top:10px;touch-action:manipulation;}
-.bmore:active{background:var(--bg3);}
 
-/* FAB */
-.fab{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));right:20px;width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;touch-action:manipulation;transition:transform .15s;box-shadow:0 4px 20px rgba(0,0,0,.5);}
+/* ── FAB ── */
+.fab{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));right:20px;width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;touch-action:manipulation;transition:transform .15s;box-shadow:0 4px 20px rgba(0,0,0,.5);}
 .fab:active{transform:scale(.9);}
-.fab-on {background:#f59e0b;color:#0f172a;}
+.fab-on{background:#f59e0b;color:#0f172a;}
 .fab-off{background:#b91c1c;color:#fca5a5;}
-.fab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.fab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 
-/* Active banner */
-.abanner{padding:10px 14px;background:var(--red-bg);border:1px solid var(--red-bd);border-radius:var(--rs);margin-bottom:14px;}
-.abanner .al{font-size:13px;color:var(--red-t);}
-.abanner .ad{font-size:20px;font-weight:700;color:var(--red-t);margin-top:4px;}
+/* ── Profile overlay ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:30;display:flex;align-items:flex-end;justify-content:center;}
+@media(min-width:600px){.overlay{align-items:center;}}
+.overlay-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:20px;}
+@media(min-width:600px){.overlay-card{border-radius:var(--r);}}
+.overlay-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.overlay-title{font-size:16px;font-weight:600;}
 
-/* Time inputs */
+/* ── Forms ── */
+.field{margin-bottom:12px;}
+.field label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;}
+.field input,.field select{width:100%;padding:9px 12px;min-height:42px;border:1px solid var(--border);border-radius:var(--rs);font-size:14px;background:var(--bg);color:var(--text);}
+.field input:focus{outline:none;border-color:var(--amber);}
+input[type=date],input[type=time]{color-scheme:dark;}
 .trow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
 .trow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
-@media(max-width:480px){.trow3{grid-template-columns:1fr 1fr;}.trow3 .ff:last-child{grid-column:1/-1;}}
-.ff label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;}
-.ff input{width:100%;padding:9px 10px;min-height:42px;border:1px solid var(--border);border-radius:var(--rs);font-size:15px;background:var(--bg);color:var(--text);}
-input[type=date],input[type=time]{color-scheme:dark;}
+@media(max-width:480px){.trow3{grid-template-columns:1fr 1fr;}.trow3 .field:last-child{grid-column:1/-1;}}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-label{font-size:14px;}
+.toggle-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+.toggle{width:42px;height:24px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--amber);}
+.toggle.off{background:var(--bg3);}
+.toggle::after{content:'';position:absolute;top:3px;width:18px;height:18px;border-radius:50%;background:white;transition:left .2s;}
+.toggle.on::after{left:21px;}
+.toggle.off::after{left:3px;}
 
-/* Forecast card */
-.forecast-card{background:linear-gradient(135deg,rgba(30,41,59,.9),rgba(15,23,42,.9));border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;}
-.forecast-main{font-size:15px;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:6px;}
-.forecast-peak{font-size:12px;color:var(--text2);}
-.forecast-safe{font-size:14px;color:var(--grn-t);}
-.forecast-nodata{font-size:14px;color:var(--text3);}
-.forecast-risk-high{color:#e24b4a;}
-.forecast-risk-med {color:#d97706;}
-.forecast-risk-low {color:var(--grn-t);}
+/* ── Active banner ── */
+.abanner{padding:10px 14px;background:var(--red-bg);border:1px solid var(--red-bd);border-radius:var(--rs);margin-bottom:14px;}
+.abanner .al{font-size:13px;color:var(--red-t);}
+.abanner .ad{font-size:20px;font-weight:700;color:var(--red-t);margin-top:3px;}
 
-/* Bar chart */
+/* ── Bar chart ── */
 .barwrap{display:flex;align-items:flex-end;height:48px;gap:2px;margin-bottom:8px;}
 .bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
 .bcol .b{width:100%;border-radius:2px;}
 .bcol .bl{font-size:9px;color:var(--text3);}
 
-/* Predict */
-.prow{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--rs);margin-bottom:2px;}
+/* ── Predict ── */
+.prow{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:var(--rs);margin-bottom:2px;}
 .prow.now{background:rgba(255,255,255,.05);}
 .phour{width:46px;font-size:12px;color:var(--text3);flex-shrink:0;}
 .phour.now{color:var(--amber);font-weight:600;}
 .ptrack{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
 .pfill{height:100%;border-radius:3px;}
-.ppct{width:34px;font-size:12px;color:var(--text2);text-align:right;flex-shrink:0;}
-.plabel{width:72px;font-size:11px;text-align:right;flex-shrink:0;}
+.ppct{width:32px;font-size:12px;color:var(--text2);text-align:right;flex-shrink:0;}
+.plabel{width:68px;font-size:11px;text-align:right;flex-shrink:0;}
 @media(max-width:400px){.plabel{display:none;}}
 
-/* Heatmap */
+/* ── Heatmap ── */
 .hmwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-.hm{min-width:330px;}
+.hm{min-width:320px;}
 .hmrow{display:flex;align-items:center;margin-bottom:3px;}
-.hmday{width:28px;font-size:11px;color:var(--text3);flex-shrink:0;}
+.hmday{width:26px;font-size:10px;color:var(--text3);flex-shrink:0;}
 .hmday.today{color:var(--amber);font-weight:700;}
 .hmcells{display:flex;gap:2px;flex:1;}
-.hmcell{flex:1;height:20px;border-radius:2px;cursor:default;}
+.hmcell{flex:1;height:18px;border-radius:2px;}
 .hmcell.now{outline:2px solid var(--amber);outline-offset:1px;}
-.hmhours{display:flex;margin-left:28px;margin-bottom:4px;}
+.hmhours{display:flex;margin-left:26px;margin-bottom:4px;}
 .hmhours span{flex:1;font-size:10px;color:var(--text3);text-align:center;}
-.hmleg{display:flex;align-items:center;gap:8px;margin-top:10px;justify-content:flex-end;}
+.hmleg{display:flex;align-items:center;gap:8px;margin-top:8px;justify-content:flex-end;}
 .legbox{width:10px;height:10px;border-radius:2px;}
 
-/* History */
+/* ── History ── */
 .hlist{display:flex;flex-direction:column;gap:8px;}
 .hitem{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;display:flex;align-items:center;gap:10px;}
 .hitem-fluc{border-color:var(--ora-bd);background:rgba(67,20,7,.25);}
@@ -167,17 +178,32 @@ input[type=date],input[type=time]{color-scheme:dark;}
 .hdate{font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .htime{font-size:13px;color:var(--text2);margin-top:2px;}
 .hdur{font-weight:700;font-size:16px;color:var(--amber2);text-align:right;flex-shrink:0;}
-.hdur-fluc{font-size:20px;color:var(--ora-t);text-align:right;flex-shrink:0;}
+.hdur-fluc{font-size:18px;color:var(--ora-t);text-align:right;flex-shrink:0;}
 .hactive{font-size:11px;color:#f87171;font-weight:400;}
-.tag{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;letter-spacing:.04em;}
+.tag{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.04em;}
 .tag-fluc{background:var(--ora-bg);color:var(--ora-t);border:1px solid var(--ora-bd);}
 
-/* Misc */
-.empty{text-align:center;padding:48px 24px;color:var(--text3);}
-.empty svg{width:40px;height:40px;stroke:currentColor;fill:none;stroke-width:1.2;margin:0 auto 12px;display:block;}
+/* ── Community ── */
+.comm-user{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.comm-user:last-child{border-bottom:none;}
+.comm-dot{width:8px;height:8px;border-radius:50%;background:#ef4444;animation:pulse 1.5s infinite;flex-shrink:0;}
+.comm-city-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.comm-city-row:last-child{border-bottom:none;}
+.comm-bar-track{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.comm-bar-fill{height:100%;border-radius:3px;background:var(--red-bd);}
+
+/* ── Forecast ── */
+.forecast-card{background:linear-gradient(135deg,rgba(30,41,59,.95),rgba(15,23,42,.95));border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;}
+
+/* ── Misc ── */
+.empty{text-align:center;padding:40px 24px;color:var(--text3);}
+.empty svg{width:36px;height:36px;stroke:currentColor;fill:none;stroke-width:1.2;margin:0 auto 10px;display:block;}
 .empty p{font-size:14px;}
 .infobox{margin-top:8px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:var(--rs);font-size:12px;color:var(--text2);}
 .divider{border:none;border-top:1px solid var(--border);margin:14px 0;}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+.chip-red{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red-t);}
+.chip-grn{background:var(--grn-bg);border:1px solid var(--grn-bd);color:var(--grn-t);}
 
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 </style>
@@ -185,8 +211,8 @@ input[type=date],input[type=time]{color-scheme:dark;}
 <body>
 <div id="app"></div>
 <script>
-// ── SVG icons ────────────────────────────────────────────────
-const ICONS={
+// ── Icons ────────────────────────────────────────────────────
+const I={
   bolt:    `<svg viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
   boltOff: `<svg viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22"/><path d="M11.5 4H13L12 10h7L12 21v-7H5z"/></svg>`,
   bulb:    `<svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/></svg>`,
@@ -194,45 +220,40 @@ const ICONS={
   plus:    `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`,
   predict: `<svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
   history: `<svg viewBox="0 0 24 24"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg>`,
+  users:   `<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
   trash:   `<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>`,
   zap:     `<svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
   chevD:   `<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>`,
   chevU:   `<svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>`,
+  x:       `<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+  download:`<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  lock:    `<svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+  globe:   `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
   plugX:   `<svg viewBox="0 0 24 24"><path d="M12 22V11M5 11l-.75-3M19 11l.75-3M8 11V5h8v6"/><line x1="3" y1="3" x2="21" y2="21"/></svg>`,
-  sun:     `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
+  logout:  `<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
 };
-const ic=k=>ICONS[k]||'';
 
 // ── Utils ────────────────────────────────────────────────────
-const pad=n=>String(n).padStart(2,'0');
-const uuid=()=>Math.random().toString(36).slice(2)+Date.now().toString(36);
-const fmtDur=m=>{if(!m||m<=0)return'0m';const h=Math.floor(m/60),mn=Math.round(m%60);return h&&mn?`${h}h ${mn}m`:h?`${h}h`:`${mn}m`;};
-const fmtDate=iso=>{if(!iso)return'';return new Date(iso).toLocaleDateString('es-ES',{weekday:'short',day:'2-digit',month:'2-digit',year:'2-digit'});};
-const fmtTime=iso=>{if(!iso)return'';const d=new Date(iso);return`${pad(d.getHours())}:${pad(d.getMinutes())}`;};
-
-// ── FIX: local date/time (NOT UTC) ───────────────────────────
-const nowDate=()=>{const d=new Date();return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;};
-const nowTime=()=>{const d=new Date();return`${pad(d.getHours())}:${pad(d.getMinutes())}`;};
-
-const DAYS_S=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-const DAYS_F=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const pad = n => String(n).padStart(2,'0');
+const uuid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+const fmtDur = m => { if(!m||m<=0)return'0m'; const h=Math.floor(m/60),mn=Math.round(m%60); return h&&mn?`${h}h ${mn}m`:h?`${h}h`:`${mn}m`; };
+const fmtDate = iso => { if(!iso)return''; return new Date(iso).toLocaleDateString('es-ES',{weekday:'short',day:'2-digit',month:'2-digit',year:'2-digit'}); };
+const fmtTime = iso => { if(!iso)return''; const d=new Date(iso); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const nowDate = () => { const d=new Date(); return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const nowTime = () => { const d=new Date(); return`${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const DAYS_S = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DAYS_F = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
 // ── API ──────────────────────────────────────────────────────
-const api={
-  getOutages: ()  =>fetch('/api/outages').then(r=>r.json()),
-  addOutage:  o   =>fetch('/api/outages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)}),
-  deleteOutage:id =>fetch(`/api/outages/${id}`,{method:'DELETE'}),
-  getActive:  ()  =>fetch('/api/active').then(r=>r.json()),
-  setActive:  o   =>fetch('/api/active',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)}),
-  clearActive:()  =>fetch('/api/active',{method:'DELETE'}),
+const api = {
+  post: (url,body) => fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),
+  get:  url => fetch(url).then(r=>{ if(!r.ok)throw r; return r.json(); }),
+  del:  url => fetch(url,{method:'DELETE'}),
+  put:  (url,body) => fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),
 };
 
 // ── Inference ────────────────────────────────────────────────
-function getSlots(o){
-  const s=[],cur=new Date(o.start);cur.setMinutes(0,0,0);const end=new Date(o.end);
-  while(cur<end){s.push({day:cur.getDay(),hour:cur.getHours()});cur.setHours(cur.getHours()+1);}
-  return s;
-}
+function getSlots(o){ const s=[],cur=new Date(o.start);cur.setMinutes(0,0,0);const end=new Date(o.end);while(cur<end){s.push({day:cur.getDay(),hour:cur.getHours()});cur.setHours(cur.getHours()+1);}return s; }
 function buildHeatmap(outages){
   const done=outages.filter(o=>o.start&&o.end&&(o.type||'corte')==='corte');
   if(!done.length)return null;
@@ -240,245 +261,290 @@ function buildHeatmap(outages){
   const minDate=new Date(Math.min(...dates.map(d=>d.getTime())));
   const obs={},hits={};
   const cur=new Date(minDate);cur.setHours(0,0,0,0);
-  while(cur<=new Date()){
-    for(let h=0;h<24;h++){const k=`${cur.getDay()}_${h}`;obs[k]=(obs[k]||0)+1;}
-    cur.setDate(cur.getDate()+1);
-  }
+  while(cur<=new Date()){for(let h=0;h<24;h++){const k=`${cur.getDay()}_${h}`;obs[k]=(obs[k]||0)+1;}cur.setDate(cur.getDate()+1);}
   done.forEach(o=>getSlots(o).forEach(({day,hour})=>{const k=`${day}_${hour}`;hits[k]=(hits[k]||0)+1;}));
   const hm={};
-  for(let d=0;d<7;d++)for(let h=0;h<24;h++){
-    const k=`${d}_${h}`,ob=obs[k]||0,hi=hits[k]||0;
-    hm[k]={prob:ob>0?(hi+.5)/(ob+1):0,conf:Math.min(ob/8,1),hits:hi,obs:ob};
-  }
+  for(let d=0;d<7;d++)for(let h=0;h<24;h++){const k=`${d}_${h}`,ob=obs[k]||0,hi=hits[k]||0;hm[k]={prob:ob>0?(hi+.5)/(ob+1):0,conf:Math.min(ob/8,1),hits:hi,obs:ob};}
   return hm;
 }
 const dp=(p,c)=>c<0.15?0:p*c;
 const rc=p=>p<0.05?'#475569':p<0.2?'#639922':p<0.4?'#d97706':p<0.6?'#e24b4a':'#b91c1c';
 const rl=(p,c)=>c<0.15?'Sin datos':p<0.05?'Sin riesgo':p<0.2?'Bajo':p<0.4?'Moderado':p<0.6?'Alto':'Muy alto';
 
-// ── Natural language day forecast ────────────────────────────
 function getDayForecast(todayPreds){
-  const hasEnoughData=todayPreds.some(p=>p.conf>=0.15);
-  if(!hasEnoughData)return{type:'nodata'};
-
-  const THRESH=0.18;
-  const risky=todayPreds.filter(({prob,conf})=>dp(prob,conf)>=THRESH);
+  const hasData=todayPreds.some(p=>p.conf>=0.15);
+  if(!hasData)return{type:'nodata'};
+  const risky=todayPreds.filter(({prob,conf})=>dp(prob,conf)>=0.18);
   if(!risky.length)return{type:'safe'};
-
-  // Group consecutive hours into ranges
-  const ranges=[];
-  let rs=null,re=null;
-  risky.forEach(({hour})=>{
-    if(rs===null){rs=hour;re=hour;}
-    else if(hour===re+1){re=hour;}
-    else{ranges.push([rs,re]);rs=hour;re=hour;}
-  });
+  const ranges=[];let rs=null,re=null;
+  risky.forEach(({hour})=>{ if(rs===null){rs=hour;re=hour;}else if(hour===re+1){re=hour;}else{ranges.push([rs,re]);rs=hour;re=hour;} });
   if(rs!==null)ranges.push([rs,re]);
-
-  // Peak
   const peak=risky.reduce((mx,p)=>dp(p.prob,p.conf)>dp(mx.prob,mx.conf)?p:mx,risky[0]);
-  const peakP=Math.round(dp(peak.prob,peak.conf)*100);
-  const peakLevel=peak.prob<0.4?'moderado':'alto';
-
-  // Build readable range text
-  const rText=ranges.map(([s,e])=>
-    s===e?`las ${pad(s)}:00`:`las ${pad(s)}:00–${pad(e+1)}:00`
-  );
+  const rText=ranges.map(([s,e])=>s===e?`las ${pad(s)}:00`:`las ${pad(s)}:00–${pad(e+1)}:00`);
   const joined=rText.length===1?rText[0]:rText.slice(0,-1).join(', ')+' y '+rText.slice(-1);
-
-  return{type:'risk',text:`Es probable que se vaya la luz entre ${joined}.`,peakH:peak.hour,peakP,peakLevel,ranges};
+  return{type:'risk',text:`Es probable que se vaya la luz entre ${joined}.`,peakH:peak.hour,peakP:Math.round(dp(peak.prob,peak.conf)*100),peakLevel:peak.prob<0.4?'moderado':'alto'};
 }
 
-// ── Stats ────────────────────────────────────────────────────
 function calcStats(outages){
   const now=new Date();
   const sow=new Date(now);sow.setDate(now.getDate()-now.getDay());sow.setHours(0,0,0,0);
   const sod=new Date(now);sod.setHours(0,0,0,0);
   const som=new Date(now.getFullYear(),now.getMonth(),1);
   const soy=new Date(now.getFullYear(),0,1);
-
   const cortes=outages.filter(o=>o.start&&o.end&&(o.type||'corte')==='corte'&&o.duration_minutes!=null);
-  const flucs =outages.filter(o=>(o.type||'corte')==='fluctuacion');
+  const flucs=outages.filter(o=>(o.type||'corte')==='fluctuacion');
   const sum=arr=>arr.reduce((s,o)=>s+(o.duration_minutes||0),0);
-
   const tw=cortes.filter(o=>new Date(o.start)>=sow);
   const tm=cortes.filter(o=>new Date(o.start)>=som);
   const ty=cortes.filter(o=>new Date(o.start)>=soy);
-  const ftd=flucs.filter(o=>new Date(o.start)>=sod);
-  const ftw=flucs.filter(o=>new Date(o.start)>=sow);
-  const ftm=flucs.filter(o=>new Date(o.start)>=som);
-
   const longest=cortes.reduce((mx,o)=>(o.duration_minutes||0)>(mx?.duration_minutes||0)?o:mx,null);
   const byDay={};
   cortes.forEach(o=>{const dk=new Date(o.start).toDateString();if(!byDay[dk])byDay[dk]={mins:0,count:0,date:new Date(o.start)};byDay[dk].mins+=o.duration_minutes||0;byDay[dk].count++;});
   const worst=Object.values(byDay).sort((a,b)=>b.mins-a.mins)[0]||null;
-  const byH={};
-  cortes.forEach(o=>getSlots(o).forEach(({hour})=>{byH[hour]=(byH[hour]||0)+1;}));
+  const byH={};cortes.forEach(o=>getSlots(o).forEach(({hour})=>{byH[hour]=(byH[hour]||0)+1;}));
   const phE=Object.entries(byH).sort((a,b)=>b[1]-a[1])[0];
   const totalDays=cortes.length>0?Math.max(1,Math.ceil((now-new Date(Math.min(...cortes.map(o=>new Date(o.start).getTime()))))/86400000)):1;
-  return{wM:sum(tw),wC:tw.length,mM:sum(tm),mC:tm.length,yM:sum(ty),yC:ty.length,longest,worst,peakH:phE?+phE[0]:null,avg:sum(cortes)/totalDays,ftd:ftd.length,ftw:ftw.length,ftm:ftm.length};
+  return{wM:sum(tw),wC:tw.length,mM:sum(tm),mC:tm.length,yM:sum(ty),yC:ty.length,longest,worst,peakH:phE?+phE[0]:null,avg:sum(cortes)/totalDays,
+    ftd:flucs.filter(o=>new Date(o.start)>=sod).length,ftw:flucs.filter(o=>new Date(o.start)>=sow).length,ftm:flucs.filter(o=>new Date(o.start)>=som).length};
 }
 
 // ── State ────────────────────────────────────────────────────
-const PAGE_SIZE=20;
-let S={
-  outages:[],active:null,tab:'dashboard',loading:true,
-  startDate:nowDate(),startTime:nowTime(),
-  endDate:nowDate(),endTime:nowTime(),
-  showManual:false,manualDate:nowDate(),manualStart:'',manualEnd:'',
-  deleteId:null,
-  histPage:1,   // pagination
-};
+const PAGE = 20;
+let A = { checking:true, user:null, authTab:'login', authErr:'', reg:{username:'',password:'',city:'',zone:''}, login:{username:'',password:''} };
+let S = { outages:[],active:null,tab:'dashboard',loading:true,startDate:nowDate(),startTime:nowTime(),endDate:nowDate(),endTime:nowTime(),showManual:false,manualDate:nowDate(),manualStart:'',manualEnd:'',deleteId:null,histPage:1 };
+let P = { open:false, profile:null, loading:false, editCity:'',editZone:'',editPublic:true,pwCurrent:'',pwNew:'',pwErr:'',pwOk:false,saveOk:false };
+let CM = { loading:false, data:null };
 
+// ── Init ─────────────────────────────────────────────────────
 async function init(){
-  const[outages,active]=await Promise.all([api.getOutages(),api.getActive()]);
-  S.outages=outages;S.active=active;S.loading=false;
+  try {
+    const user = await api.get('/api/auth/me');
+    A.user = user; A.checking = false;
+    await loadApp();
+  } catch {
+    A.checking = false; render();
+  }
+}
+async function loadApp(){
+  S.loading = true; render();
+  const [outages, active] = await Promise.all([api.get('/api/outages'), api.get('/api/active')]);
+  S.outages = outages; S.active = active; S.loading = false;
   render();
-  setInterval(()=>{if(S.active)render();},30000);
+  setInterval(()=>{ if(S.active) render(); }, 30000);
 }
 
-// ── Actions ──────────────────────────────────────────────────
+// ── Auth actions ─────────────────────────────────────────────
+async function doLogin(){
+  A.authErr = '';
+  const r = await api.post('/api/auth/login', A.login);
+  const j = await r.json();
+  if (!r.ok){ A.authErr = j.error; render(); return; }
+  A.user = j.user; await loadApp();
+}
+async function doRegister(){
+  A.authErr = '';
+  const r = await api.post('/api/auth/register', A.reg);
+  const j = await r.json();
+  if (!r.ok){ A.authErr = j.error; render(); return; }
+  A.user = j.user; await loadApp();
+}
+async function doLogout(){
+  await api.post('/api/auth/logout', {});
+  A.user = null; S.outages = []; S.active = null; P.open = false;
+  render();
+}
+
+// ── App actions ──────────────────────────────────────────────
 async function startOut(){
-  const iso=new Date(`${S.startDate}T${S.startTime}`).toISOString();
-  const o={id:uuid(),start:iso};
-  await api.setActive(o);S.active=o;render();
+  const iso = new Date(`${S.startDate}T${S.startTime}`).toISOString();
+  const o = {id:uuid(), start:iso};
+  await api.post('/api/active', o); S.active = o; render();
 }
 async function endOut(){
-  if(!S.active)return;
-  const end=new Date(`${S.endDate}T${S.endTime}`),start=new Date(S.active.start);
-  if(end<=start)return alert('La hora de regreso debe ser posterior a la salida');
-  const completed={...S.active,end:end.toISOString(),duration_minutes:(end-start)/60000,type:'corte'};
-  await Promise.all([api.addOutage(completed),api.clearActive()]);
-  S.outages.unshift(completed);S.active=null;
-  S.endDate=nowDate();S.endTime=nowTime();render();
+  if(!S.active) return;
+  const end = new Date(`${S.endDate}T${S.endTime}`), start = new Date(S.active.start);
+  if(end<=start) return alert('La hora de regreso debe ser posterior a la salida');
+  const completed = {...S.active, end:end.toISOString(), duration_minutes:(end-start)/60000, type:'corte'};
+  await Promise.all([api.post('/api/outages', completed), api.del('/api/active')]);
+  S.outages.unshift(completed); S.active = null;
+  S.endDate = nowDate(); S.endTime = nowTime(); render();
 }
 async function logFluc(){
-  const iso=new Date(`${S.startDate}T${S.startTime}`).toISOString();
-  const o={id:uuid(),start:iso,end:iso,duration_minutes:0,type:'fluctuacion'};
-  await api.addOutage(o);
-  S.outages.unshift(o);S.outages.sort((a,b)=>new Date(b.start)-new Date(a.start));
-  const btn=document.getElementById('fluc-btn');
-  if(btn){btn.innerHTML='&#10003; Registrada';btn.disabled=true;btn.style.opacity='.6';setTimeout(render,1200);}
+  const iso = new Date(`${S.startDate}T${S.startTime}`).toISOString();
+  const o = {id:uuid(), start:iso, end:iso, duration_minutes:0, type:'fluctuacion'};
+  await api.post('/api/outages', o);
+  S.outages.unshift(o); S.outages.sort((a,b)=>new Date(b.start)-new Date(a.start));
+  const btn = document.getElementById('fluc-btn');
+  if(btn){btn.textContent='✓ Registrada';btn.disabled=true;btn.style.opacity='.6';setTimeout(render,1200);}
   else render();
 }
 async function addManual(){
-  const{manualDate:d,manualStart:st,manualEnd:en}=S;
-  if(!d||!st||!en)return alert('Completa todos los campos');
-  const s=new Date(`${d}T${st}`),e=new Date(`${d}T${en}`);
-  if(isNaN(s)||isNaN(e)||e<=s)return alert('La hora de fin debe ser posterior al inicio');
-  const o={id:uuid(),start:s.toISOString(),end:e.toISOString(),duration_minutes:(e-s)/60000,type:'corte'};
-  await api.addOutage(o);
-  S.outages.unshift(o);S.outages.sort((a,b)=>new Date(b.start)-new Date(a.start));
-  S.manualStart='';S.manualEnd='';S.showManual=false;render();
+  const {manualDate:d,manualStart:st,manualEnd:en} = S;
+  if(!d||!st||!en) return alert('Completa todos los campos');
+  const s = new Date(`${d}T${st}`), e = new Date(`${d}T${en}`);
+  if(isNaN(s)||isNaN(e)||e<=s) return alert('La hora de fin debe ser posterior al inicio');
+  const o = {id:uuid(), start:s.toISOString(), end:e.toISOString(), duration_minutes:(e-s)/60000, type:'corte'};
+  await api.post('/api/outages', o);
+  S.outages.unshift(o); S.outages.sort((a,b)=>new Date(b.start)-new Date(a.start));
+  S.manualStart=''; S.manualEnd=''; S.showManual=false; render();
 }
 async function deleteOutage(id){
-  await api.deleteOutage(id);S.outages=S.outages.filter(o=>o.id!==id);S.deleteId=null;render();
+  await api.del(`/api/outages/${id}`);
+  S.outages = S.outages.filter(o=>o.id!==id); S.deleteId = null; render();
+}
+
+// ── Profile actions ──────────────────────────────────────────
+async function openProfile(){
+  P.open = true; P.loading = true; P.pwErr = ''; P.pwOk = false; P.saveOk = false; render();
+  const data = await api.get('/api/profile');
+  P.profile = data; P.editCity = data.city; P.editZone = data.zone; P.editPublic = data.is_public;
+  P.loading = false; render();
+}
+async function saveProfile(){
+  P.saveOk = false;
+  const body = {city:P.editCity, zone:P.editZone, is_public:P.editPublic};
+  if(P.pwNew){ body.currentPassword = P.pwCurrent; body.newPassword = P.pwNew; }
+  const r = await api.put('/api/profile', body);
+  const j = await r.json();
+  if(!r.ok){ P.pwErr = j.error; render(); return; }
+  P.pwCurrent=''; P.pwNew=''; P.pwErr=''; P.pwOk=!!P.pwNew;
+  P.saveOk = true;
+  if(A.user){ A.user.city = P.editCity; A.user.zone = P.editZone; }
+  render();
+}
+async function loadCommunity(){
+  CM.loading = true; render();
+  CM.data = await api.get('/api/community');
+  CM.loading = false; render();
 }
 
 // ── Render ───────────────────────────────────────────────────
 function render(){
-  const now=new Date();
-  const{outages,active,tab,showManual,deleteId}=S;
-  const activeMins=active?(now-new Date(active.start))/60000:0;
-  const hm=buildHeatmap(outages);
-  const stats=calcStats(outages);
-  const todayP=hm?Array.from({length:24},(_,h)=>({hour:h,...(hm[`${now.getDay()}_${h}`]||{prob:0,conf:0})})):[];
-  const forecast=hm?getDayForecast(todayP):{type:'nodata'};
+  const app = document.getElementById('app');
+  if(A.checking){ app.innerHTML='<div class="empty" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center"><p>Cargando...</p></div>'; return; }
+  if(!A.user){ app.innerHTML = renderAuth(); return; }
+  app.innerHTML = renderApp();
+}
 
-  if(S.loading){document.getElementById('app').innerHTML='<div class="empty"><p>Cargando...</p></div>';return;}
+function renderAuth(){
+  const isLogin = A.authTab === 'login';
+  return `<div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:#f59e0b;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <div>
+          <div class="auth-title">Restos de Juventud</div>
+          <div class="auth-subtitle" style="text-align:left;font-size:12px">Monitor de cortes eléctricos</div>
+        </div>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab ${isLogin?'active':''}" onclick="setA('authTab','login')">Entrar</button>
+        <button class="auth-tab ${!isLogin?'active':''}" onclick="setA('authTab','register')">Registrarse</button>
+      </div>
+      ${A.authErr?`<div class="auth-err">${A.authErr}</div>`:''}
+      ${isLogin?`
+        <div class="field"><label>Usuario</label><input autocomplete="username" placeholder="tu_usuario" value="${A.login.username}" oninput="A.login.username=this.value"></div>
+        <div class="field"><label>Contraseña</label><input type="password" autocomplete="current-password" value="${A.login.password}" oninput="A.login.password=this.value" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <button class="bmain bdanger" style="margin-top:4px" onclick="doLogin()">${I.bolt}Entrar</button>
+      `:`
+        <div class="field"><label>Usuario <span style="color:var(--text3)">(letras, números, _)</span></label><input autocomplete="username" placeholder="mi_usuario" value="${A.reg.username}" oninput="A.reg.username=this.value"></div>
+        <div class="field"><label>Contraseña <span style="color:var(--text3)">(mín. 6 caracteres)</span></label><input type="password" autocomplete="new-password" value="${A.reg.password}" oninput="A.reg.password=this.value"></div>
+        <div class="trow" style="margin-bottom:12px">
+          <div class="field" style="margin:0"><label>Ciudad</label><input placeholder="Caracas" value="${A.reg.city}" oninput="A.reg.city=this.value"></div>
+          <div class="field" style="margin:0"><label>Zona <span style="color:var(--text3)">(opcional)</span></label><input placeholder="Zona Norte" value="${A.reg.zone}" oninput="A.reg.zone=this.value"></div>
+        </div>
+        <button class="bmain bsuccess" onclick="doRegister()">${I.bolt}Crear cuenta</button>
+        <p class="auth-note">Tu actividad de cortes será visible para otros usuarios si mantienes el perfil público. Puedes cambiarlo en cualquier momento.</p>
+      `}
+    </div>
+  </div>`;
+}
 
-  let h=`
+function renderApp(){
+  const now = new Date();
+  const {outages,active,tab,showManual,deleteId} = S;
+  const activeMins = active ? (now-new Date(active.start))/60000 : 0;
+  const hm = buildHeatmap(outages);
+  const stats = calcStats(outages);
+  const todayP = hm ? Array.from({length:24},(_,h)=>({hour:h,...(hm[`${now.getDay()}_${h}`]||{prob:0,conf:0})})) : [];
+  const forecast = hm ? getDayForecast(todayP) : {type:'nodata'};
+
+  let h = `
   <div class="header">
     <div class="hleft">
-      <svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:#f59e0b;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#f59e0b;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
       <div>
         <div class="htitle">Monitor de Cortes</div>
         <div class="hsub">${now.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}</div>
       </div>
     </div>
-    <div class="badge ${active?'boff':'bon'}">
-      <div class="dot"></div>${active?`Sin luz &middot; ${fmtDur(activeMins)}`:'Con luz'}
+    <div class="hright">
+      <div class="badge ${active?'boff':'bon'}"><div class="dot"></div>${active?`Sin luz &middot; ${fmtDur(activeMins)}`:'Con luz'}</div>
+      <button class="profile-btn" onclick="openProfile()">@${A.user.username}</button>
     </div>
   </div>
   <div class="tabs">
-    ${[['dashboard',ic('dash'),'Panel'],['log',ic('plus'),'Registrar'],['predict',ic('predict'),'Predicción'],['history',ic('history'),'Historial']]
+    ${[['dashboard',I.dash,'Panel'],['log',I.plus,'Registrar'],['predict',I.predict,'Predicción'],['community',I.users,'Comunidad'],['history',I.history,'Historial']]
       .map(([id,svg,lb])=>`<button class="tab ${tab===id?'active':''}" onclick="setTab('${id}')">${svg}${lb}</button>`).join('')}
   </div>
   <div class="content">`;
 
-  // ─── DASHBOARD ───────────────────────────────────────────
+  // ── PANEL ─────────────────────────────────────────────────
   if(tab==='dashboard'){
-
-    // Forecast card
-    h+=`<div class="forecast-card">
-      <div style="font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.05em;margin-bottom:8px">PRONÓSTICO HOY &mdash; ${DAYS_F[now.getDay()].toUpperCase()}</div>`;
-    if(forecast.type==='nodata'){
-      h+=`<div class="forecast-nodata">Registra algunos cortes para ver predicciones.</div>`;
-    }else if(forecast.type==='safe'){
-      h+=`<div class="forecast-safe">&#10003; Hoy no hay periodos de riesgo significativo registrados.</div>`;
-    }else{
-      const lvlColor=forecast.peakLevel==='alto'?'var(--red-t)':'#fdba74';
-      h+=`<div class="forecast-main">${forecast.text}</div>
-          <div class="forecast-peak" style="color:${lvlColor}">Pico de riesgo: ${pad(forecast.peakH)}:00 (${forecast.peakP}% &mdash; riesgo ${forecast.peakLevel})</div>`;
+    h += `<div class="forecast-card">
+      <div class="slabel">PRONÓSTICO — ${DAYS_F[now.getDay()].toUpperCase()}</div>`;
+    if(forecast.type==='nodata') h+=`<div style="font-size:13px;color:var(--text3)">Registra algunos cortes para ver predicciones.</div>`;
+    else if(forecast.type==='safe') h+=`<div style="font-size:14px;color:var(--grn-t)">&#10003; Sin periodos de riesgo significativo para hoy.</div>`;
+    else{
+      const lc=forecast.peakLevel==='alto'?'var(--red-t)':'#fdba74';
+      h+=`<div style="font-size:15px;font-weight:600;margin-bottom:5px">${forecast.text}</div>
+          <div style="font-size:12px;color:${lc}">Pico: ${pad(forecast.peakH)}:00 &middot; ${forecast.peakP}% &middot; riesgo ${forecast.peakLevel}</div>`;
     }
     h+=`</div>`;
 
-    // Cortes stats
     h+=`<div class="sgrid">
-      ${[
-        [ic('history'),'Esta semana',fmtDur(stats.wM),`${stats.wC} corte${stats.wC!==1?'s':''}`],
-        [ic('history'),'Este mes',fmtDur(stats.mM),`${stats.mC} corte${stats.mC!==1?'s':''}`],
-        [ic('history'),'Este año',fmtDur(stats.yM),`${stats.yC} corte${stats.yC!==1?'s':''}`],
-        [ic('predict'),'Prom. diario',fmtDur(stats.avg),'histórico'],
-      ].map(([svg,lb,val,sub])=>`<div class="scard">${svg}<div class="sval">${val}</div><div class="slb">${lb}</div><div class="ssub">${sub}</div></div>`).join('')}
+      ${[['Esta semana',fmtDur(stats.wM),`${stats.wC} cortes`],['Este mes',fmtDur(stats.mM),`${stats.mC} cortes`],['Este año',fmtDur(stats.yM),`${stats.yC} cortes`],['Prom. diario',fmtDur(stats.avg),'histórico']]
+        .map(([lb,val,sub])=>`<div class="scard"><div class="sval">${val}</div><div class="slb">${lb}</div><div class="ssub">${sub}</div></div>`).join('')}
     </div>`;
 
-    // Fluctuaciones stats
     h+=`<div class="card card-ora" style="margin-bottom:12px">
-      <div class="slabel" style="color:var(--ora-t)">FLUCTUACIONES / MICROCORTES</div>
-      <div class="sgrid3">
-        ${[['Hoy',stats.ftd],['Esta semana',stats.ftw],['Este mes',stats.ftm]].map(([lb,n])=>`
-          <div class="scard"><div class="sval-ora">${n}</div><div class="slb">${lb}</div></div>`).join('')}
-      </div>
+      <div class="slabel" style="color:var(--ora-t)">FLUCTUACIONES</div>
+      <div class="sgrid3">${[['Hoy',stats.ftd],['Semana',stats.ftw],['Mes',stats.ftm]].map(([lb,n])=>`<div class="scard"><div class="sval-ora">${n}</div><div class="slb">${lb}</div></div>`).join('')}</div>
     </div>`;
 
-    // Records
     if(stats.longest||stats.worst||stats.peakH!==null){
       h+=`<div class="rgrid">`;
       if(stats.longest)h+=`<div class="rcard"><div class="slabel">CORTE MÁS LARGO</div><div class="rval">${fmtDur(stats.longest.duration_minutes)}</div><div class="rsub">${fmtDate(stats.longest.start)} &middot; ${fmtTime(stats.longest.start)}&ndash;${fmtTime(stats.longest.end)}</div></div>`;
-      if(stats.worst)h+=`<div class="rcard"><div class="slabel">DÍA MÁS AFECTADO</div><div class="rval" style="font-size:18px">${stats.worst.date.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'short'})}</div><div class="rsub" style="color:var(--amber2)">${fmtDur(stats.worst.mins)} &middot; ${stats.worst.count} corte${stats.worst.count!==1?'s':''}</div></div>`;
-      if(stats.peakH!==null)h+=`<div class="rcard"><div class="slabel">HORA PICO HISTÓRICA</div><div class="rval">${pad(stats.peakH)}:00</div><div class="rsub">hora con más cortes</div></div>`;
+      if(stats.worst)h+=`<div class="rcard"><div class="slabel">DÍA MÁS AFECTADO</div><div class="rval" style="font-size:17px">${stats.worst.date.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'short'})}</div><div class="rsub" style="color:var(--amber2)">${fmtDur(stats.worst.mins)} &middot; ${stats.worst.count} cortes</div></div>`;
+      if(stats.peakH!==null)h+=`<div class="rcard"><div class="slabel">HORA PICO HISTÓRICA</div><div class="rval">${pad(stats.peakH)}:00</div><div class="rsub">más cortes registrados</div></div>`;
       h+=`</div>`;
     }
 
-    // Bar chart
     if(hm){
       const cur=hm[`${now.getDay()}_${now.getHours()}`]||{prob:0,conf:0};const p0=dp(cur.prob,cur.conf);
       h+=`<div class="card card-last">
-        <div class="slabel">Detalle por hora &mdash; hoy</div>
+        <div class="slabel">DETALLE POR HORA — HOY</div>
         <div class="barwrap">${todayP.map(({hour,prob,conf})=>{const p=dp(prob,conf),isN=hour===now.getHours();return`<div class="bcol"><div class="b" style="height:${Math.max(3,p*44)}px;background:${isN?'#f59e0b':`rgba(239,68,68,${p*0.85+0.05})`};${isN?'outline:2px solid #f59e0b;outline-offset:1px':''}"></div>${hour%6===0?`<span class="bl">${pad(hour)}</span>`:''}</div>`;}).join('')}</div>
         <div style="margin-top:8px;font-size:12px;color:#94a3b8">Ahora (${pad(now.getHours())}:00): <span style="font-weight:600;color:${rc(p0)}">${rl(p0,cur.conf)}${cur.conf>=0.15?' &middot; '+Math.round(p0*100)+'%':''}</span></div>
       </div>`;
     }
+    if(!outages.length) h+=`<div class="empty">${I.plugX}<p>Sin registros. Toca <strong>+</strong> para comenzar.</p></div>`;
 
-    if(!outages.length)h+=`<div class="empty">${ic('plugX')}<p>Sin registros. Toca <strong>+</strong> para comenzar.</p></div>`;
-
-    // FAB
-    h+=`<button class="fab ${active?'fab-off':'fab-on'}" onclick="setTab('log')" title="Registrar">${active?ic('bulb'):ic('plus')}</button>`;
+    h+=`<button class="fab ${active?'fab-off':'fab-on'}" onclick="setTab('log')" title="Registrar">${active?I.bulb:I.plus}</button>`;
   }
 
-  // ─── REGISTRAR ───────────────────────────────────────────
+  // ── REGISTRAR ─────────────────────────────────────────────
   if(tab==='log'){
     if(!active){
       h+=`<div class="card card-red">
         <div class="slabel">REGISTRAR SALIDA DE LUZ</div>
         <div class="trow">
-          <div class="ff"><label>Fecha</label><input type="date" value="${S.startDate}" onchange="setS('startDate',this.value)"></div>
-          <div class="ff"><label>Hora</label><input type="time" value="${S.startTime}" onchange="setS('startTime',this.value)"></div>
+          <div class="field" style="margin:0"><label>Fecha</label><input type="date" value="${S.startDate}" onchange="setS('startDate',this.value)"></div>
+          <div class="field" style="margin:0"><label>Hora</label><input type="time" value="${S.startTime}" onchange="setS('startTime',this.value)"></div>
         </div>
-        <button class="bmain bdanger" onclick="startOut()">${ic('boltOff')}Se fue la luz</button>
+        <button class="bmain bdanger" onclick="startOut()">${I.boltOff}Se fue la luz</button>
       </div>`;
-    }else{
+    } else {
       h+=`<div class="card card-red">
         <div class="abanner">
           <div class="al">Corte activo desde las ${fmtTime(active.start)}</div>
@@ -486,32 +552,32 @@ function render(){
         </div>
         <div class="slabel">REGISTRAR REGRESO DE LUZ</div>
         <div class="trow">
-          <div class="ff"><label>Fecha</label><input type="date" value="${S.endDate}" onchange="setS('endDate',this.value)"></div>
-          <div class="ff"><label>Hora</label><input type="time" value="${S.endTime}" onchange="setS('endTime',this.value)"></div>
+          <div class="field" style="margin:0"><label>Fecha</label><input type="date" value="${S.endDate}" onchange="setS('endDate',this.value)"></div>
+          <div class="field" style="margin:0"><label>Hora</label><input type="time" value="${S.endTime}" onchange="setS('endTime',this.value)"></div>
         </div>
-        <button class="bmain bsuccess" onclick="endOut()">${ic('bulb')}Volvió la luz</button>
+        <button class="bmain bsuccess" onclick="endOut()">${I.bulb}Volvió la luz</button>
       </div>`;
     }
 
     h+=`<div class="card card-ora">
       <div class="slabel" style="color:var(--ora-t)">REGISTRAR FLUCTUACIÓN</div>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Bajón, pico de tensión o microcorte que disparó el protector (&lt;1 min).</p>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Bajón, pico o microcorte que disparó el protector (&lt;1 min).</p>
       <div class="trow">
-        <div class="ff"><label>Fecha</label><input type="date" value="${S.startDate}" onchange="setS('startDate',this.value)"></div>
-        <div class="ff"><label>Hora</label><input type="time" value="${S.startTime}" onchange="setS('startTime',this.value)"></div>
+        <div class="field" style="margin:0"><label>Fecha</label><input type="date" value="${S.startDate}" onchange="setS('startDate',this.value)"></div>
+        <div class="field" style="margin:0"><label>Hora</label><input type="time" value="${S.startTime}" onchange="setS('startTime',this.value)"></div>
       </div>
-      <button id="fluc-btn" class="bmain borange" onclick="logFluc()">${ic('zap')}Registrar fluctuación</button>
+      <button id="fluc-btn" class="bmain borange" onclick="logFluc()">${I.zap}Registrar fluctuación</button>
     </div>
 
     <div class="card card-last">
-      <button class="bghost" onclick="toggle('showManual')">${S.showManual?ic('chevU'):ic('chevD')}Registrar corte pasado completo</button>`;
+      <button class="bghost" onclick="toggle('showManual')">${S.showManual?I.chevU:I.chevD}Registrar corte pasado completo</button>`;
     if(showManual){
       const dur=S.manualStart&&S.manualEnd&&S.manualDate?(new Date(`${S.manualDate}T${S.manualEnd}`)-new Date(`${S.manualDate}T${S.manualStart}`))/60000:0;
       h+=`<div style="margin-top:14px">
         <div class="trow3">
-          <div class="ff"><label>Fecha</label><input type="date" value="${S.manualDate}" onchange="setS('manualDate',this.value)"></div>
-          <div class="ff"><label>Inicio</label><input type="time" value="${S.manualStart}" onchange="setS('manualStart',this.value)"></div>
-          <div class="ff"><label>Fin</label><input type="time" value="${S.manualEnd}" onchange="setS('manualEnd',this.value)"></div>
+          <div class="field" style="margin:0"><label>Fecha</label><input type="date" value="${S.manualDate}" onchange="setS('manualDate',this.value)"></div>
+          <div class="field" style="margin:0"><label>Inicio</label><input type="time" value="${S.manualStart}" onchange="setS('manualStart',this.value)"></div>
+          <div class="field" style="margin:0"><label>Fin</label><input type="time" value="${S.manualEnd}" onchange="setS('manualEnd',this.value)"></div>
         </div>
         ${dur>0?`<div style="font-size:12px;color:#94a3b8;margin-bottom:10px">Duración: ${fmtDur(dur)}</div>`:''}
         <button class="bsm" onclick="addManual()">Guardar</button>
@@ -520,12 +586,12 @@ function render(){
     h+=`</div>`;
   }
 
-  // ─── PREDICCIONES ────────────────────────────────────────
+  // ── PREDICCIÓN ────────────────────────────────────────────
   if(tab==='predict'){
-    if(!hm){h+=`<div class="empty">${ic('predict')}<p>Necesitas al menos 1 corte registrado para ver predicciones.</p></div>`;}
+    if(!hm){h+=`<div class="empty">${I.predict}<p>Necesitas al menos 1 corte para ver predicciones.</p></div>`;}
     else{
       h+=`<div class="card">
-        <div class="slabel">Hoy &mdash; ${DAYS_F[now.getDay()]} &mdash; riesgo por hora</div>`;
+        <div class="slabel">HOY — ${DAYS_F[now.getDay()].toUpperCase()} — RIESGO POR HORA</div>`;
       todayP.filter(p=>p.hour>=5&&p.hour<=23).forEach(({hour,prob,conf})=>{
         const p=dp(prob,conf),isN=hour===now.getHours();
         h+=`<div class="prow ${isN?'now':''}">
@@ -535,34 +601,90 @@ function render(){
           <div class="plabel" style="color:${rc(p)}">${rl(p,conf)}</div>
         </div>`;
       });
-      h+=`</div><div class="card card-last"><div class="slabel">Mapa de calor semanal</div>
+      h+=`</div>
+      <div class="card card-last">
+        <div class="slabel">MAPA DE CALOR SEMANAL</div>
         <div class="hmwrap"><div class="hm">
           <div class="hmhours">${[0,4,8,12,16,20].map(x=>`<span>${pad(x)}</span>`).join('')}</div>
           ${DAYS_S.map((day,di)=>`<div class="hmrow"><div class="hmday ${di===now.getDay()?'today':''}">${day}</div><div class="hmcells">${Array.from({length:24},(_,h2)=>{const d=hm[`${di}_${h2}`]||{prob:0,conf:0},p=dp(d.prob,d.conf),isN=di===now.getDay()&&h2===now.getHours();return`<div class="hmcell ${isN?'now':''}" title="${day} ${pad(h2)}:00 — ${Math.round(p*100)}%" style="background:${p<0.03?'rgba(255,255,255,.05)':`rgba(239,68,68,${Math.min(p*2,0.9)})`}"></div>`;}).join('')}</div></div>`).join('')}
           <div class="hmleg"><span style="font-size:10px;color:#475569">Riesgo:</span>${[['Bajo','0.2'],['Medio','0.5'],['Alto','0.85']].map(([l,o])=>`<div style="display:flex;align-items:center;gap:3px"><div class="legbox" style="background:rgba(239,68,68,${o})"></div><span style="font-size:10px;color:#475569">${l}</span></div>`).join('')}</div>
-          <div class="infobox">Solo cortes alimentan el modelo. Las fluctuaciones no se incluyen para no distorsionar las predicciones.</div>
+          <div class="infobox">Solo cortes (no fluctuaciones) alimentan el modelo.</div>
         </div></div>
       </div>`;
     }
   }
 
-  // ─── HISTORIAL (paginado) ─────────────────────────────────
+  // ── COMUNIDAD ─────────────────────────────────────────────
+  if(tab==='community'){
+    if(!CM.data&&!CM.loading){ loadCommunity(); h+=`<div class="empty"><p>Cargando...</p></div>`; }
+    else if(CM.loading){ h+=`<div class="empty"><p>Cargando comunidad...</p></div>`; }
+    else {
+      const {active:ca,todayByCity,cityUsers,totals} = CM.data;
+      const myCity = A.user?.city || '';
+
+      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div class="scard"><div class="sval-grn">${totals.total_users}</div><div class="slb">Usuarios registrados</div></div>
+        <div class="scard"><div class="sval${totals.active_now>0?'-':''}${totals.active_now>0?'ora':'grn'}">${totals.active_now}</div><div class="slb">Sin luz ahora</div></div>
+      </div>`;
+
+      if(ca.length){
+        h+=`<div class="card" style="margin-bottom:12px">
+          <div class="slabel">SIN LUZ AHORA</div>`;
+        ca.forEach(u=>{
+          const mins=(now-new Date(u.start_time))/60000;
+          const isMe=u.username===A.user?.username;
+          h+=`<div class="comm-user">
+            <div class="comm-dot"></div>
+            <div style="flex:1">
+              <div style="font-size:14px;font-weight:600">@${u.username}${isMe?' <span style="color:var(--amber);font-size:11px">(tú)</span>':''}</div>
+              <div style="font-size:12px;color:var(--text2)">${u.city}${u.zone?' &middot; '+u.zone:''}</div>
+            </div>
+            <div style="font-size:13px;font-weight:600;color:var(--red-t)">${fmtDur(mins)}</div>
+          </div>`;
+        });
+        h+=`</div>`;
+      } else {
+        h+=`<div class="card card-grn" style="margin-bottom:12px">
+          <div style="font-size:14px;color:var(--grn-t)">&#10003; Nadie sin luz ahora mismo.</div>
+        </div>`;
+      }
+
+      if(todayByCity.length){
+        const maxMins = Math.max(...todayByCity.map(r=>r.total_mins));
+        h+=`<div class="card card-last">
+          <div class="slabel">HOY POR CIUDAD</div>`;
+        todayByCity.forEach(r=>{
+          const pct=maxMins>0?Math.round(r.total_mins/maxMins*100):0;
+          const isMe=r.city===myCity;
+          h+=`<div class="comm-city-row">
+            <div style="width:80px;font-size:13px;font-weight:${isMe?700:400};color:${isMe?'var(--amber)':'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.city}</div>
+            <div class="comm-bar-track"><div class="comm-bar-fill" style="width:${pct}%"></div></div>
+            <div style="width:60px;text-align:right;font-size:12px;color:var(--text2)">${fmtDur(r.total_mins)}</div>
+            <div style="width:50px;text-align:right;font-size:11px;color:var(--text3)">${r.cortes} corte${r.cortes!==1?'s':''}</div>
+          </div>`;
+        });
+        h+=`</div>`;
+      } else {
+        h+=`<div class="card card-last"><div style="font-size:13px;color:var(--text3)">Sin cortes registrados hoy por otros usuarios.</div></div>`;
+      }
+    }
+
+    h+=`<button class="bmore" onclick="loadCommunity()">&#8635; Actualizar</button>`;
+  }
+
+  // ── HISTORIAL ─────────────────────────────────────────────
   if(tab==='history'){
     const cortes=outages.filter(o=>o.end&&(o.type||'corte')==='corte');
-    const flucs =outages.filter(o=>(o.type||'corte')==='fluctuacion');
+    const flucs=outages.filter(o=>(o.type||'corte')==='fluctuacion');
     const totalMins=cortes.reduce((s,o)=>s+(o.duration_minutes||0),0);
-
     h+=`<div style="font-size:13px;color:#94a3b8;margin-bottom:12px">
       ${cortes.length} corte${cortes.length!==1?'s':''} &middot; ${fmtDur(totalMins)} sin luz
-      &nbsp;&nbsp;&middot;&nbsp;&nbsp;
-      ${flucs.length} fluctuación${flucs.length!==1?'es':''}
+      &nbsp;&middot;&nbsp; ${flucs.length} fluctuación${flucs.length!==1?'es':''}
     </div>`;
-
-    if(!outages.length){h+=`<div class="empty">${ic('history')}<p>Sin registros aún.</p></div>`;}
-    else{
-      const visible=outages.slice(0,S.histPage*PAGE_SIZE);
+    if(!outages.length){ h+=`<div class="empty">${I.history}<p>Sin registros aún.</p></div>`; }
+    else {
+      const visible=outages.slice(0,S.histPage*PAGE);
       const hasMore=outages.length>visible.length;
-
       h+=`<div class="hlist">`;
       visible.forEach(o=>{
         const isFluc=(o.type||'corte')==='fluctuacion';
@@ -572,34 +694,77 @@ function render(){
             <div class="hdate">${fmtDate(o.start)}${isFluc?`<span class="tag tag-fluc">FLUCTUACIÓN</span>`:''}</div>
             <div class="htime">${fmtTime(o.start)}${!isFluc?` &ndash; ${o.end?fmtTime(o.end):'en curso'}`:''}</div>
           </div>
-          ${isFluc
-            ?`<div class="hdur-fluc">&#9889;</div>`
-            :`<div class="hdur">${o.end?fmtDur(o.duration_minutes):fmtDur(am)}${!o.end?'<div class="hactive">en curso</div>':''}</div>`}
+          ${isFluc?`<div class="hdur-fluc">&#9889;</div>`:`<div class="hdur">${o.end?fmtDur(o.duration_minutes):fmtDur(am)}${!o.end?'<div class="hactive">en curso</div>':''}</div>`}
           ${deleteId===o.id
             ?`<div style="display:flex;gap:4px"><button class="byes" onclick="deleteOutage('${o.id}')">Sí</button><button class="bno" onclick="cancelDel()">No</button></div>`
-            :`<button class="bicon" onclick="askDel('${o.id}')" title="Eliminar">${ic('trash')}</button>`}
+            :`<button class="bicon" onclick="askDel('${o.id}')">${I.trash}</button>`}
         </div>`;
       });
       h+=`</div>`;
-
-      if(hasMore){
-        const remaining=outages.length-visible.length;
-        h+=`<button class="bmore" onclick="loadMore()">Cargar ${Math.min(remaining,PAGE_SIZE)} más de ${remaining} restantes</button>`;
-      }
+      if(hasMore) h+=`<button class="bmore" onclick="loadMore()">Cargar ${Math.min(outages.length-visible.length,PAGE)} más &nbsp;·&nbsp; ${outages.length-visible.length} restantes</button>`;
     }
   }
 
   h+=`</div>`;
-  document.getElementById('app').innerHTML=h;
+
+  // ── PROFILE OVERLAY ───────────────────────────────────────
+  if(P.open){
+    h+=`<div class="overlay" onclick="if(event.target.classList.contains('overlay'))P.open=false,render()">
+      <div class="overlay-card">
+        <div class="overlay-header">
+          <div class="overlay-title">@${A.user.username}</div>
+          <button class="bicon" onclick="P.open=false;render()">${I.x}</button>
+        </div>`;
+
+    if(P.loading){ h+=`<p style="color:var(--text3);font-size:14px">Cargando...</p>`; }
+    else if(P.profile){
+      const st=P.profile.stats;
+      h+=`<div class="sgrid3" style="margin-bottom:16px">
+        <div class="scard"><div class="sval" style="font-size:16px">${st.total_cortes}</div><div class="slb">Cortes</div></div>
+        <div class="scard"><div class="sval" style="font-size:16px">${fmtDur(st.total_mins)}</div><div class="slb">Sin luz</div></div>
+        <div class="scard"><div class="sval-ora" style="font-size:16px">${st.total_flucs}</div><div class="slb">Fluctuac.</div></div>
+      </div>`;
+
+      h+=`<div class="trow" style="margin-bottom:12px">
+        <div class="field" style="margin:0"><label>Ciudad</label><input value="${P.editCity}" oninput="P.editCity=this.value" placeholder="Caracas"></div>
+        <div class="field" style="margin:0"><label>Zona</label><input value="${P.editZone}" oninput="P.editZone=this.value" placeholder="Zona Norte"></div>
+      </div>`;
+
+      h+=`<div class="toggle-row" style="margin-bottom:14px">
+        <div><div class="toggle-label">Perfil público</div><div class="toggle-sub">Tu actividad es visible en Comunidad</div></div>
+        <button class="toggle ${P.editPublic?'on':'off'}" onclick="P.editPublic=!P.editPublic;render()"></button>
+      </div>`;
+
+      h+=`<details style="margin-bottom:14px"><summary style="cursor:pointer;font-size:13px;color:var(--text2);padding:8px 0">Cambiar contraseña</summary>
+        <div style="margin-top:10px">
+          <div class="field"><label>Contraseña actual</label><input type="password" value="${P.pwCurrent}" oninput="P.pwCurrent=this.value"></div>
+          <div class="field"><label>Nueva contraseña</label><input type="password" value="${P.pwNew}" oninput="P.pwNew=this.value"></div>
+          ${P.pwErr?`<div class="auth-err">${P.pwErr}</div>`:''}
+          ${P.pwOk?`<div style="color:var(--grn-t);font-size:13px;margin-bottom:8px">&#10003; Contraseña actualizada</div>`:''}
+        </div>
+      </details>`;
+
+      if(P.saveOk) h+=`<div style="color:var(--grn-t);font-size:13px;margin-bottom:10px">&#10003; Cambios guardados</div>`;
+      h+=`<div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="bsm" onclick="saveProfile()">Guardar cambios</button>
+        <a href="/api/export" download style="text-decoration:none"><button class="bsm">${I.download} Exportar CSV</button></a>
+        <button class="bsm" style="margin-left:auto;color:var(--red-t);border-color:var(--red-bd)" onclick="doLogout()">${I.logout} Salir</button>
+      </div>`;
+    }
+    h+=`</div></div>`;
+  }
+
+  return h;
 }
 
 // ── Helpers ──────────────────────────────────────────────────
-function setTab(t){S.tab=t;S.deleteId=null;S.histPage=1;S.startDate=nowDate();S.startTime=nowTime();render();}
-function toggle(k){S[k]=!S[k];render();}
-function setS(k,v){S[k]=v;render();}
-function askDel(id){S.deleteId=id;render();}
-function cancelDel(){S.deleteId=null;render();}
-function loadMore(){S.histPage++;render();}
+function setTab(t){ S.tab=t; S.deleteId=null; S.histPage=1; S.startDate=nowDate(); S.startTime=nowTime(); if(t==='community'&&!CM.data)loadCommunity(); render(); }
+function toggle(k){ S[k]=!S[k]; render(); }
+function setS(k,v){ S[k]=v; render(); }
+function setA(k,v){ A[k]=v; A.authErr=''; render(); }
+function askDel(id){ S.deleteId=id; render(); }
+function cancelDel(){ S.deleteId=null; render(); }
+function loadMore(){ S.histPage++; render(); }
 
 init();
 </script>
