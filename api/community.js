@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
   // Users currently without power (public only)
   const active = await sql`
     SELECT u.username, u.city, u.zone, a.start_time
-    FROM active_outage_v2 a
+    FROM active_outage a
     JOIN users u ON u.id = a.user_id
     WHERE u.is_public = true
     ORDER BY a.start_time ASC
@@ -48,7 +48,7 @@ module.exports = async (req, res) => {
       COUNT(DISTINCT u.id)::int AS total_users,
       COUNT(DISTINCT a.user_id)::int AS active_now
     FROM users u
-    LEFT JOIN active_outage_v2 a ON a.user_id = u.id AND u.is_public = true
+    LEFT JOIN active_outage a ON a.user_id = u.id AND u.is_public = true
     WHERE u.is_public = true
   `;
 

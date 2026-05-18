@@ -22,19 +22,18 @@ html,body{height:100%;}
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 svg{overflow:hidden;flex-shrink:0;}
 
-/* ── Auth screen ── */
+/* Auth */
 .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
 .auth-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:28px 24px;width:100%;max-width:380px;}
-.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;justify-content:center;}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;}
 .auth-title{font-size:20px;font-weight:700;}
-.auth-subtitle{font-size:13px;color:var(--text2);margin-top:2px;text-align:center;}
 .auth-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px;}
 .auth-tab{flex:1;padding:10px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-size:14px;font-weight:500;border-bottom:2px solid transparent;}
 .auth-tab.active{color:var(--amber);border-bottom-color:var(--amber);}
 .auth-err{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red-t);padding:8px 12px;border-radius:var(--rs);font-size:13px;margin-bottom:12px;}
-.auth-note{font-size:11px;color:var(--text3);margin-top:16px;line-height:1.5;text-align:center;}
+.auth-note{font-size:11px;color:var(--text3);margin-top:14px;line-height:1.5;text-align:center;}
 
-/* ── Header ── */
+/* Header */
 .header{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top,0px));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
 .hleft{display:flex;align-items:center;gap:10px;}
 .htitle{font-size:15px;font-weight:600;}
@@ -47,18 +46,17 @@ svg{overflow:hidden;flex-shrink:0;}
 .bon .dot{background:#22c55e;}
 .boff .dot{background:#ef4444;animation:pulse 1.5s infinite;}
 .profile-btn{background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:5px 10px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;touch-action:manipulation;}
-.profile-btn:active{opacity:.7;}
 
-/* ── Tabs ── */
+/* Tabs */
 .tabs{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;}
 .tab{flex:1;min-height:50px;padding:6px 2px;border:none;background:transparent;color:var(--text2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-bottom:2px solid transparent;font-size:10px;font-weight:500;touch-action:manipulation;}
 .tab svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
 .tab.active{color:var(--amber);border-bottom-color:var(--amber);}
 
-/* ── Content ── */
+/* Content */
 .content{padding:16px;max-width:720px;margin:0 auto;padding-bottom:calc(90px + env(safe-area-inset-bottom,0px));}
 
-/* ── Cards ── */
+/* Cards */
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;}
 .card-red{border-color:var(--red-bd);}
 .card-ora{border-color:var(--ora-bd);}
@@ -66,7 +64,7 @@ svg{overflow:hidden;flex-shrink:0;}
 .card-last{margin-bottom:0;}
 .slabel{font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:10px;}
 
-/* ── Stat grids ── */
+/* Stat grids */
 .sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px;}
 @media(min-width:520px){.sgrid{grid-template-columns:repeat(4,1fr);}}
 .sgrid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
@@ -81,16 +79,18 @@ svg{overflow:hidden;flex-shrink:0;}
 .rval{font-size:20px;font-weight:700;margin-top:5px;}
 .rsub{font-size:12px;color:var(--text3);margin-top:3px;}
 
-/* ── Buttons ── */
+/* Buttons */
 .bmain{width:100%;min-height:50px;padding:12px 16px;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid;touch-action:manipulation;transition:opacity .1s;}
 .bmain:active{opacity:.7;}
+.bmain:disabled{opacity:.35;cursor:not-allowed;}
 .bmain svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
 .bdanger {background:var(--red-bg);border-color:var(--red-bd);color:var(--red-t);}
 .bsuccess{background:var(--grn-bg);border-color:var(--grn-bd);color:var(--grn-t);}
 .borange {background:var(--ora-bg);border-color:var(--ora-bd);color:var(--ora-t);}
 .bsm{padding:9px 18px;min-height:42px;border-radius:var(--rs);border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;touch-action:manipulation;}
 .bsm:active{opacity:.7;}
-.blink{background:transparent;border:none;color:var(--amber);cursor:pointer;font-size:13px;font-weight:500;padding:0;touch-action:manipulation;}
+.bnow{padding:0 12px;height:42px;border-radius:var(--rs);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;touch-action:manipulation;flex-shrink:0;}
+.bnow:active{opacity:.7;}
 .bicon{background:transparent;border:1px solid var(--border);border-radius:var(--rs);color:var(--text3);cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;touch-action:manipulation;flex-shrink:0;}
 .bicon svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
 .byes{padding:6px 14px;min-height:36px;border-radius:var(--rs);border:1px solid var(--red-bd);background:var(--red-bg);color:var(--red-t);cursor:pointer;font-size:13px;}
@@ -98,15 +98,16 @@ svg{overflow:hidden;flex-shrink:0;}
 .bghost{background:transparent;border:none;color:var(--text2);cursor:pointer;font-size:14px;font-weight:500;padding:0;display:flex;align-items:center;gap:6px;touch-action:manipulation;}
 .bghost svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
 .bmore{width:100%;padding:10px;border-radius:var(--rs);border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;margin-top:10px;touch-action:manipulation;}
+.bdel-account{padding:9px 18px;min-height:42px;border-radius:var(--rs);border:1px solid var(--red-bd);background:transparent;color:var(--red-t);font-size:13px;font-weight:500;cursor:pointer;touch-action:manipulation;}
 
-/* ── FAB ── */
+/* FAB */
 .fab{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));right:20px;width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;touch-action:manipulation;transition:transform .15s;box-shadow:0 4px 20px rgba(0,0,0,.5);}
 .fab:active{transform:scale(.9);}
 .fab-on{background:#f59e0b;color:#0f172a;}
 .fab-off{background:#b91c1c;color:#fca5a5;}
 .fab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 
-/* ── Profile overlay ── */
+/* Profile overlay */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:30;display:flex;align-items:flex-end;justify-content:center;}
 @media(min-width:600px){.overlay{align-items:center;}}
 .overlay-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:20px;}
@@ -114,19 +115,29 @@ svg{overflow:hidden;flex-shrink:0;}
 .overlay-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
 .overlay-title{font-size:16px;font-weight:600;}
 
-/* ── Forms ── */
+/* Danger zone */
+.danger-zone{border:1px solid var(--red-bd);border-radius:var(--rs);padding:12px 14px;margin-top:16px;}
+.danger-title{font-size:11px;font-weight:700;color:var(--red-t);letter-spacing:.06em;margin-bottom:6px;}
+.danger-desc{font-size:12px;color:var(--text2);margin-bottom:10px;}
+
+/* Forms */
 .field{margin-bottom:12px;}
 .field label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;}
-.field input,.field select{width:100%;padding:9px 12px;min-height:42px;border:1px solid var(--border);border-radius:var(--rs);font-size:14px;background:var(--bg);color:var(--text);}
+.field input{width:100%;padding:9px 12px;min-height:42px;border:1px solid var(--border);border-radius:var(--rs);font-size:14px;background:var(--bg);color:var(--text);}
 .field input:focus{outline:none;border-color:var(--amber);}
 input[type=date],input[type=time]{color-scheme:dark;}
+
+/* Time row with Now button */
 .trow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.trow-now{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-bottom:12px;}
 .trow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
 @media(max-width:480px){.trow3{grid-template-columns:1fr 1fr;}.trow3 .field:last-child{grid-column:1/-1;}}
+.ff label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;}
+.ff input{width:100%;padding:9px 10px;min-height:42px;border:1px solid var(--border);border-radius:var(--rs);font-size:14px;background:var(--bg);color:var(--text);}
+
+/* Toggle */
 .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
 .toggle-row:last-child{border-bottom:none;}
-.toggle-label{font-size:14px;}
-.toggle-sub{font-size:12px;color:var(--text2);margin-top:2px;}
 .toggle{width:42px;height:24px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
 .toggle.on{background:var(--amber);}
 .toggle.off{background:var(--bg3);}
@@ -134,18 +145,18 @@ input[type=date],input[type=time]{color-scheme:dark;}
 .toggle.on::after{left:21px;}
 .toggle.off::after{left:3px;}
 
-/* ── Active banner ── */
+/* Active banner */
 .abanner{padding:10px 14px;background:var(--red-bg);border:1px solid var(--red-bd);border-radius:var(--rs);margin-bottom:14px;}
 .abanner .al{font-size:13px;color:var(--red-t);}
 .abanner .ad{font-size:20px;font-weight:700;color:var(--red-t);margin-top:3px;}
 
-/* ── Bar chart ── */
+/* Bar chart */
 .barwrap{display:flex;align-items:flex-end;height:48px;gap:2px;margin-bottom:8px;}
 .bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
 .bcol .b{width:100%;border-radius:2px;}
 .bcol .bl{font-size:9px;color:var(--text3);}
 
-/* ── Predict ── */
+/* Predict */
 .prow{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:var(--rs);margin-bottom:2px;}
 .prow.now{background:rgba(255,255,255,.05);}
 .phour{width:46px;font-size:12px;color:var(--text3);flex-shrink:0;}
@@ -156,7 +167,7 @@ input[type=date],input[type=time]{color-scheme:dark;}
 .plabel{width:68px;font-size:11px;text-align:right;flex-shrink:0;}
 @media(max-width:400px){.plabel{display:none;}}
 
-/* ── Heatmap ── */
+/* Heatmap */
 .hmwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .hm{min-width:320px;}
 .hmrow{display:flex;align-items:center;margin-bottom:3px;}
@@ -170,7 +181,7 @@ input[type=date],input[type=time]{color-scheme:dark;}
 .hmleg{display:flex;align-items:center;gap:8px;margin-top:8px;justify-content:flex-end;}
 .legbox{width:10px;height:10px;border-radius:2px;}
 
-/* ── History ── */
+/* History */
 .hlist{display:flex;flex-direction:column;gap:8px;}
 .hitem{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;display:flex;align-items:center;gap:10px;}
 .hitem-fluc{border-color:var(--ora-bd);background:rgba(67,20,7,.25);}
@@ -183,7 +194,7 @@ input[type=date],input[type=time]{color-scheme:dark;}
 .tag{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.04em;}
 .tag-fluc{background:var(--ora-bg);color:var(--ora-t);border:1px solid var(--ora-bd);}
 
-/* ── Community ── */
+/* Community */
 .comm-user{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
 .comm-user:last-child{border-bottom:none;}
 .comm-dot{width:8px;height:8px;border-radius:50%;background:#ef4444;animation:pulse 1.5s infinite;flex-shrink:0;}
@@ -192,18 +203,14 @@ input[type=date],input[type=time]{color-scheme:dark;}
 .comm-bar-track{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
 .comm-bar-fill{height:100%;border-radius:3px;background:var(--red-bd);}
 
-/* ── Forecast ── */
+/* Forecast */
 .forecast-card{background:linear-gradient(135deg,rgba(30,41,59,.95),rgba(15,23,42,.95));border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;}
 
-/* ── Misc ── */
+/* Misc */
 .empty{text-align:center;padding:40px 24px;color:var(--text3);}
 .empty svg{width:36px;height:36px;stroke:currentColor;fill:none;stroke-width:1.2;margin:0 auto 10px;display:block;}
 .empty p{font-size:14px;}
 .infobox{margin-top:8px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:var(--rs);font-size:12px;color:var(--text2);}
-.divider{border:none;border-top:1px solid var(--border);margin:14px 0;}
-.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600;}
-.chip-red{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red-t);}
-.chip-grn{background:var(--grn-bg);border:1px solid var(--grn-bd);color:var(--grn-t);}
 
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 </style>
@@ -227,10 +234,10 @@ const I={
   chevU:   `<svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>`,
   x:       `<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
   download:`<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
-  lock:    `<svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
-  globe:   `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+  clock:   `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
   plugX:   `<svg viewBox="0 0 24 24"><path d="M12 22V11M5 11l-.75-3M19 11l.75-3M8 11V5h8v6"/><line x1="3" y1="3" x2="21" y2="21"/></svg>`,
   logout:  `<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+  warn:    `<svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
 };
 
 // ── Utils ────────────────────────────────────────────────────
@@ -245,15 +252,17 @@ const DAYS_S = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const DAYS_F = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
 // ── API ──────────────────────────────────────────────────────
+const OPTS = { credentials: 'same-origin' };
 const api = {
-  post: (url,body) => fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),
-  get:  url => fetch(url).then(r=>{ if(!r.ok)throw r; return r.json(); }),
-  del:  url => fetch(url,{method:'DELETE'}),
-  put:  (url,body) => fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),
+  get:  url        => fetch(url, OPTS).then(r => { if(!r.ok) throw r; return r.json(); }),
+  post: (url,body) => fetch(url, { ...OPTS, method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) }),
+  put:  (url,body) => fetch(url, { ...OPTS, method:'PUT',  headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) }),
+  del:  url        => fetch(url, { ...OPTS, method:'DELETE' }),
 };
 
 // ── Inference ────────────────────────────────────────────────
 function getSlots(o){ const s=[],cur=new Date(o.start);cur.setMinutes(0,0,0);const end=new Date(o.end);while(cur<end){s.push({day:cur.getDay(),hour:cur.getHours()});cur.setHours(cur.getHours()+1);}return s; }
+
 function buildHeatmap(outages){
   const done=outages.filter(o=>o.start&&o.end&&(o.type||'corte')==='corte');
   if(!done.length)return null;
@@ -267,22 +276,50 @@ function buildHeatmap(outages){
   for(let d=0;d<7;d++)for(let h=0;h<24;h++){const k=`${d}_${h}`,ob=obs[k]||0,hi=hits[k]||0;hm[k]={prob:ob>0?(hi+.5)/(ob+1):0,conf:Math.min(ob/8,1),hits:hi,obs:ob};}
   return hm;
 }
+
+// Average duration of cuts that started at each hour (for duration estimates)
+function avgDurationByStartHour(outages){
+  const cortes=outages.filter(o=>o.start&&o.end&&(o.type||'corte')==='corte'&&o.duration_minutes>0);
+  const byH={};
+  cortes.forEach(o=>{const h=new Date(o.start).getHours();if(!byH[h])byH[h]=[];byH[h].push(o.duration_minutes);});
+  const result={};
+  Object.entries(byH).forEach(([h,arr])=>{ result[+h]=arr.reduce((a,b)=>a+b,0)/arr.length; });
+  return result;
+}
+
 const dp=(p,c)=>c<0.15?0:p*c;
 const rc=p=>p<0.05?'#475569':p<0.2?'#639922':p<0.4?'#d97706':p<0.6?'#e24b4a':'#b91c1c';
 const rl=(p,c)=>c<0.15?'Sin datos':p<0.05?'Sin riesgo':p<0.2?'Bajo':p<0.4?'Moderado':p<0.6?'Alto':'Muy alto';
 
-function getDayForecast(todayPreds){
+function getDayForecast(todayPreds, outages){
   const hasData=todayPreds.some(p=>p.conf>=0.15);
   if(!hasData)return{type:'nodata'};
   const risky=todayPreds.filter(({prob,conf})=>dp(prob,conf)>=0.18);
   if(!risky.length)return{type:'safe'};
+
   const ranges=[];let rs=null,re=null;
   risky.forEach(({hour})=>{ if(rs===null){rs=hour;re=hour;}else if(hour===re+1){re=hour;}else{ranges.push([rs,re]);rs=hour;re=hour;} });
   if(rs!==null)ranges.push([rs,re]);
+
   const peak=risky.reduce((mx,p)=>dp(p.prob,p.conf)>dp(mx.prob,mx.conf)?p:mx,risky[0]);
   const rText=ranges.map(([s,e])=>s===e?`las ${pad(s)}:00`:`las ${pad(s)}:00–${pad(e+1)}:00`);
   const joined=rText.length===1?rText[0]:rText.slice(0,-1).join(', ')+' y '+rText.slice(-1);
-  return{type:'risk',text:`Es probable que se vaya la luz entre ${joined}.`,peakH:peak.hour,peakP:Math.round(dp(peak.prob,peak.conf)*100),peakLevel:peak.prob<0.4?'moderado':'alto'};
+
+  // Duration estimate: average historical duration of cuts starting in risky hours
+  const durByHour=avgDurationByStartHour(outages);
+  const riskHours=risky.map(p=>p.hour);
+  const relevantDurs=riskHours.filter(h=>durByHour[h]).map(h=>durByHour[h]);
+  const avgDur=relevantDurs.length>0?Math.round(relevantDurs.reduce((a,b)=>a+b,0)/relevantDurs.length):null;
+
+  return{
+    type:'risk',
+    text:`Es probable que se vaya la luz entre ${joined}.`,
+    peakH:peak.hour,
+    peakP:Math.round(dp(peak.prob,peak.conf)*100),
+    peakLevel:peak.prob<0.4?'moderado':'alto',
+    avgDur,
+    ranges,
+  };
 }
 
 function calcStats(outages){
@@ -290,13 +327,12 @@ function calcStats(outages){
   const sow=new Date(now);sow.setDate(now.getDate()-now.getDay());sow.setHours(0,0,0,0);
   const sod=new Date(now);sod.setHours(0,0,0,0);
   const som=new Date(now.getFullYear(),now.getMonth(),1);
-  const soy=new Date(now.getFullYear(),0,1);
   const cortes=outages.filter(o=>o.start&&o.end&&(o.type||'corte')==='corte'&&o.duration_minutes!=null);
   const flucs=outages.filter(o=>(o.type||'corte')==='fluctuacion');
   const sum=arr=>arr.reduce((s,o)=>s+(o.duration_minutes||0),0);
   const tw=cortes.filter(o=>new Date(o.start)>=sow);
   const tm=cortes.filter(o=>new Date(o.start)>=som);
-  const ty=cortes.filter(o=>new Date(o.start)>=soy);
+  const ty=cortes.filter(o=>new Date(o.start)>=new Date(now.getFullYear(),0,1));
   const longest=cortes.reduce((mx,o)=>(o.duration_minutes||0)>(mx?.duration_minutes||0)?o:mx,null);
   const byDay={};
   cortes.forEach(o=>{const dk=new Date(o.start).toDateString();if(!byDay[dk])byDay[dk]={mins:0,count:0,date:new Date(o.start)};byDay[dk].mins+=o.duration_minutes||0;byDay[dk].count++;});
@@ -304,15 +340,18 @@ function calcStats(outages){
   const byH={};cortes.forEach(o=>getSlots(o).forEach(({hour})=>{byH[hour]=(byH[hour]||0)+1;}));
   const phE=Object.entries(byH).sort((a,b)=>b[1]-a[1])[0];
   const totalDays=cortes.length>0?Math.max(1,Math.ceil((now-new Date(Math.min(...cortes.map(o=>new Date(o.start).getTime()))))/86400000)):1;
-  return{wM:sum(tw),wC:tw.length,mM:sum(tm),mC:tm.length,yM:sum(ty),yC:ty.length,longest,worst,peakH:phE?+phE[0]:null,avg:sum(cortes)/totalDays,
-    ftd:flucs.filter(o=>new Date(o.start)>=sod).length,ftw:flucs.filter(o=>new Date(o.start)>=sow).length,ftm:flucs.filter(o=>new Date(o.start)>=som).length};
+  return{wM:sum(tw),wC:tw.length,mM:sum(tm),mC:tm.length,yM:sum(ty),yC:ty.length,longest,worst,
+    peakH:phE?+phE[0]:null,avg:sum(cortes)/totalDays,
+    ftd:flucs.filter(o=>new Date(o.start)>=sod).length,
+    ftw:flucs.filter(o=>new Date(o.start)>=sow).length,
+    ftm:flucs.filter(o=>new Date(o.start)>=som).length};
 }
 
 // ── State ────────────────────────────────────────────────────
 const PAGE = 20;
 let A = { checking:true, user:null, authTab:'login', authErr:'', reg:{username:'',password:'',city:'',zone:''}, login:{username:'',password:''} };
 let S = { outages:[],active:null,tab:'dashboard',loading:true,startDate:nowDate(),startTime:nowTime(),endDate:nowDate(),endTime:nowTime(),showManual:false,manualDate:nowDate(),manualStart:'',manualEnd:'',deleteId:null,histPage:1 };
-let P = { open:false, profile:null, loading:false, editCity:'',editZone:'',editPublic:true,pwCurrent:'',pwNew:'',pwErr:'',pwOk:false,saveOk:false };
+let P = { open:false,profile:null,loading:false,editCity:'',editZone:'',editPublic:true,pwCurrent:'',pwNew:'',pwErr:'',pwOk:false,saveOk:false,confirmDelete:false };
 let CM = { loading:false, data:null };
 
 // ── Init ─────────────────────────────────────────────────────
@@ -329,50 +368,59 @@ async function loadApp(){
   S.loading = true; render();
   const [outages, active] = await Promise.all([api.get('/api/outages'), api.get('/api/active')]);
   S.outages = outages; S.active = active; S.loading = false;
+  // Keep end time fresh when loading with active outage
+  if(active){ S.endDate = nowDate(); S.endTime = nowTime(); }
   render();
   setInterval(()=>{ if(S.active) render(); }, 30000);
 }
 
-// ── Auth actions ─────────────────────────────────────────────
+// ── Auth ─────────────────────────────────────────────────────
 async function doLogin(){
   A.authErr = '';
   const r = await api.post('/api/auth/login', A.login);
   const j = await r.json();
-  if (!r.ok){ A.authErr = j.error; render(); return; }
+  if(!r.ok){ A.authErr = j.error; render(); return; }
   A.user = j.user; await loadApp();
 }
 async function doRegister(){
   A.authErr = '';
   const r = await api.post('/api/auth/register', A.reg);
   const j = await r.json();
-  if (!r.ok){ A.authErr = j.error; render(); return; }
+  if(!r.ok){ A.authErr = j.error; render(); return; }
   A.user = j.user; await loadApp();
 }
 async function doLogout(){
   await api.post('/api/auth/logout', {});
-  A.user = null; S.outages = []; S.active = null; P.open = false;
-  render();
+  A.user = null; S.outages = []; S.active = null; P.open = false; render();
 }
 
 // ── App actions ──────────────────────────────────────────────
 async function startOut(){
   const iso = new Date(`${S.startDate}T${S.startTime}`).toISOString();
   const o = {id:uuid(), start:iso};
-  await api.post('/api/active', o); S.active = o; render();
+  await api.post('/api/active', o); S.active = o;
+  S.endDate = nowDate(); S.endTime = nowTime();  // pre-fill end with now
+  render();
 }
 async function endOut(){
   if(!S.active) return;
   const end = new Date(`${S.endDate}T${S.endTime}`), start = new Date(S.active.start);
-  if(end<=start) return alert('La hora de regreso debe ser posterior a la salida');
+  if(end <= start) return alert(`La hora de regreso (${S.endTime}) debe ser posterior a la hora de salida (${fmtTime(S.active.start)}). Usa el botón "Ahora" para sincronizar.`);
   const completed = {...S.active, end:end.toISOString(), duration_minutes:(end-start)/60000, type:'corte'};
-  await Promise.all([api.post('/api/outages', completed), api.del('/api/active')]);
+  const [r1] = await Promise.all([api.post('/api/outages', completed), api.del('/api/active')]);
+  if(!r1.ok){ alert('Error al guardar el corte. Reintenta.'); return; }
   S.outages.unshift(completed); S.active = null;
   S.endDate = nowDate(); S.endTime = nowTime(); render();
 }
 async function logFluc(){
+  if(S.active){
+    alert('No es posible registrar una fluctuación mientras hay un corte activo. Si la luz regresó brevemente y se fue de nuevo, registra primero el regreso del corte anterior.');
+    return;
+  }
   const iso = new Date(`${S.startDate}T${S.startTime}`).toISOString();
   const o = {id:uuid(), start:iso, end:iso, duration_minutes:0, type:'fluctuacion'};
-  await api.post('/api/outages', o);
+  const r = await api.post('/api/outages', o);
+  if(!r.ok){ alert('Error al registrar. Reintenta.'); return; }
   S.outages.unshift(o); S.outages.sort((a,b)=>new Date(b.start)-new Date(a.start));
   const btn = document.getElementById('fluc-btn');
   if(btn){btn.textContent='✓ Registrada';btn.disabled=true;btn.style.opacity='.6';setTimeout(render,1200);}
@@ -384,58 +432,64 @@ async function addManual(){
   const s = new Date(`${d}T${st}`), e = new Date(`${d}T${en}`);
   if(isNaN(s)||isNaN(e)||e<=s) return alert('La hora de fin debe ser posterior al inicio');
   const o = {id:uuid(), start:s.toISOString(), end:e.toISOString(), duration_minutes:(e-s)/60000, type:'corte'};
-  await api.post('/api/outages', o);
+  const r = await api.post('/api/outages', o);
+  if(!r.ok){ alert('Error al guardar. Reintenta.'); return; }
   S.outages.unshift(o); S.outages.sort((a,b)=>new Date(b.start)-new Date(a.start));
   S.manualStart=''; S.manualEnd=''; S.showManual=false; render();
 }
 async function deleteOutage(id){
-  await api.del(`/api/outages/${id}`);
+  const r = await api.del(`/api/outages/${id}`);
+  if(!r.ok){ alert('Error al borrar. Reintenta.'); return; }
   S.outages = S.outages.filter(o=>o.id!==id); S.deleteId = null; render();
 }
 
-// ── Profile actions ──────────────────────────────────────────
+// ── Profile ──────────────────────────────────────────────────
 async function openProfile(){
-  P.open = true; P.loading = true; P.pwErr = ''; P.pwOk = false; P.saveOk = false; render();
+  P.open=true; P.loading=true; P.pwErr=''; P.pwOk=false; P.saveOk=false; P.confirmDelete=false; render();
   const data = await api.get('/api/profile');
-  P.profile = data; P.editCity = data.city; P.editZone = data.zone; P.editPublic = data.is_public;
-  P.loading = false; render();
+  P.profile=data; P.editCity=data.city; P.editZone=data.zone; P.editPublic=data.is_public;
+  P.loading=false; render();
 }
 async function saveProfile(){
-  P.saveOk = false;
+  P.saveOk=false; P.pwErr='';
   const body = {city:P.editCity, zone:P.editZone, is_public:P.editPublic};
-  if(P.pwNew){ body.currentPassword = P.pwCurrent; body.newPassword = P.pwNew; }
+  if(P.pwNew){ body.currentPassword=P.pwCurrent; body.newPassword=P.pwNew; }
   const r = await api.put('/api/profile', body);
   const j = await r.json();
-  if(!r.ok){ P.pwErr = j.error; render(); return; }
-  P.pwCurrent=''; P.pwNew=''; P.pwErr=''; P.pwOk=!!P.pwNew;
-  P.saveOk = true;
-  if(A.user){ A.user.city = P.editCity; A.user.zone = P.editZone; }
+  if(!r.ok){ P.pwErr=j.error; render(); return; }
+  P.pwCurrent=''; P.pwNew=''; P.pwErr=''; P.pwOk=!!body.newPassword;
+  P.saveOk=true; if(A.user){ A.user.city=P.editCity; A.user.zone=P.editZone; }
   render();
 }
+async function deleteAccount(){
+  if(!P.confirmDelete){ P.confirmDelete=true; render(); return; }
+  const r = await api.del('/api/account');
+  if(!r.ok){ alert('Error al borrar la cuenta. Reintenta.'); return; }
+  A.user=null; S.outages=[]; S.active=null; P.open=false; render();
+}
+
+// ── Community ────────────────────────────────────────────────
 async function loadCommunity(){
-  CM.loading = true; render();
+  CM.loading=true; render();
   CM.data = await api.get('/api/community');
-  CM.loading = false; render();
+  CM.loading=false; render();
 }
 
 // ── Render ───────────────────────────────────────────────────
 function render(){
   const app = document.getElementById('app');
   if(A.checking){ app.innerHTML='<div class="empty" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center"><p>Cargando...</p></div>'; return; }
-  if(!A.user){ app.innerHTML = renderAuth(); return; }
-  app.innerHTML = renderApp();
+  if(!A.user){ app.innerHTML=renderAuth(); return; }
+  app.innerHTML=renderApp();
 }
 
 function renderAuth(){
-  const isLogin = A.authTab === 'login';
+  const isLogin = A.authTab==='login';
   return `<div class="auth-wrap">
     <div class="auth-card">
       <div class="auth-logo">
-        <svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:#f59e0b;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        <div>
-          <div class="auth-title">Restos de Juventud</div>
-          <div class="auth-subtitle" style="text-align:left;font-size:12px">Monitor de cortes eléctricos</div>
-        </div>
+        <svg viewBox="0 0 24 24" style="width:26px;height:26px;stroke:#f59e0b;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <div><div class="auth-title">Restos de Juventud</div><div style="font-size:12px;color:var(--text2)">Monitor de cortes eléctricos</div></div>
       </div>
       <div class="auth-tabs">
         <button class="auth-tab ${isLogin?'active':''}" onclick="setA('authTab','login')">Entrar</button>
@@ -447,36 +501,33 @@ function renderAuth(){
         <div class="field"><label>Contraseña</label><input type="password" autocomplete="current-password" value="${A.login.password}" oninput="A.login.password=this.value" onkeydown="if(event.key==='Enter')doLogin()"></div>
         <button class="bmain bdanger" style="margin-top:4px" onclick="doLogin()">${I.bolt}Entrar</button>
       `:`
-        <div class="field"><label>Usuario <span style="color:var(--text3)">(letras, números, _)</span></label><input autocomplete="username" placeholder="mi_usuario" value="${A.reg.username}" oninput="A.reg.username=this.value"></div>
+        <div class="field"><label>Usuario</label><input autocomplete="username" placeholder="mi_usuario" value="${A.reg.username}" oninput="A.reg.username=this.value"></div>
         <div class="field"><label>Contraseña <span style="color:var(--text3)">(mín. 6 caracteres)</span></label><input type="password" autocomplete="new-password" value="${A.reg.password}" oninput="A.reg.password=this.value"></div>
         <div class="trow" style="margin-bottom:12px">
           <div class="field" style="margin:0"><label>Ciudad</label><input placeholder="Caracas" value="${A.reg.city}" oninput="A.reg.city=this.value"></div>
           <div class="field" style="margin:0"><label>Zona <span style="color:var(--text3)">(opcional)</span></label><input placeholder="Zona Norte" value="${A.reg.zone}" oninput="A.reg.zone=this.value"></div>
         </div>
         <button class="bmain bsuccess" onclick="doRegister()">${I.bolt}Crear cuenta</button>
-        <p class="auth-note">Tu actividad de cortes será visible para otros usuarios si mantienes el perfil público. Puedes cambiarlo en cualquier momento.</p>
+        <p class="auth-note">Tu actividad será visible para otros usuarios si mantienes el perfil público. Puedes cambiarlo en tu perfil.</p>
       `}
     </div>
   </div>`;
 }
 
 function renderApp(){
-  const now = new Date();
-  const {outages,active,tab,showManual,deleteId} = S;
-  const activeMins = active ? (now-new Date(active.start))/60000 : 0;
-  const hm = buildHeatmap(outages);
-  const stats = calcStats(outages);
-  const todayP = hm ? Array.from({length:24},(_,h)=>({hour:h,...(hm[`${now.getDay()}_${h}`]||{prob:0,conf:0})})) : [];
-  const forecast = hm ? getDayForecast(todayP) : {type:'nodata'};
+  const now=new Date();
+  const {outages,active,tab,showManual,deleteId}=S;
+  const activeMins=active?(now-new Date(active.start))/60000:0;
+  const hm=buildHeatmap(outages);
+  const stats=calcStats(outages);
+  const todayP=hm?Array.from({length:24},(_,h)=>({hour:h,...(hm[`${now.getDay()}_${h}`]||{prob:0,conf:0})})):[];
+  const forecast=hm?getDayForecast(todayP,outages):{type:'nodata'};
 
-  let h = `
+  let h=`
   <div class="header">
     <div class="hleft">
       <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#f59e0b;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-      <div>
-        <div class="htitle">Monitor de Cortes</div>
-        <div class="hsub">${now.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}</div>
-      </div>
+      <div><div class="htitle">Monitor de Cortes</div><div class="hsub">${now.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}</div></div>
     </div>
     <div class="hright">
       <div class="badge ${active?'boff':'bon'}"><div class="dot"></div>${active?`Sin luz &middot; ${fmtDur(activeMins)}`:'Con luz'}</div>
@@ -489,16 +540,17 @@ function renderApp(){
   </div>
   <div class="content">`;
 
-  // ── PANEL ─────────────────────────────────────────────────
+  // PANEL
   if(tab==='dashboard'){
-    h += `<div class="forecast-card">
+    h+=`<div class="forecast-card">
       <div class="slabel">PRONÓSTICO — ${DAYS_F[now.getDay()].toUpperCase()}</div>`;
     if(forecast.type==='nodata') h+=`<div style="font-size:13px;color:var(--text3)">Registra algunos cortes para ver predicciones.</div>`;
     else if(forecast.type==='safe') h+=`<div style="font-size:14px;color:var(--grn-t)">&#10003; Sin periodos de riesgo significativo para hoy.</div>`;
     else{
       const lc=forecast.peakLevel==='alto'?'var(--red-t)':'#fdba74';
-      h+=`<div style="font-size:15px;font-weight:600;margin-bottom:5px">${forecast.text}</div>
-          <div style="font-size:12px;color:${lc}">Pico: ${pad(forecast.peakH)}:00 &middot; ${forecast.peakP}% &middot; riesgo ${forecast.peakLevel}</div>`;
+      h+=`<div style="font-size:15px;font-weight:600;margin-bottom:6px">${forecast.text}</div>
+          <div style="font-size:12px;color:${lc};margin-bottom:${forecast.avgDur?'4px':'0'}">Pico: ${pad(forecast.peakH)}:00 &middot; ${forecast.peakP}% &middot; riesgo ${forecast.peakLevel}</div>`;
+      if(forecast.avgDur) h+=`<div style="font-size:12px;color:var(--text2)">Duración esperada: <strong style="color:var(--text)">${fmtDur(forecast.avgDur)}</strong> (promedio histórico en esas horas)</div>`;
     }
     h+=`</div>`;
 
@@ -528,19 +580,18 @@ function renderApp(){
         <div style="margin-top:8px;font-size:12px;color:#94a3b8">Ahora (${pad(now.getHours())}:00): <span style="font-weight:600;color:${rc(p0)}">${rl(p0,cur.conf)}${cur.conf>=0.15?' &middot; '+Math.round(p0*100)+'%':''}</span></div>
       </div>`;
     }
-    if(!outages.length) h+=`<div class="empty">${I.plugX}<p>Sin registros. Toca <strong>+</strong> para comenzar.</p></div>`;
-
-    h+=`<button class="fab ${active?'fab-off':'fab-on'}" onclick="setTab('log')" title="Registrar">${active?I.bulb:I.plus}</button>`;
+    if(!outages.length) h+=`<div class="empty">${I.plugX}<p>Sin registros. Toca + para comenzar.</p></div>`;
+    h+=`<button class="fab ${active?'fab-off':'fab-on'}" onclick="setTab('log')">${active?I.bulb:I.plus}</button>`;
   }
 
-  // ── REGISTRAR ─────────────────────────────────────────────
+  // REGISTRAR
   if(tab==='log'){
     if(!active){
       h+=`<div class="card card-red">
         <div class="slabel">REGISTRAR SALIDA DE LUZ</div>
         <div class="trow">
-          <div class="field" style="margin:0"><label>Fecha</label><input type="date" value="${S.startDate}" onchange="setS('startDate',this.value)"></div>
-          <div class="field" style="margin:0"><label>Hora</label><input type="time" value="${S.startTime}" onchange="setS('startTime',this.value)"></div>
+          <div class="ff"><label>Fecha</label><input type="date" value="${S.startDate}" onchange="setS('startDate',this.value)"></div>
+          <div class="ff"><label>Hora</label><input type="time" value="${S.startTime}" onchange="setS('startTime',this.value)"></div>
         </div>
         <button class="bmain bdanger" onclick="startOut()">${I.boltOff}Se fue la luz</button>
       </div>`;
@@ -551,22 +602,27 @@ function renderApp(){
           <div class="ad">${fmtDur(activeMins)} sin luz</div>
         </div>
         <div class="slabel">REGISTRAR REGRESO DE LUZ</div>
-        <div class="trow">
-          <div class="field" style="margin:0"><label>Fecha</label><input type="date" value="${S.endDate}" onchange="setS('endDate',this.value)"></div>
-          <div class="field" style="margin:0"><label>Hora</label><input type="time" value="${S.endTime}" onchange="setS('endTime',this.value)"></div>
+        <div class="trow-now">
+          <div class="ff"><label>Fecha</label><input type="date" value="${S.endDate}" onchange="setS('endDate',this.value)"></div>
+          <div class="ff"><label>Hora</label><input type="time" value="${S.endTime}" onchange="setS('endTime',this.value)"></div>
+          <button class="bnow" onclick="syncEndNow()" title="Usar hora actual">${I.clock} Ahora</button>
         </div>
         <button class="bmain bsuccess" onclick="endOut()">${I.bulb}Volvió la luz</button>
       </div>`;
     }
 
-    h+=`<div class="card card-ora">
+    // Fluctuación — disabled if active outage
+    const flucDisabled = !!active;
+    h+=`<div class="card card-ora" style="${flucDisabled?'opacity:.6':''}">
       <div class="slabel" style="color:var(--ora-t)">REGISTRAR FLUCTUACIÓN</div>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Bajón, pico o microcorte que disparó el protector (&lt;1 min).</p>
-      <div class="trow">
-        <div class="field" style="margin:0"><label>Fecha</label><input type="date" value="${S.startDate}" onchange="setS('startDate',this.value)"></div>
-        <div class="field" style="margin:0"><label>Hora</label><input type="time" value="${S.startTime}" onchange="setS('startTime',this.value)"></div>
-      </div>
-      <button id="fluc-btn" class="bmain borange" onclick="logFluc()">${I.zap}Registrar fluctuación</button>
+      ${flucDisabled
+        ? `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(239,68,68,.1);border-radius:var(--rs);margin-bottom:10px;font-size:13px;color:var(--red-t)">${I.warn.replace('<svg','<svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5"')} No se pueden registrar fluctuaciones con un corte activo.</div>`
+        : `<p style="font-size:13px;color:var(--text2);margin-bottom:10px">Bajón, pico o microcorte que disparó el protector (&lt;1 min).</p>
+           <div class="trow">
+             <div class="ff"><label>Fecha</label><input type="date" value="${S.startDate}" onchange="setS('startDate',this.value)"></div>
+             <div class="ff"><label>Hora</label><input type="time" value="${S.startTime}" onchange="setS('startTime',this.value)"></div>
+           </div>`}
+      <button id="fluc-btn" class="bmain borange" ${flucDisabled?'disabled onclick="return false"':'onclick="logFluc()"'}>${I.zap}Registrar fluctuación</button>
     </div>
 
     <div class="card card-last">
@@ -586,7 +642,7 @@ function renderApp(){
     h+=`</div>`;
   }
 
-  // ── PREDICCIÓN ────────────────────────────────────────────
+  // PREDICCIÓN
   if(tab==='predict'){
     if(!hm){h+=`<div class="empty">${I.predict}<p>Necesitas al menos 1 corte para ver predicciones.</p></div>`;}
     else{
@@ -594,11 +650,13 @@ function renderApp(){
         <div class="slabel">HOY — ${DAYS_F[now.getDay()].toUpperCase()} — RIESGO POR HORA</div>`;
       todayP.filter(p=>p.hour>=5&&p.hour<=23).forEach(({hour,prob,conf})=>{
         const p=dp(prob,conf),isN=hour===now.getHours();
+        const durByHour=avgDurationByStartHour(outages);
+        const estDur=durByHour[hour];
         h+=`<div class="prow ${isN?'now':''}">
           <div class="phour ${isN?'now':''}">${pad(hour)}:00${isN?' ◀':''}</div>
           <div class="ptrack"><div class="pfill" style="width:${Math.round(p*100)}%;background:${rc(p)}"></div></div>
           <div class="ppct">${prob>0&&conf>=0.15?Math.round(p*100)+'%':'—'}</div>
-          <div class="plabel" style="color:${rc(p)}">${rl(p,conf)}</div>
+          <div class="plabel" style="color:${rc(p)}">${rl(p,conf)}${estDur&&p>=0.18?` ~${fmtDur(estDur)}`:''}</div>
         </div>`;
       });
       h+=`</div>
@@ -608,81 +666,54 @@ function renderApp(){
           <div class="hmhours">${[0,4,8,12,16,20].map(x=>`<span>${pad(x)}</span>`).join('')}</div>
           ${DAYS_S.map((day,di)=>`<div class="hmrow"><div class="hmday ${di===now.getDay()?'today':''}">${day}</div><div class="hmcells">${Array.from({length:24},(_,h2)=>{const d=hm[`${di}_${h2}`]||{prob:0,conf:0},p=dp(d.prob,d.conf),isN=di===now.getDay()&&h2===now.getHours();return`<div class="hmcell ${isN?'now':''}" title="${day} ${pad(h2)}:00 — ${Math.round(p*100)}%" style="background:${p<0.03?'rgba(255,255,255,.05)':`rgba(239,68,68,${Math.min(p*2,0.9)})`}"></div>`;}).join('')}</div></div>`).join('')}
           <div class="hmleg"><span style="font-size:10px;color:#475569">Riesgo:</span>${[['Bajo','0.2'],['Medio','0.5'],['Alto','0.85']].map(([l,o])=>`<div style="display:flex;align-items:center;gap:3px"><div class="legbox" style="background:rgba(239,68,68,${o})"></div><span style="font-size:10px;color:#475569">${l}</span></div>`).join('')}</div>
-          <div class="infobox">Solo cortes (no fluctuaciones) alimentan el modelo.</div>
+          <div class="infobox">Solo cortes alimentan el modelo. La columna de duración estimada (~Xh) aparece en horas con riesgo real.</div>
         </div></div>
       </div>`;
     }
   }
 
-  // ── COMUNIDAD ─────────────────────────────────────────────
+  // COMUNIDAD
   if(tab==='community'){
     if(!CM.data&&!CM.loading){ loadCommunity(); h+=`<div class="empty"><p>Cargando...</p></div>`; }
     else if(CM.loading){ h+=`<div class="empty"><p>Cargando comunidad...</p></div>`; }
-    else {
-      const {active:ca,todayByCity,cityUsers,totals} = CM.data;
-      const myCity = A.user?.city || '';
-
+    else{
+      const {active:ca,todayByCity,cityUsers,totals}=CM.data;
+      const myCity=A.user?.city||'';
       h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
         <div class="scard"><div class="sval-grn">${totals.total_users}</div><div class="slb">Usuarios registrados</div></div>
-        <div class="scard"><div class="sval${totals.active_now>0?'-':''}${totals.active_now>0?'ora':'grn'}">${totals.active_now}</div><div class="slb">Sin luz ahora</div></div>
+        <div class="scard"><div class="${totals.active_now>0?'sval-ora':'sval-grn'}">${totals.active_now}</div><div class="slb">Sin luz ahora</div></div>
       </div>`;
-
       if(ca.length){
-        h+=`<div class="card" style="margin-bottom:12px">
-          <div class="slabel">SIN LUZ AHORA</div>`;
+        h+=`<div class="card" style="margin-bottom:12px"><div class="slabel">SIN LUZ AHORA</div>`;
         ca.forEach(u=>{
           const mins=(now-new Date(u.start_time))/60000;
-          const isMe=u.username===A.user?.username;
-          h+=`<div class="comm-user">
-            <div class="comm-dot"></div>
-            <div style="flex:1">
-              <div style="font-size:14px;font-weight:600">@${u.username}${isMe?' <span style="color:var(--amber);font-size:11px">(tú)</span>':''}</div>
-              <div style="font-size:12px;color:var(--text2)">${u.city}${u.zone?' &middot; '+u.zone:''}</div>
-            </div>
-            <div style="font-size:13px;font-weight:600;color:var(--red-t)">${fmtDur(mins)}</div>
-          </div>`;
+          h+=`<div class="comm-user"><div class="comm-dot"></div><div style="flex:1"><div style="font-size:14px;font-weight:600">@${u.username}${u.username===A.user?.username?' <span style="color:var(--amber);font-size:11px">(tú)</span>':''}</div><div style="font-size:12px;color:var(--text2)">${u.city}${u.zone?' &middot; '+u.zone:''}</div></div><div style="font-size:13px;font-weight:600;color:var(--red-t)">${fmtDur(mins)}</div></div>`;
         });
         h+=`</div>`;
       } else {
-        h+=`<div class="card card-grn" style="margin-bottom:12px">
-          <div style="font-size:14px;color:var(--grn-t)">&#10003; Nadie sin luz ahora mismo.</div>
-        </div>`;
+        h+=`<div class="card card-grn" style="margin-bottom:12px"><div style="font-size:14px;color:var(--grn-t)">&#10003; Nadie sin luz ahora mismo.</div></div>`;
       }
-
       if(todayByCity.length){
-        const maxMins = Math.max(...todayByCity.map(r=>r.total_mins));
-        h+=`<div class="card card-last">
-          <div class="slabel">HOY POR CIUDAD</div>`;
+        const maxMins=Math.max(...todayByCity.map(r=>r.total_mins));
+        h+=`<div class="card card-last"><div class="slabel">HOY POR CIUDAD</div>`;
         todayByCity.forEach(r=>{
           const pct=maxMins>0?Math.round(r.total_mins/maxMins*100):0;
-          const isMe=r.city===myCity;
-          h+=`<div class="comm-city-row">
-            <div style="width:80px;font-size:13px;font-weight:${isMe?700:400};color:${isMe?'var(--amber)':'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.city}</div>
-            <div class="comm-bar-track"><div class="comm-bar-fill" style="width:${pct}%"></div></div>
-            <div style="width:60px;text-align:right;font-size:12px;color:var(--text2)">${fmtDur(r.total_mins)}</div>
-            <div style="width:50px;text-align:right;font-size:11px;color:var(--text3)">${r.cortes} corte${r.cortes!==1?'s':''}</div>
-          </div>`;
+          h+=`<div class="comm-city-row"><div style="width:80px;font-size:13px;font-weight:${r.city===myCity?700:400};color:${r.city===myCity?'var(--amber)':'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.city}</div><div class="comm-bar-track"><div class="comm-bar-fill" style="width:${pct}%"></div></div><div style="width:58px;text-align:right;font-size:12px;color:var(--text2)">${fmtDur(r.total_mins)}</div><div style="width:50px;text-align:right;font-size:11px;color:var(--text3)">${r.cortes} corte${r.cortes!==1?'s':''}</div></div>`;
         });
         h+=`</div>`;
-      } else {
-        h+=`<div class="card card-last"><div style="font-size:13px;color:var(--text3)">Sin cortes registrados hoy por otros usuarios.</div></div>`;
       }
     }
-
     h+=`<button class="bmore" onclick="loadCommunity()">&#8635; Actualizar</button>`;
   }
 
-  // ── HISTORIAL ─────────────────────────────────────────────
+  // HISTORIAL
   if(tab==='history'){
     const cortes=outages.filter(o=>o.end&&(o.type||'corte')==='corte');
     const flucs=outages.filter(o=>(o.type||'corte')==='fluctuacion');
     const totalMins=cortes.reduce((s,o)=>s+(o.duration_minutes||0),0);
-    h+=`<div style="font-size:13px;color:#94a3b8;margin-bottom:12px">
-      ${cortes.length} corte${cortes.length!==1?'s':''} &middot; ${fmtDur(totalMins)} sin luz
-      &nbsp;&middot;&nbsp; ${flucs.length} fluctuación${flucs.length!==1?'es':''}
-    </div>`;
-    if(!outages.length){ h+=`<div class="empty">${I.history}<p>Sin registros aún.</p></div>`; }
-    else {
+    h+=`<div style="font-size:13px;color:#94a3b8;margin-bottom:12px">${cortes.length} corte${cortes.length!==1?'s':''} &middot; ${fmtDur(totalMins)} sin luz &nbsp;&middot;&nbsp; ${flucs.length} fluctuación${flucs.length!==1?'es':''}</div>`;
+    if(!outages.length){h+=`<div class="empty">${I.history}<p>Sin registros aún.</p></div>`;}
+    else{
       const visible=outages.slice(0,S.histPage*PAGE);
       const hasMore=outages.length>visible.length;
       h+=`<div class="hlist">`;
@@ -701,54 +732,60 @@ function renderApp(){
         </div>`;
       });
       h+=`</div>`;
-      if(hasMore) h+=`<button class="bmore" onclick="loadMore()">Cargar ${Math.min(outages.length-visible.length,PAGE)} más &nbsp;·&nbsp; ${outages.length-visible.length} restantes</button>`;
+      if(hasMore) h+=`<button class="bmore" onclick="loadMore()">Cargar ${Math.min(outages.length-visible.length,PAGE)} más &nbsp;&middot;&nbsp; ${outages.length-visible.length} restantes</button>`;
     }
   }
 
   h+=`</div>`;
 
-  // ── PROFILE OVERLAY ───────────────────────────────────────
+  // PROFILE OVERLAY
   if(P.open){
-    h+=`<div class="overlay" onclick="if(event.target.classList.contains('overlay'))P.open=false,render()">
+    h+=`<div class="overlay" onclick="if(event.target.classList.contains('overlay')){P.open=false;render()}">
       <div class="overlay-card">
         <div class="overlay-header">
           <div class="overlay-title">@${A.user.username}</div>
           <button class="bicon" onclick="P.open=false;render()">${I.x}</button>
         </div>`;
-
-    if(P.loading){ h+=`<p style="color:var(--text3);font-size:14px">Cargando...</p>`; }
+    if(P.loading){h+=`<p style="color:var(--text3);font-size:14px">Cargando...</p>`;}
     else if(P.profile){
       const st=P.profile.stats;
       h+=`<div class="sgrid3" style="margin-bottom:16px">
         <div class="scard"><div class="sval" style="font-size:16px">${st.total_cortes}</div><div class="slb">Cortes</div></div>
         <div class="scard"><div class="sval" style="font-size:16px">${fmtDur(st.total_mins)}</div><div class="slb">Sin luz</div></div>
         <div class="scard"><div class="sval-ora" style="font-size:16px">${st.total_flucs}</div><div class="slb">Fluctuac.</div></div>
-      </div>`;
-
-      h+=`<div class="trow" style="margin-bottom:12px">
+      </div>
+      <div class="trow" style="margin-bottom:12px">
         <div class="field" style="margin:0"><label>Ciudad</label><input value="${P.editCity}" oninput="P.editCity=this.value" placeholder="Caracas"></div>
         <div class="field" style="margin:0"><label>Zona</label><input value="${P.editZone}" oninput="P.editZone=this.value" placeholder="Zona Norte"></div>
-      </div>`;
-
-      h+=`<div class="toggle-row" style="margin-bottom:14px">
-        <div><div class="toggle-label">Perfil público</div><div class="toggle-sub">Tu actividad es visible en Comunidad</div></div>
+      </div>
+      <div class="toggle-row" style="margin-bottom:14px">
+        <div><div style="font-size:14px">Perfil público</div><div style="font-size:12px;color:var(--text2)">Tu actividad es visible en Comunidad</div></div>
         <button class="toggle ${P.editPublic?'on':'off'}" onclick="P.editPublic=!P.editPublic;render()"></button>
-      </div>`;
-
-      h+=`<details style="margin-bottom:14px"><summary style="cursor:pointer;font-size:13px;color:var(--text2);padding:8px 0">Cambiar contraseña</summary>
+      </div>
+      <details style="margin-bottom:14px"><summary style="cursor:pointer;font-size:13px;color:var(--text2);padding:8px 0">Cambiar contraseña</summary>
         <div style="margin-top:10px">
           <div class="field"><label>Contraseña actual</label><input type="password" value="${P.pwCurrent}" oninput="P.pwCurrent=this.value"></div>
           <div class="field"><label>Nueva contraseña</label><input type="password" value="${P.pwNew}" oninput="P.pwNew=this.value"></div>
           ${P.pwErr?`<div class="auth-err">${P.pwErr}</div>`:''}
           ${P.pwOk?`<div style="color:var(--grn-t);font-size:13px;margin-bottom:8px">&#10003; Contraseña actualizada</div>`:''}
         </div>
-      </details>`;
-
-      if(P.saveOk) h+=`<div style="color:var(--grn-t);font-size:13px;margin-bottom:10px">&#10003; Cambios guardados</div>`;
-      h+=`<div style="display:flex;gap:8px;flex-wrap:wrap">
+      </details>
+      ${P.saveOk?`<div style="color:var(--grn-t);font-size:13px;margin-bottom:10px">&#10003; Cambios guardados</div>`:''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
         <button class="bsm" onclick="saveProfile()">Guardar cambios</button>
         <a href="/api/export" download style="text-decoration:none"><button class="bsm">${I.download} Exportar CSV</button></a>
-        <button class="bsm" style="margin-left:auto;color:var(--red-t);border-color:var(--red-bd)" onclick="doLogout()">${I.logout} Salir</button>
+        <button class="bsm" style="color:var(--red-t);border-color:var(--red-bd)" onclick="doLogout()">${I.logout} Cerrar sesión</button>
+      </div>
+      <div class="danger-zone">
+        <div class="danger-title">ZONA DE PELIGRO</div>
+        <div class="danger-desc">Borrar cuenta elimina permanentemente tu usuario y todos tus registros de la base de datos. Esta acción no se puede deshacer.</div>
+        ${P.confirmDelete
+          ?`<div style="font-size:13px;color:var(--red-t);margin-bottom:8px;font-weight:600">¿Estás seguro? Se borrarán ${st.total_cortes} cortes y ${st.total_flucs} fluctuaciones.</div>
+            <div style="display:flex;gap:8px">
+              <button class="byes" onclick="deleteAccount()">Sí, borrar todo</button>
+              <button class="bno" onclick="P.confirmDelete=false;render()">Cancelar</button>
+            </div>`
+          :`<button class="bdel-account" onclick="deleteAccount()">Borrar mi cuenta</button>`}
       </div>`;
     }
     h+=`</div></div>`;
@@ -765,12 +802,9 @@ function setA(k,v){ A[k]=v; A.authErr=''; render(); }
 function askDel(id){ S.deleteId=id; render(); }
 function cancelDel(){ S.deleteId=null; render(); }
 function loadMore(){ S.histPage++; render(); }
+function syncEndNow(){ S.endDate=nowDate(); S.endTime=nowTime(); render(); }
 
 init();
-</script>
-<script type="module">
-  import { inject } from 'https://cdn.jsdelivr.net/npm/@vercel/analytics@1/dist/index.js';
-  inject();
 </script>
 </body>
 </html>
