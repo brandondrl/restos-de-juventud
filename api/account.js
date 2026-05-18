@@ -6,12 +6,9 @@ module.exports = async (req, res) => {
   const user = requireAuth(req, res);
   if (!user) return;
   const sql = getSql();
-
-  // Delete everything belonging to this user
-  await sql`DELETE FROM active_outage WHERE user_id = ${user.id}`;
-  await sql`DELETE FROM outages       WHERE user_id = ${user.id}`;
-  await sql`DELETE FROM users         WHERE id      = ${user.id}`;
-
+  await sql`DELETE FROM active_outage_v2 WHERE user_id = ${user.id}`;
+  await sql`DELETE FROM outages WHERE user_id = ${user.id}`;
+  await sql`DELETE FROM users WHERE id = ${user.id}`;
   clearCookie(res);
   res.json({ ok: true });
 };
