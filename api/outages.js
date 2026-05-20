@@ -9,21 +9,27 @@ module.exports = async (req, res) => {
 
   if (req.method === 'GET') {
     const rows = await sql`SELECT * FROM outages WHERE user_id = ${user.id} ORDER BY start_time DESC`;
-    return res.json(rows.map(r => ({
-      id: r.id, start: r.start_time, end: r.end_time,
-      duration_minutes: r.duration_minutes, type: r.type || 'corte', notes: r.notes
+    return res.json(rows.map(row => ({
+      id: row.id,
+      start: row.start_time,
+      end: row.end_time,
+      duration_minutes: row.duration_minutes,
+      type: row.type || 'corte',
+      mood: row.mood || null,
+      notes: row.notes,
     })));
   }
 
   if (req.method === 'POST') {
-    const { id, start, end, duration_minutes, type, notes } = req.body;
+    const { id, start, end, duration_minutes, type, mood, notes } = req.body;
     if (!id || !start) return res.status(400).json({ error: 'id y start requeridos' });
     await sql`
-      INSERT INTO outages (id, user_id, start_time, end_time, duration_minutes, type, notes)
-      VALUES (${id}, ${user.id}, ${start}, ${end ?? null}, ${duration_minutes ?? null}, ${type ?? 'corte'}, ${notes ?? null})
+      INSERT INTO outages (id, user_id, start_time, end_time, duration_minutes, type, mood, notes)
+      VALUES (${id}, ${user.id}, ${start}, ${end ?? null}, ${duration_minutes ?? null}, ${type ?? 'corte'}, ${mood ?? null}, ${notes ?? null})
       ON CONFLICT (id) DO UPDATE
         SET end_time = EXCLUDED.end_time,
-            duration_minutes = EXCLUDED.duration_minutes
+            duration_minutes = EXCLUDED.duration_minutes,
+            mood = EXCLUDED.mood
     `;
     return res.json({ ok: true });
   }
