@@ -178,6 +178,19 @@ input[type=date]{color-scheme:dark;}
 .time-picker select{flex:1;padding:0 4px 0 10px;background:transparent;border:none;color:var(--text);font-size:14px;cursor:pointer;min-height:42px;}
 .time-picker select:last-child{padding:0 10px 0 4px;}
 .time-picker span{display:flex;align-items:center;color:var(--text2);font-weight:700;padding:0 2px;pointer-events:none;flex-shrink:0;}
+.time-picker input[type="number"] {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 14px;
+    min-height: 42px;
+    padding: 0 4px;
+    -moz-appearance: textfield;
+}
+.time-picker input[type="number"]::-webkit-outer-spin-button,
+.time-picker input[type="number"]::-webkit-inner-spin-button {
+    opacity: 1;
+}
 
 .mood-row{display:flex;gap:6px;margin-bottom:12px;}
 .mood-btn{flex:1;padding:8px 4px;border-radius:var(--rs);border:2px solid var(--border);background:var(--bg);cursor:pointer;text-align:center;touch-action:manipulation;transition:border-color .15s,background .15s;}

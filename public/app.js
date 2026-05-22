@@ -128,9 +128,13 @@ function buildTimePicker(stateKey, currentValue) {
     }).join('');
 
     return `<div class="time-picker">
-        <select onchange="setTimeHour('${stateKey}', this.value)">${hourOptions}</select>
-        <span>:</span>
-        <select onchange="setTimeMinute('${stateKey}', this.value)">${minuteOptions}</select>
+            <input type="number" min="0" max="23" value="${hour}"
+                style="width:50%;text-align:center"
+                onchange="setTimeHour('${stateKey}', padZero(Math.min(23,Math.max(0,+this.value))))">
+            <span>:</span>
+            <input type="number" min="0" max="59" value="${min}"
+                style="width:50%;text-align:center"
+                onchange="setTimeMinute('${stateKey}', padZero(Math.min(59,Math.max(0,+this.value))))">
     </div>`;
 }
 
