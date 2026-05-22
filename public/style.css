@@ -105,10 +105,10 @@ svg{overflow:hidden;flex-shrink:0;}
 input[type=date]{color-scheme:dark;}
 .trow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
 .trow-now {
-    display: flex;
-    gap: 15px; 
-    align-items: flex-end;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    align-items: end;
 }
 .trow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
 @media(max-width:480px){.trow3{grid-template-columns:1fr 1fr;}.trow3 .field:last-child{grid-column:1/-1;}}
@@ -220,7 +220,11 @@ input[type=date]{color-scheme:dark;}
     flex-shrink: 0;
 }
 .input-fecha {
-    flex: 0 1 auto;
+    width: 100%;
+}
+.input-fecha input[type="date"] {
+    width: 100%;
+    box-sizing: border-box;
 }
 .hora-action-group {
     display: flex;
