@@ -682,9 +682,17 @@ function renderLogTab(minutesWithoutPower) {
         </div>
         <div class="slabel">REGISTRAR REGRESO DE LUZ</div>
         <div class="trow-now">
-            <div class="ff"><label>Fecha</label><input type="date" value="${endDate}" onchange="updateAppState('endDate', this.value)"></div>
-            <div class="ff"><label>Hora</label>${buildTimePicker('endTime', endTime)}</div>
-            <button class="bnow" onclick="syncEndTimeToNow()">${ICONS.clock}Ahora</button>
+            <div class="ff input-fecha">
+                <label>Fecha</label>
+                <input type="date" value="${endDate}" onchange="updateAppState('endDate', this.value)">
+            </div>
+            <div class="ff">
+                <label>Hora</label>
+                <div class="hora-action-group">
+                    ${buildTimePicker('endTime', endTime)}
+                    <button class="bnow" onclick="syncEndTimeToNow()">${ICONS.clock}Ahora</button>
+                </div>
+            </div>
         </div>
         ${buildMoodPicker()}
         <button class="bmain bsuccess" onclick="endOutage()">${ICONS.bulb}Volvió la luz</button>
