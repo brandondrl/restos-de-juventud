@@ -117,11 +117,9 @@ function buildTimePicker(stateKey, currentValue) {
 
     return `<div class="time-picker">
         <input type="number" min="0" max="23" value="${currentHour}"
-            style="width:50%;text-align:center"
             onchange="setTimeHour('${stateKey}', padZero(Math.min(23,Math.max(0,+this.value))))">
         <span>:</span>
         <input type="number" min="0" max="59" value="${currentMin}"
-            style="width:50%;text-align:center"
             onchange="setTimeMinute('${stateKey}', padZero(Math.min(59,Math.max(0,+this.value))))">
     </div>`;
 }
