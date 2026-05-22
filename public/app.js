@@ -115,26 +115,14 @@ function buildTimePicker(stateKey, currentValue) {
     const currentHour = parts[0] || '00';
     const currentMin  = parts[1] || '00';
 
-    const hourOptions = Array.from({ length: 24 }, (_, i) => {
-        const value    = padZero(i);
-        const selected = value === currentHour ? ' selected' : '';
-        return `<option value="${value}"${selected}>${value}</option>`;
-    }).join('');
-
-    const minuteOptions = Array.from({ length: 60 }, (_, i) => {
-        const value    = padZero(i);
-        const selected = value === currentMin ? ' selected' : '';
-        return `<option value="${value}"${selected}>${value}</option>`;
-    }).join('');
-
     return `<div class="time-picker">
-            <input type="number" min="0" max="23" value="${hour}"
-                style="width:50%;text-align:center"
-                onchange="setTimeHour('${stateKey}', padZero(Math.min(23,Math.max(0,+this.value))))">
-            <span>:</span>
-            <input type="number" min="0" max="59" value="${min}"
-                style="width:50%;text-align:center"
-                onchange="setTimeMinute('${stateKey}', padZero(Math.min(59,Math.max(0,+this.value))))">
+        <input type="number" min="0" max="23" value="${currentHour}"
+            style="width:50%;text-align:center"
+            onchange="setTimeHour('${stateKey}', padZero(Math.min(23,Math.max(0,+this.value))))">
+        <span>:</span>
+        <input type="number" min="0" max="59" value="${currentMin}"
+            style="width:50%;text-align:center"
+            onchange="setTimeMinute('${stateKey}', padZero(Math.min(59,Math.max(0,+this.value))))">
     </div>`;
 }
 
