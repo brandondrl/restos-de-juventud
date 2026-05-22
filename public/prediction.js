@@ -1,171 +1,235 @@
-const DAYS_SHORT = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-const DAYS_FULL  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const DAYS_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const DAYS_FULL  = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+const WEEKS_FOR_FULL_CONFIDENCE = 4;
+
+function padZero(number) {
+    return String(number).padStart(2, '0');
+}
 
 function getHourlySlots(outage) {
-  const slots = [];
-  const cursor = new Date(outage.start);
-  cursor.setMinutes(0, 0, 0);
-  const end = new Date(outage.end);
-  while (cursor < end) {
-    slots.push({ day: cursor.getDay(), hour: cursor.getHours() });
-    cursor.setHours(cursor.getHours() + 1);
-  }
-  return slots;
+    const slots = [];
+    const cursor = new Date(outage.start);
+    cursor.setMinutes(0, 0, 0);
+    const endTime = new Date(outage.end);
+    while (cursor < endTime) {
+        slots.push({ dayOfWeek: cursor.getDay(), hour: cursor.getHours() });
+        cursor.setHours(cursor.getHours() + 1);
+    }
+    return slots;
 }
 
 function buildHeatmap(outages) {
-  const completed = outages.filter(o => o.start && o.end && (o.type || 'corte') === 'corte');
-  if (!completed.length) return null;
+    const completed = outages.filter(
+        o => o.start && o.end && (o.type || 'corte') === 'corte'
+    );
+    if (completed.length === 0) return null;
 
-  const allDates = completed.flatMap(o => [new Date(o.start), new Date(o.end)]);
-  const earliest = new Date(Math.min(...allDates.map(d => d.getTime())));
+    const allDates = completed.flatMap(o => [new Date(o.start), new Date(o.end)]);
+    const earliestDate = new Date(Math.min(...allDates.map(d => d.getTime())));
 
-  const observed = {};
-  const hits     = {};
+    const observationCount = {};
+    const hitCount = {};
 
-  const cursor = new Date(earliest);
-  cursor.setHours(0, 0, 0, 0);
-  while (cursor <= new Date()) {
-    for (let h = 0; h < 24; h++) {
-      const key = `${cursor.getDay()}_${h}`;
-      observed[key] = (observed[key] || 0) + 1;
+    const cursor = new Date(earliestDate);
+    cursor.setHours(0, 0, 0, 0);
+    while (cursor <= new Date()) {
+        for (let hour = 0; hour < 24; hour++) {
+            const key = `${cursor.getDay()}_${hour}`;
+            observationCount[key] = (observationCount[key] || 0) + 1;
+        }
+        cursor.setDate(cursor.getDate() + 1);
     }
-    cursor.setDate(cursor.getDate() + 1);
-  }
 
-  completed.forEach(o => {
-    getHourlySlots(o).forEach(({ day, hour }) => {
-      const key = `${day}_${hour}`;
-      hits[key] = (hits[key] || 0) + 1;
+    completed.forEach(outage => {
+        getHourlySlots(outage).forEach(({ dayOfWeek, hour }) => {
+            const key = `${dayOfWeek}_${hour}`;
+            hitCount[key] = (hitCount[key] || 0) + 1;
+        });
     });
-  });
 
-  const OBSERVATIONS_FOR_FULL_CONFIDENCE = 4;
-
-  const heatmap = {};
-  for (let d = 0; d < 7; d++) {
-    for (let h = 0; h < 24; h++) {
-      const key = `${d}_${h}`;
-      const ob  = observed[key] || 0;
-      const hi  = hits[key]    || 0;
-      heatmap[key] = {
-        prob: ob > 0 ? (hi + 0.5) / (ob + 1) : 0,
-        conf: Math.min(ob / OBSERVATIONS_FOR_FULL_CONFIDENCE, 1),
-        hits: hi,
-        obs:  ob,
-      };
+    const heatmap = {};
+    for (let day = 0; day < 7; day++) {
+        for (let hour = 0; hour < 24; hour++) {
+            const key = `${day}_${hour}`;
+            const observations = observationCount[key] || 0;
+            const hits = hitCount[key] || 0;
+            heatmap[key] = {
+                probability: observations > 0 ? (hits + 0.5) / (observations + 1) : 0,
+                confidence:  Math.min(observations / WEEKS_FOR_FULL_CONFIDENCE, 1),
+                hits,
+                observations,
+            };
+        }
     }
-  }
-  return heatmap;
+    return heatmap;
 }
 
-function avgDurByHour(outages) {
-  const completed = outages.filter(o => o.start && o.end && (o.type || 'corte') === 'corte' && o.duration_minutes > 0);
-  const grouped = {};
-  completed.forEach(o => {
-    const h = new Date(o.start).getHours();
-    if (!grouped[h]) grouped[h] = [];
-    grouped[h].push(o.duration_minutes);
-  });
-  const result = {};
-  Object.entries(grouped).forEach(([h, arr]) => {
-    result[+h] = arr.reduce((a, b) => a + b, 0) / arr.length;
-  });
-  return result;
+function averageDurationByHour(outages) {
+    const completed = outages.filter(
+        o => o.start && o.end && (o.type || 'corte') === 'corte' && o.duration_minutes > 0
+    );
+    const grouped = {};
+    completed.forEach(outage => {
+        const hour = new Date(outage.start).getHours();
+        if (!grouped[hour]) grouped[hour] = [];
+        grouped[hour].push(outage.duration_minutes);
+    });
+    const averages = {};
+    Object.entries(grouped).forEach(([hour, durations]) => {
+        averages[+hour] = durations.reduce((sum, d) => sum + d, 0) / durations.length;
+    });
+    return averages;
 }
 
-const adjProb   = (prob, conf) => conf < 0.15 ? 0 : prob * conf;
-const riskColor = p => p < 0.05 ? '#475569' : p < 0.2 ? '#639922' : p < 0.4 ? '#d97706' : p < 0.6 ? '#e24b4a' : '#b91c1c';
-const riskLabel = (p, conf) => conf < 0.15 ? 'Sin datos' : p < 0.05 ? 'Sin riesgo' : p < 0.2 ? 'Bajo' : p < 0.4 ? 'Moderado' : p < 0.6 ? 'Alto' : 'Muy alto';
+function adjustedProbability(rawProbability, confidence) {
+    return confidence < 0.15 ? 0 : rawProbability * confidence;
+}
+
+function riskColor(probability) {
+    if (probability < 0.05) return '#475569';
+    if (probability < 0.2)  return '#639922';
+    if (probability < 0.4)  return '#d97706';
+    if (probability < 0.6)  return '#e24b4a';
+    return '#b91c1c';
+}
+
+function riskLabel(probability, confidence) {
+    if (confidence < 0.15)  return 'Sin datos';
+    if (probability < 0.05) return 'Sin riesgo';
+    if (probability < 0.2)  return 'Bajo';
+    if (probability < 0.4)  return 'Moderado';
+    if (probability < 0.6)  return 'Alto';
+    return 'Muy alto';
+}
 
 function getDayForecast(predictions, outages) {
-  if (!predictions.some(p => p.conf >= 0.15)) return { type: 'nodata' };
+    const hasEnoughData = predictions.some(p => p.confidence >= 0.15);
+    if (!hasEnoughData) return { type: 'nodata' };
 
-  const risky = predictions.filter(({ prob, conf }) => adjProb(prob, conf) >= 0.18);
-  if (!risky.length) return { type: 'safe' };
+    const riskyHours = predictions.filter(
+        p => adjustedProbability(p.probability, p.confidence) >= 0.18
+    );
+    if (riskyHours.length === 0) return { type: 'safe' };
 
-  const ranges = [];
-  let rs = null, re = null;
-  risky.forEach(({ hour }) => {
-    if (rs === null)        { rs = hour; re = hour; }
-    else if (hour === re+1) { re = hour; }
-    else { ranges.push([rs, re]); rs = hour; re = hour; }
-  });
-  if (rs !== null) ranges.push([rs, re]);
+    const ranges = [];
+    let rangeStart = null;
+    let rangeEnd   = null;
+    riskyHours.forEach(({ hour }) => {
+        if (rangeStart === null) {
+            rangeStart = hour;
+            rangeEnd   = hour;
+        } else if (hour === rangeEnd + 1) {
+            rangeEnd = hour;
+        } else {
+            ranges.push([rangeStart, rangeEnd]);
+            rangeStart = hour;
+            rangeEnd   = hour;
+        }
+    });
+    if (rangeStart !== null) ranges.push([rangeStart, rangeEnd]);
 
-  const peak    = risky.reduce((mx, p) => adjProb(p.prob, p.conf) > adjProb(mx.prob, mx.conf) ? p : mx, risky[0]);
-  const rText   = ranges.map(([s, e]) => s === e ? `las ${pad(s)}:00` : `las ${pad(s)}:00–${pad(e+1)}:00`);
-  const joined  = rText.length === 1 ? rText[0] : rText.slice(0,-1).join(', ') + ' y ' + rText.slice(-1);
-  const durByH  = avgDurByHour(outages);
-  const durs    = risky.map(p => p.hour).filter(h => durByH[h]).map(h => durByH[h]);
-  const avgDur  = durs.length ? Math.round(durs.reduce((a, b) => a + b, 0) / durs.length) : null;
+    const peakHour = riskyHours.reduce((peak, current) =>
+        adjustedProbability(current.probability, current.confidence) >
+        adjustedProbability(peak.probability,    peak.confidence) ? current : peak,
+        riskyHours[0]
+    );
 
-  return {
-    type: 'risk',
-    text: `Es probable que se vaya la luz entre ${joined}.`,
-    peakH: peak.hour,
-    peakP: Math.round(adjProb(peak.prob, peak.conf) * 100),
-    peakLevel: peak.prob < 0.4 ? 'moderado' : 'alto',
-    avgDur,
-  };
+    const rangeTexts = ranges.map(([start, end]) =>
+        start === end
+            ? `las ${padZero(start)}:00`
+            : `las ${padZero(start)}:00–${padZero(end + 1)}:00`
+    );
+    const rangeDescription = rangeTexts.length === 1
+        ? rangeTexts[0]
+        : rangeTexts.slice(0, -1).join(', ') + ' y ' + rangeTexts.slice(-1);
+
+    const durationsByHour  = averageDurationByHour(outages);
+    const riskyDurations   = riskyHours
+        .map(p => p.hour)
+        .filter(h => durationsByHour[h])
+        .map(h => durationsByHour[h]);
+    const estimatedMinutes = riskyDurations.length > 0
+        ? Math.round(riskyDurations.reduce((sum, d) => sum + d, 0) / riskyDurations.length)
+        : null;
+
+    return {
+        type: 'risk',
+        message: `Es probable que se vaya la luz entre ${rangeDescription}.`,
+        peakHour:          peakHour.hour,
+        peakPercent:       Math.round(adjustedProbability(peakHour.probability, peakHour.confidence) * 100),
+        peakLevel:         peakHour.probability < 0.4 ? 'moderado' : 'alto',
+        estimatedMinutes,
+    };
 }
 
-function calcStats(outages) {
-  const now          = new Date();
-  const startOfWeek  = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0,0,0,0);
-  const startOfDay   = new Date(now); startOfDay.setHours(0,0,0,0);
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+function computeStatistics(outages) {
+    const now           = new Date();
+    const startOfToday  = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+    const startOfWeek   = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0, 0, 0, 0);
+    const startOfMonth  = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfYear   = new Date(now.getFullYear(), 0, 1);
 
-  const completed = outages.filter(o => o.start && o.end && (o.type || 'corte') === 'corte' && o.duration_minutes != null);
-  const flucs     = outages.filter(o => (o.type || 'corte') === 'fluctuacion');
-  const sum       = arr => arr.reduce((s, o) => s + (o.duration_minutes || 0), 0);
+    const completed    = outages.filter(o => o.start && o.end && (o.type || 'corte') === 'corte' && o.duration_minutes != null);
+    const fluctuations = outages.filter(o => (o.type || 'corte') === 'fluctuacion');
+    const sumMinutes   = list => list.reduce((total, o) => total + (o.duration_minutes || 0), 0);
 
-  const week   = completed.filter(o => new Date(o.start) >= startOfWeek);
-  const month  = completed.filter(o => new Date(o.start) >= startOfMonth);
-  const year   = completed.filter(o => new Date(o.start) >= new Date(now.getFullYear(), 0, 1));
-  const longest = completed.reduce((mx, o) => (o.duration_minutes || 0) > (mx?.duration_minutes || 0) ? o : mx, null);
+    const thisWeek  = completed.filter(o => new Date(o.start) >= startOfWeek);
+    const thisMonth = completed.filter(o => new Date(o.start) >= startOfMonth);
+    const thisYear  = completed.filter(o => new Date(o.start) >= startOfYear);
 
-  const byDay = {};
-  completed.forEach(o => {
-    const key = new Date(o.start).toDateString();
-    if (!byDay[key]) byDay[key] = { mins: 0, count: 0, date: new Date(o.start) };
-    byDay[key].mins  += o.duration_minutes || 0;
-    byDay[key].count += 1;
-  });
-  const worstDay   = Object.values(byDay).sort((a, b) => b.mins - a.mins)[0] || null;
-  const slotCounts = {};
-  completed.forEach(o => getHourlySlots(o).forEach(({ hour }) => { slotCounts[hour] = (slotCounts[hour] || 0) + 1; }));
-  const peakEntry  = Object.entries(slotCounts).sort((a, b) => b[1] - a[1])[0];
-  const totalDays  = completed.length > 0
-    ? Math.max(1, Math.ceil((now - new Date(Math.min(...completed.map(o => new Date(o.start).getTime())))) / 86400000))
-    : 1;
+    const longestOutage = completed.reduce(
+        (longest, o) => (o.duration_minutes || 0) > (longest?.duration_minutes || 0) ? o : longest,
+        null
+    );
 
-  return {
-    weekMins:   sum(week),   weekCount:  week.length,
-    monthMins:  sum(month),  monthCount: month.length,
-    yearMins:   sum(year),   yearCount:  year.length,
-    longest, worstDay,
-    peakHour:   peakEntry ? +peakEntry[0] : null,
-    dailyAvg:   sum(completed) / totalDays,
-    flucsToday: flucs.filter(o => new Date(o.start) >= startOfDay).length,
-    flucsWeek:  flucs.filter(o => new Date(o.start) >= startOfWeek).length,
-    flucsMonth: flucs.filter(o => new Date(o.start) >= startOfMonth).length,
-  };
+    const byDay = {};
+    completed.forEach(o => {
+        const key = new Date(o.start).toDateString();
+        if (!byDay[key]) byDay[key] = { minutes: 0, count: 0, date: new Date(o.start) };
+        byDay[key].minutes += o.duration_minutes || 0;
+        byDay[key].count++;
+    });
+    const worstDay = Object.values(byDay).sort((a, b) => b.minutes - a.minutes)[0] || null;
+
+    const slotFrequency = {};
+    completed.forEach(o => {
+        getHourlySlots(o).forEach(({ hour }) => {
+            slotFrequency[hour] = (slotFrequency[hour] || 0) + 1;
+        });
+    });
+    const peakEntry = Object.entries(slotFrequency).sort((a, b) => b[1] - a[1])[0];
+
+    const daysTracked = completed.length > 0
+        ? Math.max(1, Math.ceil((now - new Date(Math.min(...completed.map(o => new Date(o.start).getTime())))) / 86400000))
+        : 1;
+
+    return {
+        weekMinutes:   sumMinutes(thisWeek),   weekCount:  thisWeek.length,
+        monthMinutes:  sumMinutes(thisMonth),  monthCount: thisMonth.length,
+        yearMinutes:   sumMinutes(thisYear),   yearCount:  thisYear.length,
+        longestOutage,
+        worstDay,
+        peakHour:      peakEntry ? +peakEntry[0] : null,
+        dailyAverage:  sumMinutes(completed) / daysTracked,
+        fluctuationsToday:     fluctuations.filter(o => new Date(o.start) >= startOfToday).length,
+        fluctuationsThisWeek:  fluctuations.filter(o => new Date(o.start) >= startOfWeek).length,
+        fluctuationsThisMonth: fluctuations.filter(o => new Date(o.start) >= startOfMonth).length,
+    };
 }
 
-function calcAvgMood(outages) {
-  const withMood = outages.filter(o => o.mood && o.end && (o.type || 'corte') === 'corte');
-  if (!withMood.length) return null;
-  const recent = withMood.slice(0, 20);
-  return { avg: recent.reduce((s, o) => s + o.mood, 0) / recent.length, count: withMood.length };
+function computeAverageMood(outages) {
+    const withMood = outages.filter(o => o.mood && o.end && (o.type || 'corte') === 'corte');
+    if (withMood.length === 0) return null;
+    const recent  = withMood.slice(0, 20);
+    const average = recent.reduce((sum, o) => sum + o.mood, 0) / recent.length;
+    return { average, totalCount: withMood.length };
 }
 
-function calcTrainingProgress(outages) {
-  const completed = outages.filter(o => o.start && o.end && (o.type || 'corte') === 'corte');
-  if (!completed.length) return { weeks: 0, percent: 0, enough: false };
-  const earliest  = new Date(Math.min(...completed.map(o => new Date(o.start).getTime())));
-  const weeks     = (new Date() - earliest) / (7 * 24 * 3600 * 1000);
-  const TARGET    = 4;
-  const percent   = Math.min(Math.round((weeks / TARGET) * 100), 100);
-  return { weeks: Math.floor(weeks), percent, enough: weeks >= TARGET };
+function computeTrainingProgress(outages) {
+    const completed = outages.filter(o => o.start && o.end && (o.type || 'corte') === 'corte');
+    if (completed.length === 0) return { weeks: 0, percent: 0, isReady: false };
+    const earliestDate = new Date(Math.min(...completed.map(o => new Date(o.start).getTime())));
+    const weeksElapsed = (new Date() - earliestDate) / (7 * 24 * 3600 * 1000);
+    const percent      = Math.min(Math.round((weeksElapsed / WEEKS_FOR_FULL_CONFIDENCE) * 100), 100);
+    return { weeks: Math.floor(weeksElapsed), percent, isReady: weeksElapsed >= WEEKS_FOR_FULL_CONFIDENCE };
 }
