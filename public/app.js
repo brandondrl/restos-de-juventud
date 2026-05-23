@@ -139,62 +139,61 @@ function buildMoodPicker() {
 
     return `<div style="margin-bottom:12px">
         <div style="font-size:12px;color:var(--text2);margin-bottom:6px">
-            ¿Cómo te sientes? <span style="color:var(--text3)">(opcional)</span>
+            ¿Cómo te sientes con este corte?
         </div>
         <div class="mood-row">${buttons}</div>
     </div>`;
 }
 
 function buildMoodGauge(moodData) {
-    const centerX   = 100;
-    const centerY   = 98;
-    const outerRadius = 75;
-    const innerRadius = 52;
-    const needleLength = 64;
+    const cx = 100, cy = 88, outerR = 72, innerR = 50, needleLen = 60;
+    const GAP_DEGREES = 2;
 
-    function polarPoint(angleDegrees, radius) {
-        const radians = angleDegrees * Math.PI / 180;
-        return [centerX + radius * Math.cos(radians), centerY - radius * Math.sin(radians)];
+    function polarPoint(angleDeg, r) {
+        const rad = angleDeg * Math.PI / 180;
+        return [cx + r * Math.cos(rad), cy - r * Math.sin(rad)];
     }
 
-    function arcSegmentPath(startAngle, endAngle, color, opacity) {
-        const fmt = v => v.toFixed(2);
-        const [ox1, oy1] = polarPoint(startAngle, outerRadius);
-        const [ox2, oy2] = polarPoint(endAngle,   outerRadius);
-        const [ix1, iy1] = polarPoint(startAngle, innerRadius);
-        const [ix2, iy2] = polarPoint(endAngle,   innerRadius);
-        return `<path d="M ${fmt(ox1)} ${fmt(oy1)} A ${outerRadius} ${outerRadius} 0 0 0 ${fmt(ox2)} ${fmt(oy2)} L ${fmt(ix2)} ${fmt(iy2)} A ${innerRadius} ${innerRadius} 0 0 1 ${fmt(ix1)} ${fmt(iy1)} Z" fill="${color}" opacity="${opacity}"/>`;
+    function arcSegment(startAngle, endAngle, color, opacity) {
+        const s1 = startAngle - GAP_DEGREES;
+        const e1 = endAngle   + GAP_DEGREES;
+        const f  = v => v.toFixed(2);
+        const [ox1, oy1] = polarPoint(s1, outerR);
+        const [ox2, oy2] = polarPoint(e1, outerR);
+        const [ix1, iy1] = polarPoint(s1, innerR);
+        const [ix2, iy2] = polarPoint(e1, innerR);
+        return `<path d="M ${f(ox1)} ${f(oy1)} A ${outerR} ${outerR} 0 0 0 ${f(ox2)} ${f(oy2)} L ${f(ix2)} ${f(iy2)} A ${innerR} ${innerR} 0 0 1 ${f(ix1)} ${f(iy1)} Z" fill="${color}" opacity="${opacity}"/>`;
     }
 
-    const segmentOpacity = moodData ? '0.9' : '0.2';
-    const segments = MOOD_OPTIONS.map((mood, index) =>
-        arcSegmentPath(180 - index * 36, 180 - (index + 1) * 36, mood.color, segmentOpacity)
+    const opacity  = moodData ? '0.92' : '0.18';
+    const segments = MOOD_OPTIONS.map((mood, i) =>
+        arcSegment(180 - i * 36, 180 - (i + 1) * 36, mood.color, opacity)
     ).join('');
 
     if (!moodData) {
-        return `<svg viewBox="0 0 200 115" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:220px;display:block;margin:0 auto">
+        return `<svg viewBox="0 0 200 125" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:240px;display:block;margin:0 auto">
             ${segments}
-            <circle cx="${centerX}" cy="${centerY}" r="5" fill="#334155"/>
-            <text x="${centerX}" y="78" text-anchor="middle" fill="#475569" font-size="13" font-family="system-ui">Sin datos aún</text>
-            <text x="${centerX}" y="93" text-anchor="middle" fill="#334155" font-size="10" font-family="system-ui">Registra tu estado al guardar cortes</text>
+            <circle cx="${cx}" cy="${cy}" r="5" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+            <text x="${cx}" y="108" text-anchor="middle" fill="#475569" font-size="12" font-family="system-ui">Sin datos aún</text>
+            <text x="${cx}" y="122" text-anchor="middle" fill="#334155" font-size="10" font-family="system-ui">Registra tu estado de ánimo para verlo aquí</text>
         </svg>`;
     }
 
     const { average, totalCount } = moodData;
-    const needleAngle  = 180 - ((average - 1) / 4) * 180;
-    const [needleX, needleY] = polarPoint(needleAngle, needleLength);
-    const moodIndex    = Math.min(4, Math.max(0, Math.round(average) - 1));
+    const needleAngle = 180 - ((average - 1) / 4) * 180;
+    const [nx, ny]    = polarPoint(needleAngle, needleLen);
+    const moodIndex   = Math.min(4, Math.max(0, Math.round(average) - 1));
     const displayValue = Math.round(((average - 1) / 4) * 100);
     const currentMood  = MOOD_OPTIONS[moodIndex];
     const countLabel   = `${totalCount} registro${totalCount !== 1 ? 's' : ''}`;
+    const f = v => v.toFixed(2);
 
-    return `<svg viewBox="0 0 200 115" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:220px;display:block;margin:0 auto">
+    return `<svg viewBox="0 0 200 125" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:240px;display:block;margin:0 auto">
         ${segments}
-        <line x1="${centerX}" y1="${centerY}" x2="${needleX.toFixed(2)}" y2="${needleY.toFixed(2)}" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-        <text x="${centerX}" y="76" text-anchor="middle" fill="white" font-size="24" font-weight="700" font-family="system-ui">${displayValue}</text>
-        <text x="${centerX}" y="92" text-anchor="middle" fill="${currentMood.color}" font-size="11" font-weight="600" font-family="system-ui">${currentMood.label}</text>
-        <circle cx="${centerX}" cy="${centerY}" r="5" fill="white"/>
-        <text x="${centerX}" y="112" text-anchor="middle" fill="#475569" font-size="9" font-family="system-ui">${countLabel}</text>
+        <line x1="${cx}" y1="${cy}" x2="${f(nx)}" y2="${f(ny)}" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="${cx}" cy="${cy}" r="5" fill="white"/>
+        <text x="${cx}" y="108" text-anchor="middle" fill="white" font-size="26" font-weight="700" font-family="system-ui">${displayValue}</text>
+        <text x="${cx}" y="122" text-anchor="middle" fill="${currentMood.color}" font-size="12" font-weight="600" font-family="system-ui">${currentMood.label} &middot; <tspan fill="#475569" font-weight="400">${countLabel}</tspan></text>
     </svg>`;
 }
 
@@ -267,6 +266,7 @@ async function startOutage() {
 
 async function endOutage() {
     if (!appState.activeOutage) return;
+    if (!appState.selectedMood) { alert('Selecciona cómo te sientes antes de registrar el regreso.'); return; }
     const endTime   = new Date(`${appState.endDate}T${appState.endTime}`);
     const startTime = new Date(appState.activeOutage.start);
     if (endTime <= startTime) {
@@ -313,6 +313,7 @@ async function recordFluctuation() {
 async function saveManualOutage() {
     const { manualDate, manualStartTime, manualEndTime } = appState;
     if (!manualDate) { alert('Completa todos los campos'); return; }
+    if (!appState.selectedMood) { alert('Selecciona cómo te sientes antes de guardar.'); return; }
     const startTime = new Date(`${manualDate}T${manualStartTime}`);
     const endTime   = new Date(`${manualDate}T${manualEndTime}`);
     if (isNaN(startTime) || isNaN(endTime) || endTime <= startTime) {
