@@ -157,7 +157,7 @@ function getDayForecast(predictions, outages) {
         message: `Es probable que se vaya la luz entre ${rangeDescription}.`,
         peakHour:          peakHour.hour,
         peakPercent:       Math.round(adjustedProbability(peakHour.probability, peakHour.confidence) * 100),
-        peakLevel:         peakHour.probability < 0.4 ? 'moderado' : 'alto',
+        peakLevel: adjustedProbability(peakHour.probability, peakHour.confidence) < 0.4 ? 'moderado' : 'alto',
         estimatedMinutes,
     };
 }

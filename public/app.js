@@ -447,7 +447,14 @@ function renderAuthScreen() {
                 <input placeholder="Caracas" value="${authState.registerForm.city}" oninput="authState.registerForm.city = this.value">
             </div>
             <div class="field" style="margin:0"><label>Zona <span style="color:var(--text3)">(opcional)</span></label>
-                <input placeholder="Zona Norte" value="${authState.registerForm.zone}" oninput="authState.registerForm.zone = this.value">
+                <select onchange="authState.registerForm.zone = this.value">
+                    <option value="">Sin zona</option>
+                    <option value="Norte" ${authState.registerForm.zone==='Norte'?'selected':''}>Norte</option>
+                    <option value="Centro" ${authState.registerForm.zone==='Centro'?'selected':''}>Centro</option>
+                    <option value="Sur" ${authState.registerForm.zone==='Sur'?'selected':''}>Sur</option>
+                    <option value="Este" ${authState.registerForm.zone==='Este'?'selected':''}>Este</option>
+                    <option value="Oeste" ${authState.registerForm.zone==='Oeste'?'selected':''}>Oeste</option>
+                </select>
             </div>
         </div>
         <button class="bmain bsuccess" onclick="register()">${ICONS.bolt}Crear cuenta</button>
@@ -561,7 +568,7 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
         forecastContent = `
             <div style="font-size:15px;font-weight:600;margin-bottom:6px">${forecast.message}</div>
             <div style="font-size:12px;color:${levelColor};margin-bottom:${forecast.estimatedMinutes ? '4px' : '0'}">
-                Pico: ${padZero(forecast.peakHour)}:00 &middot; ${forecast.peakPercent}% &middot; riesgo ${forecast.peakLevel}
+                A las: ${padZero(forecast.peakHour)}:00 &middot; ${forecast.peakPercent}% &middot; riesgo ${forecast.peakLevel}
             </div>
             ${durationLine}`;
     }
@@ -950,7 +957,14 @@ function renderProfileOverlay() {
                 <input value="${profileState.editCity}" oninput="profileState.editCity = this.value" placeholder="Caracas">
             </div>
             <div class="field" style="margin:0"><label>Zona</label>
-                <input value="${profileState.editZone}" oninput="profileState.editZone = this.value" placeholder="Zona Norte">
+                <select onchange="profileState.editZone = this.value">
+                    <option value="">Sin zona</option>
+                    <option value="Norte" ${profileState.editZone==='Norte'?'selected':''}>Norte</option>
+                    <option value="Centro" ${profileState.editZone==='Centro'?'selected':''}>Centro</option>
+                    <option value="Sur" ${profileState.editZone==='Sur'?'selected':''}>Sur</option>
+                    <option value="Este" ${profileState.editZone==='Este'?'selected':''}>Este</option>
+                    <option value="Oeste" ${profileState.editZone==='Oeste'?'selected':''}>Oeste</option>
+                </select>
             </div>
         </div>
         <div class="toggle-row" style="margin-bottom:14px">
