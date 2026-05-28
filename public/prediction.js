@@ -48,12 +48,17 @@ function buildHeatmap(outages) {
     }
 
     const windowedCompleted = completed.filter(o => new Date(o.start) >= effectiveStart);
+    const startHitCount = {};
 
     windowedCompleted.forEach(outage => {
         getHourlySlots(outage).forEach(({ dayOfWeek, hour }) => {
             const key = `${dayOfWeek}_${hour}`;
             hitCount[key] = (hitCount[key] || 0) + 1;
         });
+        const startDay  = new Date(outage.start).getDay();
+        const startHour = new Date(outage.start).getHours();
+        const startKey  = `${startDay}_${startHour}`;
+        startHitCount[startKey] = (startHitCount[startKey] || 0) + 1;
     });
 
     const heatmap = {};
@@ -66,6 +71,7 @@ function buildHeatmap(outages) {
                 probability: observations > 0 ? (hits + 0.5) / (observations + 1) : 0,
                 confidence:  Math.min(observations / WEEKS_FOR_FULL_CONFIDENCE, 1),
                 hits,
+                startHits: startHitCount[key] || 0,
                 observations,
             };
         }
@@ -124,9 +130,11 @@ function getDayForecast(predictions, outages) {
     const hasEnoughData = predictions.some(p => p.confidence >= 0.15);
     if (!hasEnoughData) return { type: 'nodata' };
 
-    const riskyHours = predictions.filter(
-        p => adjustedProbability(p.probability, p.confidence) >= 0.18
-    );
+    const riskyHours = predictions.filter(p => {
+        if (adjustedProbability(p.probability, p.confidence) < 0.18) return false;
+        if (p.hour <= 4 && (p.startHits || 0) === 0) return false;
+        return true;
+    });
     if (riskyHours.length === 0) return { type: 'safe' };
 
     const ranges = [];

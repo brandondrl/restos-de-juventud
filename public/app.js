@@ -602,7 +602,7 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
         forecastContent = `
             <div style="font-size:15px;font-weight:600;margin-bottom:6px">${forecast.message}</div>
             <div style="font-size:12px;color:${levelColor};margin-bottom:${forecast.estimatedMinutes ? '4px' : '0'}">
-                Hora pico: ${padZero(forecast.peakHour)}:00 &middot; ${forecast.peakPercent}% &middot; riesgo ${forecast.peakLevel}
+                A las: ${padZero(forecast.peakHour)}:00 &middot; ${forecast.peakPercent}% &middot; riesgo ${forecast.peakLevel}
             </div>
             ${durationLine}`;
     }
@@ -832,7 +832,6 @@ function renderPredictTab(now, heatmap, todayPredictions) {
         return `<div class="empty">${ICONS.chart}<p>Necesitas al menos 1 corte para ver predicciones.</p></div>`;
     }
 
-    const durationsByHour = averageDurationByHour(appState.outages);
     const dayName = DAYS_FULL[now.getDay()].toUpperCase();
 
     const hourRows = todayPredictions
@@ -840,14 +839,12 @@ function renderPredictTab(now, heatmap, todayPredictions) {
         .map(({ hour, probability, confidence }) => {
             const prob          = adjustedProbability(probability, confidence);
             const isCurrentHour = hour === now.getHours();
-            const estimated     = durationsByHour[hour];
-            const durationHint  = estimated && prob >= 0.18 ? ` ~${formatDuration(estimated)}` : '';
             const percentText   = probability > 0 && confidence >= 0.15 ? `${Math.round(prob * 100)}%` : '—';
             return `<div class="prow ${isCurrentHour ? 'now' : ''}">
                 <div class="phour ${isCurrentHour ? 'now' : ''}">${padZero(hour)}:00${isCurrentHour ? ' ◀' : ''}</div>
                 <div class="ptrack"><div class="pfill" style="width:${Math.round(prob * 100)}%;background:${riskColor(prob)}"></div></div>
                 <div class="ppct">${percentText}</div>
-                <div class="plabel" style="color:${riskColor(prob)}">${riskLabel(prob, confidence)}${durationHint}</div>
+                <div class="plabel" style="color:${riskColor(prob)}">${riskLabel(prob, confidence)}</div>
             </div>`;
         }).join('');
 
