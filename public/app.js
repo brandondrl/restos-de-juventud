@@ -924,19 +924,42 @@ function renderCommunityTab(now) {
 
     let cityRankingCard = '';
     if (todayByCity.length > 0) {
-        const maxMinutes = Math.max(...todayByCity.map(r => r.total_mins));
-        const cityRows   = todayByCity.map(row => {
-            const isMyCity    = row.city === myCity;
-            const barWidth    = maxMinutes > 0 ? Math.round(row.total_mins / maxMinutes * 100) : 0;
-            const cityStyle   = `font-weight:${isMyCity ? 700 : 400};color:${isMyCity ? 'var(--amber)' : 'var(--text)'}`;
-            return `<div class="comm-city-row">
-                <div style="width:80px;font-size:13px;${cityStyle};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${row.city}</div>
-                <div class="comm-bar-track"><div class="comm-bar-fill" style="width:${barWidth}%"></div></div>
-                <div style="width:58px;text-align:right;font-size:12px;color:var(--text2)">${formatDuration(row.total_mins)}</div>
-                <div style="width:52px;text-align:right;font-size:11px;color:var(--text3)">${row.cortes} corte${row.cortes !== 1 ? 's' : ''}</div>
+        const grouped = {};
+        todayByCity.forEach(row => {
+            if (!grouped[row.city]) grouped[row.city] = [];
+            grouped[row.city].push(row);
+        });
+
+        const cities = Object.keys(grouped).sort((a, b) => {
+            if (a === myCity) return -1;
+            if (b === myCity) return 1;
+            return a.localeCompare(b);
+        });
+
+        const cityBlocks = cities.map(city => {
+            const zones    = grouped[city];
+            const isMyCity = city === myCity;
+            const maxMins  = Math.max(...zones.map(z => z.total_mins));
+
+            const zoneRows = zones.map(z => {
+                const barWidth = maxMins > 0 ? Math.round(z.total_mins / maxMins * 100) : 0;
+                return `<div class="comm-city-row">
+                    <div style="width:72px;font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${z.zone}</div>
+                    <div class="comm-bar-track"><div class="comm-bar-fill" style="width:${barWidth}%"></div></div>
+                    <div style="width:52px;text-align:right;font-size:12px;color:var(--text2)">${formatDuration(z.total_mins)}</div>
+                    <div style="width:52px;text-align:right;font-size:11px;color:var(--text3)">${z.cortes} corte${z.cortes !== 1 ? 's' : ''}</div>
+                </div>`;
+            }).join('');
+
+            return `<div style="margin-bottom:14px">
+                <div style="font-size:13px;font-weight:700;color:${isMyCity ? 'var(--amber)' : 'var(--text)'};margin-bottom:6px">
+                    ${isMyCity ? '📍 ' : ''}${city}
+                </div>
+                ${zoneRows}
             </div>`;
         }).join('');
-        cityRankingCard = `<div class="card card-last"><div class="slabel">HOY POR CIUDAD</div>${cityRows}</div>`;
+
+        cityRankingCard = `<div class="card card-last"><div class="slabel">HOY POR CIUDAD Y ZONA</div>${cityBlocks}</div>`;
     }
 
     return totalsGrid + activeUsersCard + cityRankingCard + `<button class="bmore" onclick="refreshCommunity()">&#8635; Actualizar</button>`;

@@ -17,11 +17,12 @@ module.exports = async (req, res) => {
   `;
 
   const todayByCity = await sql`
-    SELECT u.city, COUNT(*)::int AS cortes, COALESCE(SUM(o.duration_minutes), 0)::int AS total_mins
+    SELECT u.city, COALESCE(NULLIF(u.zone,''), 'Sin zona') AS zone,
+           COUNT(*)::int AS cortes, COALESCE(SUM(o.duration_minutes), 0)::int AS total_mins
     FROM outages o
     JOIN users u ON u.id = o.user_id
     WHERE u.is_public = true AND o.type = 'corte' AND o.start_time >= ${todayISO} AND o.end_time IS NOT NULL
-    GROUP BY u.city ORDER BY total_mins DESC
+    GROUP BY u.city, u.zone ORDER BY u.city, total_mins DESC
   `;
 
   const cityUsers = await sql`
