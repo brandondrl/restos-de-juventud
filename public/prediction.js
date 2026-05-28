@@ -1,6 +1,7 @@
 const DAYS_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const DAYS_FULL  = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 const WEEKS_FOR_FULL_CONFIDENCE = 4;
+const HEATMAP_WINDOW_DAYS = 84;
 
 function padZero(number) {
     return String(number).padStart(2, '0');
@@ -27,10 +28,16 @@ function buildHeatmap(outages) {
     const allDates = completed.flatMap(o => [new Date(o.start), new Date(o.end)]);
     const earliestDate = new Date(Math.min(...allDates.map(d => d.getTime())));
 
+    const windowStart = new Date();
+    windowStart.setDate(windowStart.getDate() - HEATMAP_WINDOW_DAYS);
+    windowStart.setHours(0, 0, 0, 0);
+
+    const effectiveStart = new Date(Math.max(earliestDate.getTime(), windowStart.getTime()));
+
     const observationCount = {};
     const hitCount = {};
 
-    const cursor = new Date(earliestDate);
+    const cursor = new Date(effectiveStart);
     cursor.setHours(0, 0, 0, 0);
     while (cursor <= new Date()) {
         for (let hour = 0; hour < 24; hour++) {
@@ -40,7 +47,9 @@ function buildHeatmap(outages) {
         cursor.setDate(cursor.getDate() + 1);
     }
 
-    completed.forEach(outage => {
+    const windowedCompleted = completed.filter(o => new Date(o.start) >= effectiveStart);
+
+    windowedCompleted.forEach(outage => {
         getHourlySlots(outage).forEach(({ dayOfWeek, hour }) => {
             const key = `${dayOfWeek}_${hour}`;
             hitCount[key] = (hitCount[key] || 0) + 1;
@@ -79,6 +88,15 @@ function averageDurationByHour(outages) {
         averages[+hour] = durations.reduce((sum, d) => sum + d, 0) / durations.length;
     });
     return averages;
+}
+
+function computeSurvivalCurve(outages) {
+    const completed = outages.filter(
+        o => o.start && o.end && (o.type || 'corte') === 'corte' && o.duration_minutes > 0
+    );
+    if (completed.length < 2) return null;
+    const lambda = completed.reduce((s, o) => s + o.duration_minutes, 0) / completed.length;
+    return { lambda, n: completed.length };
 }
 
 function adjustedProbability(rawProbability, confidence) {
@@ -152,12 +170,14 @@ function getDayForecast(predictions, outages) {
         ? Math.round(riskyDurations.reduce((sum, d) => sum + d, 0) / riskyDurations.length)
         : null;
 
+    const peakAdj = adjustedProbability(peakHour.probability, peakHour.confidence);
+
     return {
         type: 'risk',
         message: `Es probable que se vaya la luz entre ${rangeDescription}.`,
         peakHour:          peakHour.hour,
-        peakPercent:       Math.round(adjustedProbability(peakHour.probability, peakHour.confidence) * 100),
-        peakLevel: adjustedProbability(peakHour.probability, peakHour.confidence) < 0.4 ? 'moderado' : 'alto',
+        peakPercent:       Math.round(peakAdj * 100),
+        peakLevel:         peakAdj < 0.4 ? 'moderado' : 'alto',
         estimatedMinutes,
     };
 }

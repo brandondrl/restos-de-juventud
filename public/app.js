@@ -27,6 +27,7 @@ const MOOD_OPTIONS = [
 ];
 
 const HISTORY_PAGE_SIZE = 20;
+const ZONE_OPTIONS = ['Norte', 'Centro', 'Sur', 'Este', 'Oeste'];
 
 function generateId() {
     return Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -54,6 +55,11 @@ function getTodayDate() {
 function getCurrentTime() {
     const d = new Date();
     return `${padZero(d.getHours())}:${padZero(d.getMinutes())}`;
+}
+function buildZoneSelect(stateExpr, currentValue) {
+    const opts = `<option value="">Sin zona</option>` +
+        ZONE_OPTIONS.map(z => `<option value="${z}"${currentValue === z ? ' selected' : ''}>${z}</option>`).join('');
+    return `<select onchange="${stateExpr} = this.value">${opts}</select>`;
 }
 
 const http = {
@@ -209,6 +215,27 @@ async function initialize() {
     }
 }
 
+let lastNotifiedHour = -1;
+
+function checkRiskNotification() {
+    if (!appState.outages.length || appState.activeOutage) return;
+    if (Notification.permission !== 'granted') return;
+    const now  = new Date();
+    const hour = now.getHours();
+    if (hour === lastNotifiedHour) return;
+    const heatmap = buildHeatmap(appState.outages);
+    if (!heatmap) return;
+    const slot = heatmap[`${now.getDay()}_${hour}`] || { probability: 0, confidence: 0 };
+    const prob = adjustedProbability(slot.probability, slot.confidence);
+    if (prob >= 0.18) {
+        lastNotifiedHour = hour;
+        new Notification('⚡ Riesgo de corte', {
+            body: `${Math.round(prob * 100)}% de probabilidad esta hora según tu historial.`,
+            tag:  'riesgo-corte',
+        });
+    }
+}
+
 async function loadApplicationData() {
     appState.isLoading = true;
     render();
@@ -224,7 +251,14 @@ async function loadApplicationData() {
         appState.endTime = getCurrentTime();
     }
     render();
-    setInterval(() => { if (appState.activeOutage) render(); }, 30000);
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+    checkRiskNotification();
+    setInterval(() => {
+        if (appState.activeOutage) render();
+        checkRiskNotification();
+    }, 30000);
 }
 
 async function login() {
@@ -447,14 +481,7 @@ function renderAuthScreen() {
                 <input placeholder="Caracas" value="${authState.registerForm.city}" oninput="authState.registerForm.city = this.value">
             </div>
             <div class="field" style="margin:0"><label>Zona <span style="color:var(--text3)">(opcional)</span></label>
-                <select onchange="authState.registerForm.zone = this.value">
-                    <option value="">Sin zona</option>
-                    <option value="Norte" ${authState.registerForm.zone==='Norte'?'selected':''}>Norte</option>
-                    <option value="Centro" ${authState.registerForm.zone==='Centro'?'selected':''}>Centro</option>
-                    <option value="Sur" ${authState.registerForm.zone==='Sur'?'selected':''}>Sur</option>
-                    <option value="Este" ${authState.registerForm.zone==='Este'?'selected':''}>Este</option>
-                    <option value="Oeste" ${authState.registerForm.zone==='Oeste'?'selected':''}>Oeste</option>
-                </select>
+                ${buildZoneSelect('authState.registerForm.zone', authState.registerForm.zone)}
             </div>
         </div>
         <button class="bmain bsuccess" onclick="register()">${ICONS.bolt}Crear cuenta</button>
@@ -514,6 +541,12 @@ function renderApp() {
 
     const profileOverlay = profileState.isOpen ? renderProfileOverlay() : '';
 
+    const activeBanner = activeOutage ? `
+        <div class="active-banner">
+            <span>⚡ CORTE ACTIVO — ¿Ya regresó la luz?</span>
+            <button onclick="setCurrentTab('log')">Registrar →</button>
+        </div>` : '';
+
     return `
         <div class="header">
             <div class="hleft">
@@ -529,6 +562,7 @@ function renderApp() {
             </div>
         </div>
         <div class="tabs">${tabButtons}</div>
+        ${activeBanner}
         <div class="content">
             ${tabContent}
         </div>
@@ -568,7 +602,7 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
         forecastContent = `
             <div style="font-size:15px;font-weight:600;margin-bottom:6px">${forecast.message}</div>
             <div style="font-size:12px;color:${levelColor};margin-bottom:${forecast.estimatedMinutes ? '4px' : '0'}">
-                A las: ${padZero(forecast.peakHour)}:00 &middot; ${forecast.peakPercent}% &middot; riesgo ${forecast.peakLevel}
+                Hora pico: ${padZero(forecast.peakHour)}:00 &middot; ${forecast.peakPercent}% &middot; riesgo ${forecast.peakLevel}
             </div>
             ${durationLine}`;
     }
@@ -706,6 +740,47 @@ function renderLogTab(minutesWithoutPower) {
         <button class="bmain bsuccess" onclick="endOutage()">${ICONS.bulb}Volvió la luz</button>
     </div>`;
 
+    let survivalCard = '';
+    if (activeOutage) {
+        const survivalData = computeSurvivalCurve(appState.outages);
+        if (survivalData) {
+            const { lambda, n } = survivalData;
+            const pct     = Math.min((minutesWithoutPower / lambda) * 100, 100);
+            const overdue = minutesWithoutPower > lambda;
+            const checkpoints = [
+                { label: '30 min', t: 30 },
+                { label: '1h',     t: 60 },
+                { label: '2h',     t: 120 },
+                { label: '3h',     t: 180 },
+                { label: '4h',     t: 240 },
+                { label: '5h',     t: 300 },
+            ];
+            const cells = checkpoints.map(({ label, t }) => {
+                const p     = Math.round((1 - Math.exp(-t / lambda)) * 100);
+                const color = p >= 70 ? 'var(--grn-t)' : p >= 40 ? 'var(--amber2)' : 'var(--text2)';
+                return `<div style="text-align:center;padding:8px 4px;background:var(--bg3);border-radius:var(--rs)">
+                    <div style="font-size:15px;font-weight:700;color:${color}">${p}%</div>
+                    <div style="font-size:10px;color:var(--text3);margin-top:2px">${label}</div>
+                </div>`;
+            }).join('');
+            survivalCard = `<div class="card" style="margin-bottom:12px">
+                <div class="slabel">ESTIMACIÓN DE RETORNO</div>
+                <div style="margin-bottom:10px">
+                    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:5px">
+                        <span>${overdue ? '⚠ Superó el promedio histórico' : 'Tiempo actual vs. duración promedio'}</span>
+                        <span style="color:${overdue ? 'var(--red-t)' : 'var(--text2)'}">${formatDuration(minutesWithoutPower)} / ~${formatDuration(lambda)}</span>
+                    </div>
+                    <div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden">
+                        <div style="height:100%;width:${Math.min(pct, 100)}%;background:${overdue ? 'var(--red-bd)' : 'var(--amber)'};border-radius:4px"></div>
+                    </div>
+                </div>
+                <div style="font-size:11px;color:var(--text2);margin-bottom:7px;font-weight:600;letter-spacing:.05em">PROBABILIDAD DE QUE VUELVA EN LOS PRÓXIMOS</div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px">${cells}</div>
+                <div style="font-size:10px;color:var(--text3);line-height:1.5">Sin importar cuánto lleves esperando, estas probabilidades no cambian. · ${n} corte${n !== 1 ? 's' : ''} en historial.</div>
+            </div>`;
+        }
+    }
+
     const fluctuationDisabled = !!activeOutage;
     const disabledWarning = `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(239,68,68,.1);border-radius:var(--rs);margin-bottom:10px;font-size:13px;color:var(--red-t)">
         <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -749,7 +824,7 @@ function renderLogTab(minutesWithoutPower) {
         ${manualFormContent}
     </div>`;
 
-    return (activeOutage ? endCard : startCard) + fluctuationCard + manualCard;
+    return (activeOutage ? endCard : startCard) + survivalCard + fluctuationCard + manualCard;
 }
 
 function renderPredictTab(now, heatmap, todayPredictions) {
@@ -810,6 +885,7 @@ function renderPredictTab(now, heatmap, todayPredictions) {
             ${heatmapRows}
             <div class="hmleg"><span style="font-size:10px;color:#475569">Riesgo:</span>${legendItems}</div>
             <div class="infobox">Solo cortes alimentan el modelo. La columna derecha muestra duración estimada en horas de riesgo real.</div>
+            <div class="infobox" style="margin-top:4px">El modelo considera los últimos 3 meses de registros para mantener los patrones actualizados.</div>
         </div></div>
     </div>`;
 }
@@ -957,14 +1033,7 @@ function renderProfileOverlay() {
                 <input value="${profileState.editCity}" oninput="profileState.editCity = this.value" placeholder="Caracas">
             </div>
             <div class="field" style="margin:0"><label>Zona</label>
-                <select onchange="profileState.editZone = this.value">
-                    <option value="">Sin zona</option>
-                    <option value="Norte" ${profileState.editZone==='Norte'?'selected':''}>Norte</option>
-                    <option value="Centro" ${profileState.editZone==='Centro'?'selected':''}>Centro</option>
-                    <option value="Sur" ${profileState.editZone==='Sur'?'selected':''}>Sur</option>
-                    <option value="Este" ${profileState.editZone==='Este'?'selected':''}>Este</option>
-                    <option value="Oeste" ${profileState.editZone==='Oeste'?'selected':''}>Oeste</option>
-                </select>
+                ${buildZoneSelect('profileState.editZone', profileState.editZone)}
             </div>
         </div>
         <div class="toggle-row" style="margin-bottom:14px">
@@ -1058,5 +1127,9 @@ function syncEndTimeToNow() {
     appState.endTime = getCurrentTime();
     render();
 }
+
+window.addEventListener('beforeunload', e => {
+    if (appState.activeOutage) { e.preventDefault(); e.returnValue = ''; }
+});
 
 initialize();
