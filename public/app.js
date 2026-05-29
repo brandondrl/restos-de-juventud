@@ -515,7 +515,8 @@ function renderApp() {
     const todayPredictions = heatmap
         ? Array.from({ length: 24 }, (_, hour) => ({ hour, ...(heatmap[`${now.getDay()}_${hour}`] || { probability: 0, confidence: 0 }) }))
         : [];
-    const forecast         = heatmap ? getDayForecast(todayPredictions, outages) : { type: 'nodata' };
+    window._activeOutage = activeOutage;
+    const forecast = heatmap ? getDayForecast(todayPredictions, outages) : { type: 'nodata' };
 
     const navTabs = [
         { id: 'dashboard', icon: ICONS.dashboard, label: 'Panel' },
@@ -594,8 +595,25 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
         }
     } else if (forecast.type === 'safe') {
         forecastContent = `<div style="font-size:14px;color:var(--grn-t)">&#10003; Sin periodos de riesgo significativo para hoy.</div>`;
+    } else if (forecast.type === 'already_hit') {
+        if (forecast.active) {
+            forecastContent = `<div style="font-size:15px;font-weight:600;color:var(--red-t);margin-bottom:4px">⚡ Sin luz ahora mismo.</div>
+                <div style="font-size:13px;color:var(--text2)">Respira. Lo más probable es que no se vaya de nuevo hoy una vez que regrese.</div>`;
+        } else {
+            const totalHoy = appState.outages
+                .filter(o => o.end && (o.type || 'corte') === 'corte' && new Date(o.start) >= new Date(new Date().setHours(0,0,0,0)))
+                .reduce((s, o) => s + (o.duration_minutes || 0), 0);
+            forecastContent = `<div style="font-size:15px;font-weight:600;color:var(--grn-t);margin-bottom:4px">&#10003; Ya se fue. Ya volvió. Fresco.</div>
+                <div style="font-size:13px;color:var(--text2)">Hoy ya estuviste ${formatDuration(totalHoy)} sin luz. Lo más probable es que no se vaya de nuevo hoy.</div>`;
+        }
+    } else if (forecast.type === 'missed') {
+        const rangeTexts = forecast.ranges.map(([a, b]) =>
+            a === b ? `${padZero(a)}:00` : `${padZero(a)}:00–${padZero(b+1)}:00`
+        ).join(' y ');
+        forecastContent = `<div style="font-size:15px;font-weight:600;margin-bottom:4px">Era probable que se fuera entre las ${rangeTexts}…</div>
+            <div style="font-size:13px;color:var(--text2)">pero no se fue. Sospechoso 👀 — igual podría irse a otra hora, estate pendiente.</div>`;
     } else {
-        const levelColor   = forecast.peakLevel === 'alto' ? 'var(--red-t)' : '#fdba74';
+        const levelColor = forecast.peakLevel === 'alto' ? 'var(--red-t)' : '#fdba74';
         const durationLine = forecast.estimatedMinutes
             ? `<div style="font-size:12px;color:var(--text2)">Duración esperada: <strong style="color:var(--text)">${formatDuration(forecast.estimatedMinutes)}</strong> (promedio histórico)</div>`
             : '';

@@ -15,7 +15,7 @@ const MOOD_MAP = { '1': 1, '2': 2, '3': 3, '4': 4, '5': 5 };
 const MOOD_LABELS = { 1: '😡 Arrecho', 2: '😢 Triste', 3: '😤 Frustrado', 4: '😐 Normal', 5: '😊 Feliz' };
 
 const STRINGS = {
-  welcome: `⚡ *Restos de Juventud Bot*\n\nEnvía tu usuario de la app para vincular tu cuenta.\n\nEjemplo: \`tuusuario\`\n\n_Para registrarte ve a la app web primero._`,
+  welcome: `⚡ *Restos de Juventud Bot*\n\n¿Sin luz otra vez? Este bot te ayuda a registrarlo sin abrir la app.\n\n*Si ya tienes cuenta:* envía tu usuario ahora.\n\n*Si no tienes cuenta:* regístrate primero en:\nhttps://restos-de-juventud.vercel.app\n\nEs gratis y tarda 30 segundos.`,
   linked: (u) => `✅ Cuenta *@${u}* vinculada. Ya puedes usar los comandos.`,
   noAccount: `❌ No encontré ese usuario. Verifica en la app web.`,
   notLinked: `🔗 Primero vincula tu cuenta enviando /start y luego tu usuario.`,

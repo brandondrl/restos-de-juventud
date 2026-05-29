@@ -130,35 +130,49 @@ function getDayForecast(predictions, outages) {
     const hasEnoughData = predictions.some(p => p.confidence >= 0.15);
     if (!hasEnoughData) return { type: 'nodata' };
 
+    const now = new Date();
+    const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+
+    const todayCortes = outages.filter(o =>
+        o.end && (o.type || 'corte') === 'corte' && new Date(o.start) >= startOfToday
+    );
+    const hadOutageToday = todayCortes.length > 0;
+    const activeNow = !!(window._activeOutage);
+
     const riskyHours = predictions.filter(p => {
         if (adjustedProbability(p.probability, p.confidence) < 0.18) return false;
         if (p.hour <= 4 && (p.startHits || 0) === 0) return false;
         return true;
     });
+
     if (riskyHours.length === 0) return { type: 'safe' };
 
     const ranges = [];
-    let rangeStart = null;
-    let rangeEnd   = null;
+    let rangeStart = null, rangeEnd = null;
     riskyHours.forEach(({ hour }) => {
-        if (rangeStart === null) {
-            rangeStart = hour;
-            rangeEnd   = hour;
-        } else if (hour === rangeEnd + 1) {
-            rangeEnd = hour;
-        } else {
-            ranges.push([rangeStart, rangeEnd]);
-            rangeStart = hour;
-            rangeEnd   = hour;
-        }
+        if (rangeStart === null) { rangeStart = hour; rangeEnd = hour; }
+        else if (hour === rangeEnd + 1) { rangeEnd = hour; }
+        else { ranges.push([rangeStart, rangeEnd]); rangeStart = hour; rangeEnd = hour; }
     });
     if (rangeStart !== null) ranges.push([rangeStart, rangeEnd]);
 
     const peakHour = riskyHours.reduce((peak, current) =>
         adjustedProbability(current.probability, current.confidence) >
-        adjustedProbability(peak.probability,    peak.confidence) ? current : peak,
+        adjustedProbability(peak.probability, peak.confidence) ? current : peak,
         riskyHours[0]
     );
+
+    const lastRiskyHour = riskyHours[riskyHours.length - 1].hour;
+    const allRiskyPassed = now.getHours() > lastRiskyHour;
+    const inRiskyWindow = riskyHours.some(p => p.hour === now.getHours());
+
+    if (hadOutageToday || activeNow) {
+        return { type: 'already_hit', ranges, peakHour: peakHour.hour, active: activeNow };
+    }
+
+    if (allRiskyPassed && !hadOutageToday) {
+        return { type: 'missed', ranges, peakHour: peakHour.hour };
+    }
 
     const rangeTexts = ranges.map(([start, end]) =>
         start === end
@@ -169,11 +183,8 @@ function getDayForecast(predictions, outages) {
         ? rangeTexts[0]
         : rangeTexts.slice(0, -1).join(', ') + ' y ' + rangeTexts.slice(-1);
 
-    const durationsByHour  = averageDurationByHour(outages);
-    const riskyDurations   = riskyHours
-        .map(p => p.hour)
-        .filter(h => durationsByHour[h])
-        .map(h => durationsByHour[h]);
+    const durationsByHour = averageDurationByHour(outages);
+    const riskyDurations = riskyHours.map(p => p.hour).filter(h => durationsByHour[h]).map(h => durationsByHour[h]);
     const estimatedMinutes = riskyDurations.length > 0
         ? Math.round(riskyDurations.reduce((sum, d) => sum + d, 0) / riskyDurations.length)
         : null;
@@ -183,9 +194,9 @@ function getDayForecast(predictions, outages) {
     return {
         type: 'risk',
         message: `Es probable que se vaya la luz entre ${rangeDescription}.`,
-        peakHour:          peakHour.hour,
-        peakPercent:       Math.round(peakAdj * 100),
-        peakLevel:         peakAdj < 0.4 ? 'moderado' : 'alto',
+        peakHour: peakHour.hour,
+        peakPercent: Math.round(peakAdj * 100),
+        peakLevel: peakAdj < 0.4 ? 'moderado' : 'alto',
         estimatedMinutes,
     };
 }
