@@ -139,12 +139,16 @@ async function handleLogin(env, userId, username) {
 
 function buildDaySummary(outages) {
   const now = new Date();
-  const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+  const localNow = new Date(now.getTime() + TZ_OFFSET_HOURS * 3600000);
+  const startOfToday = new Date(localNow);
+  startOfToday.setUTCHours(0, 0, 0, 0);
+  const startOfTodayUTC = new Date(startOfToday.getTime() - TZ_OFFSET_HOURS * 3600000);
+
   const todayCortes = outages.filter(o =>
-    o.end && (o.type || 'corte') === 'corte' && new Date(o.start) >= startOfToday
+    o.end && (o.type || 'corte') === 'corte' && new Date(o.start) >= startOfTodayUTC
   );
   const todayFlucs = outages.filter(o =>
-    (o.type || 'corte') === 'fluctuacion' && new Date(o.start) >= startOfToday
+    (o.type || 'corte') === 'fluctuacion' && new Date(o.start) >= startOfTodayUTC
   );
   const totalMins = todayCortes.reduce((s, o) => s + (o.duration_minutes || 0), 0);
   if (!todayCortes.length && !todayFlucs.length) return `📋 Hoy: sin cortes registrados aún.`;
