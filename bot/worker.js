@@ -331,7 +331,9 @@ Llevas *${fmtDuration(elapsed)}* sin luz${etaLine}`,
     const outages = await apiGet('/api/outages', session);
     if (!outages) { await tg(env.BOT_TOKEN, chatId, STRINGS.error); return; }
     const now = new Date();
-    const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+    const localNowHoy = new Date(now.getTime() + TZ_OFFSET_HOURS * 3600000);
+    const startOfTodayLocal = new Date(localNowHoy); startOfTodayLocal.setUTCHours(0, 0, 0, 0);
+    const startOfToday = new Date(startOfTodayLocal.getTime() - TZ_OFFSET_HOURS * 3600000);
     const active = await apiGet('/api/active', session);
     const todayCortes = outages.filter(o => o.end && (o.type || 'corte') === 'corte' && new Date(o.start) >= startOfToday);
     const todayFlucs = outages.filter(o => (o.type || 'corte') === 'fluctuacion' && new Date(o.start) >= startOfToday);
