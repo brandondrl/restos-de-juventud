@@ -1098,6 +1098,7 @@ function renderProfileOverlay() {
             <button class="bsm" onclick="saveProfile()">Guardar cambios</button>
             <a class="bsm" href="/api/export" download>${ICONS.download}Exportar CSV</a>
             <button class="bsm" style="color:var(--red-t);border-color:var(--red-bd)" onclick="logout()">${ICONS.logout}Cerrar sesión</button>
+            ${authState.currentUser?.username === 'brandon' ? `<a class="bsm" href="/api/admin" target="_blank" style="color:var(--amber);border-color:var(--amber)"><svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Admin</a>` : ''}
         </div>
         <div class="danger-zone">
             <div class="danger-title">ZONA DE PELIGRO</div>
