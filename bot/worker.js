@@ -1,23 +1,43 @@
-const API = 'http://restos-de-juventud.vercel.app';
+const API = 'https://restos-de-juventud.vercel.app';
+const TZ_OFFSET_HOURS = -4;
+
+const MOOD_PROMPT = `¿Cómo te quedaste con este corte?
+
+1️⃣ 😡 Arrecho
+2️⃣ 😢 Triste
+3️⃣ 😤 Frustrado
+4️⃣ 😐 Normal
+5️⃣ 😊 Feliz
+
+_Responde con un número del 1 al 5. Sin esto no se cierra el registro._`;
+
+const MOOD_MAP = { '1': 1, '2': 2, '3': 3, '4': 4, '5': 5 };
+const MOOD_LABELS = { 1: '😡 Arrecho', 2: '😢 Triste', 3: '😤 Frustrado', 4: '😐 Normal', 5: '😊 Feliz' };
 
 const STRINGS = {
-  welcome: `⚡ *Restos de Juventud Bot*\n\nEnvía tu usuario de la app para vincular tu cuenta.\n\nEjemplo: \`tuusuario\``,
+  welcome: `⚡ *Restos de Juventud Bot*\n\nEnvía tu usuario de la app para vincular tu cuenta.\n\nEjemplo: \`tuusuario\`\n\n_Para registrarte ve a la app web primero._`,
   linked: (u) => `✅ Cuenta *@${u}* vinculada. Ya puedes usar los comandos.`,
-  noAccount: `❌ No encontré ese usuario. Verifica en la app.`,
-  notLinked: `🔗 Primero vincula tu cuenta enviando /start`,
-  outageStarted: (t) => `⚡ Corte registrado a las *${t}*`,
-  outageAlreadyActive: (t) => `⚠️ Ya tienes un corte activo desde las *${t}*`,
-  outageEnded: (d) => `💡 Luz de vuelta. Duración: *${d}*`,
-  noActiveOutage: `ℹ️ No hay corte activo registrado.`,
-  status_on: (t) => `⚡ Sin luz desde las *${t}*`,
-  status_off: `💡 Con luz`,
+  noAccount: `❌ No encontré ese usuario. Verifica en la app web.`,
+  notLinked: `🔗 Primero vincula tu cuenta enviando /start y luego tu usuario.`,
+  outageStarted: (t) => `⚡ Corte registrado a las *${t}*\n\nCuando vuelva la luz usa /volvio`,
+  outageAlreadyActive: (t) => `⚠️ Ya tienes un corte activo desde las *${t}*\n\nUsa /volvio cuando regrese la luz.`,
+  askMood: MOOD_PROMPT,
+  outageEnded: (d, mood) => `💡 Luz de vuelta. Duración: *${d}*\nEstado: ${MOOD_LABELS[mood]}`,
+  moodInvalid: `Responde solo con un número del 1 al 5.`,
+  noActiveOutage: `ℹ️ No hay corte activo registrado.\n\nUsa /corte si se fue la luz.`,
+  statusOn: (t) => `⚡ Sin luz desde las *${t}*\n\nUsa /volvio cuando regrese.`,
+  statusOff: `💡 Con luz`,
+  fluctuationSaved: (t) => `🔌 Fluctuación registrada a las *${t}*`,
   error: `❌ Error. Intenta de nuevo.`,
   duplicate: `⏳ Ya registré esa acción. Espera un momento.`,
+  disconnected: `🔌 Cuenta desvinculada.`,
 };
 
-function fmtTime(iso) {
-  const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+function localTime(date = new Date()) {
+  const local = new Date(date.getTime() + TZ_OFFSET_HOURS * 3600000);
+  const h = String(local.getUTCHours()).padStart(2, '0');
+  const m = String(local.getUTCMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
 }
 
 function fmtDuration(mins) {
@@ -40,10 +60,20 @@ async function isDuplicate(kv, chatId, cmd) {
   return false;
 }
 
-async function apiGet(path, token) {
-  const r = await fetch(`${API}${path}`, {
-    headers: { Cookie: `auth=${token}` }
+function generateId() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+async function tg(botToken, chatId, text) {
+  await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
   });
+}
+
+async function apiGet(path, token) {
+  const r = await fetch(`${API}${path}`, { headers: { Cookie: `auth=${token}` } });
   if (!r.ok) return null;
   return r.json();
 }
@@ -66,12 +96,8 @@ async function apiDelete(path, token) {
   return r.ok;
 }
 
-async function tg(botToken, chatId, text) {
-  await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
-  });
+async function getSession(kv, chatId) {
+  return kv.get(`session:${chatId}`);
 }
 
 async function handleLogin(env, chatId, username) {
@@ -87,21 +113,14 @@ async function handleLogin(env, chatId, username) {
   return data.username;
 }
 
-async function getSession(kv, chatId) {
-  return kv.get(`session:${chatId}`);
-}
-
-function generateId() {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
-
 async function handleUpdate(env, update) {
   const msg = update.message;
   if (!msg || !msg.text) return;
 
   const chatId = msg.chat.id;
   const text = msg.text.trim();
-  const cmd = text.split(' ')[0].toLowerCase().replace('@' + env.BOT_USERNAME, '');
+  const rawCmd = text.split(' ')[0].toLowerCase();
+  const cmd = rawCmd.replace(`@${(env.BOT_USERNAME || '').toLowerCase()}`, '');
 
   if (cmd === '/start') {
     await tg(env.BOT_TOKEN, chatId, STRINGS.welcome);
@@ -110,14 +129,42 @@ async function handleUpdate(env, update) {
 
   if (cmd === '/desconectar') {
     await env.KV.delete(`session:${chatId}`);
-    await tg(env.BOT_TOKEN, chatId, '🔌 Cuenta desvinculada.');
+    await env.KV.delete(`pending_mood:${chatId}`);
+    await tg(env.BOT_TOKEN, chatId, STRINGS.disconnected);
     return;
   }
 
   const session = await getSession(env.KV, chatId);
 
+  const pendingMood = await env.KV.get(`pending_mood:${chatId}`);
+  if (pendingMood && !cmd.startsWith('/')) {
+    const moodValue = MOOD_MAP[text];
+    if (!moodValue) {
+      await tg(env.BOT_TOKEN, chatId, STRINGS.moodInvalid);
+      return;
+    }
+    const { outageId, outageStart } = JSON.parse(pendingMood);
+    const endTime = new Date();
+    const startTime = new Date(outageStart);
+    const mins = (endTime - startTime) / 60000;
+    const outage = {
+      id: outageId,
+      start: outageStart,
+      end: endTime.toISOString(),
+      duration_minutes: mins,
+      type: 'corte',
+      mood: moodValue,
+    };
+    const saved = await apiPost('/api/outages', outage, session);
+    if (!saved) { await tg(env.BOT_TOKEN, chatId, STRINGS.error); return; }
+    await apiDelete('/api/active', session);
+    await env.KV.delete(`pending_mood:${chatId}`);
+    await tg(env.BOT_TOKEN, chatId, STRINGS.outageEnded(fmtDuration(mins), moodValue));
+    return;
+  }
+
   if (!session && !cmd.startsWith('/')) {
-    const linked = await handleLogin(env, chatId, text.trim());
+    const linked = await handleLogin(env, chatId, text);
     if (linked) {
       await tg(env.BOT_TOKEN, chatId, STRINGS.linked(linked));
     } else {
@@ -131,25 +178,25 @@ async function handleUpdate(env, update) {
     return;
   }
 
-  if (cmd === '/luz_se_fue') {
+  if (cmd === '/corte') {
     if (await isDuplicate(env.KV, chatId, 'start')) {
       await tg(env.BOT_TOKEN, chatId, STRINGS.duplicate);
       return;
     }
     const active = await apiGet('/api/active', session);
     if (active) {
-      await tg(env.BOT_TOKEN, chatId, STRINGS.outageAlreadyActive(fmtTime(active.start)));
+      await tg(env.BOT_TOKEN, chatId, STRINGS.outageAlreadyActive(localTime(new Date(active.start))));
       return;
     }
-    const now = new Date().toISOString();
-    const outage = { id: generateId(), start: now };
+    const now = new Date();
+    const outage = { id: generateId(), start: now.toISOString() };
     const ok = await apiPost('/api/active', outage, session);
     if (!ok) { await tg(env.BOT_TOKEN, chatId, STRINGS.error); return; }
-    await tg(env.BOT_TOKEN, chatId, STRINGS.outageStarted(fmtTime(now)));
+    await tg(env.BOT_TOKEN, chatId, STRINGS.outageStarted(localTime(now)));
     return;
   }
 
-  if (cmd === '/volvio_la_luz') {
+  if (cmd === '/volvio') {
     if (await isDuplicate(env.KV, chatId, 'end')) {
       await tg(env.BOT_TOKEN, chatId, STRINGS.duplicate);
       return;
@@ -159,31 +206,40 @@ async function handleUpdate(env, update) {
       await tg(env.BOT_TOKEN, chatId, STRINGS.noActiveOutage);
       return;
     }
-    const endTime = new Date();
-    const startTime = new Date(active.start);
-    const mins = (endTime - startTime) / 60000;
-    const outage = {
-      id: active.id,
-      start: active.start,
-      end: endTime.toISOString(),
-      duration_minutes: mins,
-      type: 'corte',
-      mood: null,
-    };
-    const saved = await apiPost('/api/outages', outage, session);
-    if (!saved) { await tg(env.BOT_TOKEN, chatId, STRINGS.error); return; }
-    await apiDelete('/api/active', session);
-    await tg(env.BOT_TOKEN, chatId, STRINGS.outageEnded(fmtDuration(mins)));
+    await env.KV.put(
+      `pending_mood:${chatId}`,
+      JSON.stringify({ outageId: active.id, outageStart: active.start }),
+      { expirationTtl: 300 }
+    );
+    await tg(env.BOT_TOKEN, chatId, STRINGS.askMood);
     return;
   }
 
   if (cmd === '/estado') {
     const active = await apiGet('/api/active', session);
     if (active) {
-      await tg(env.BOT_TOKEN, chatId, STRINGS.status_on(fmtTime(active.start)));
+      await tg(env.BOT_TOKEN, chatId, STRINGS.statusOn(localTime(new Date(active.start))));
     } else {
-      await tg(env.BOT_TOKEN, chatId, STRINGS.status_off);
+      await tg(env.BOT_TOKEN, chatId, STRINGS.statusOff);
     }
+    return;
+  }
+
+  if (cmd === '/fluctuacion') {
+    if (await isDuplicate(env.KV, chatId, 'fluc')) {
+      await tg(env.BOT_TOKEN, chatId, STRINGS.duplicate);
+      return;
+    }
+    const active = await apiGet('/api/active', session);
+    if (active) {
+      await tg(env.BOT_TOKEN, chatId, `⚠️ No puedes registrar una fluctuación con un corte activo.`);
+      return;
+    }
+    const now = new Date();
+    const fluc = { id: generateId(), start: now.toISOString(), end: now.toISOString(), duration_minutes: 0, type: 'fluctuacion' };
+    const ok = await apiPost('/api/outages', fluc, session);
+    if (!ok) { await tg(env.BOT_TOKEN, chatId, STRINGS.error); return; }
+    await tg(env.BOT_TOKEN, chatId, STRINGS.fluctuationSaved(localTime(now)));
     return;
   }
 
@@ -200,15 +256,19 @@ async function handleUpdate(env, update) {
       cutoff.setHours(0, 0, 0, 0);
     }
     const period = outages.filter(o => o.end && o.type !== 'fluctuacion' && new Date(o.start) >= cutoff);
-    const flucs  = outages.filter(o => o.type === 'fluctuacion' && new Date(o.start) >= cutoff);
-    const total  = period.reduce((s, o) => s + (o.duration_minutes || 0), 0);
-    const label  = cmd === '/semana' ? 'esta semana' : 'este mes';
-    const reply  = `📊 *Resumen ${label}*\n\n⚡ Cortes: *${period.length}*\n⏱ Total sin luz: *${fmtDuration(total)}*\n🔌 Fluctuaciones: *${flucs.length}*`;
-    await tg(env.BOT_TOKEN, chatId, reply);
+    const flucs = outages.filter(o => o.type === 'fluctuacion' && new Date(o.start) >= cutoff);
+    const total = period.reduce((s, o) => s + (o.duration_minutes || 0), 0);
+    const label = cmd === '/semana' ? 'esta semana' : 'este mes';
+    await tg(env.BOT_TOKEN, chatId, `📊 *Resumen ${label}*\n\n⚡ Cortes: *${period.length}*\n⏱ Total sin luz: *${fmtDuration(total)}*\n🔌 Fluctuaciones: *${flucs.length}*`);
     return;
   }
 
   if (cmd === '/probabilidad') {
+    const active = await apiGet('/api/active', session);
+    if (active) {
+      await tg(env.BOT_TOKEN, chatId, `😮‍💨 Ya se fue la luz. Respira, lo más probable es que no se vaya de nuevo hoy.\n\nUsa /volvio cuando regrese.`);
+      return;
+    }
     const outages = await apiGet('/api/outages', session);
     if (!outages || outages.length < 3) {
       await tg(env.BOT_TOKEN, chatId, 'ℹ️ Necesitas más registros para calcular probabilidades.');
@@ -244,8 +304,7 @@ async function handleUpdate(env, update) {
       const k = `${day}_${h}`;
       const obs = observations[k] || 1;
       const hits = slots[k] || 0;
-      const weeks = obs / 4;
-      const conf = Math.min(weeks, 1);
+      const conf = Math.min(obs / 4, 1);
       const prob = ((hits + 0.5) / (obs + 1)) * conf;
       if (prob >= 0.18) risky.push({ h, prob });
     }
@@ -263,10 +322,9 @@ async function handleUpdate(env, update) {
     });
     if (rs !== null) ranges.push([rs, re]);
     const rangeText = ranges.map(([a, b]) =>
-      a === b ? `${String(a).padStart(2,'0')}:00` : `${String(a).padStart(2,'0')}:00–${String(b+1).padStart(2,'0')}:00`
+      a === b ? `${String(a).padStart(2, '0')}:00` : `${String(a).padStart(2, '0')}:00–${String(b + 1).padStart(2, '0')}:00`
     ).join(', ');
-    const reply = `🔮 *Predicción para hoy*\n\n⏰ Horas de riesgo: *${rangeText}*\n📈 Pico: *${String(peak.h).padStart(2,'0')}:00* (${Math.round(peak.prob*100)}%)\n\n_Basado en tu historial personal._`;
-    await tg(env.BOT_TOKEN, chatId, reply);
+    await tg(env.BOT_TOKEN, chatId, `🔮 *Predicción para hoy*\n\n⏰ Riesgo: *${rangeText}*\n📈 Pico: *${String(peak.h).padStart(2, '0')}:00* (${Math.round(peak.prob * 100)}%)\n\n_Basado en tu historial personal._`);
     return;
   }
 
