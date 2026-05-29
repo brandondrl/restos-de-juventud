@@ -1,6 +1,13 @@
 {
   "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" },
-    { "source": "/api/admin", "destination": "/api/admin.js" }
+    { "source": "/api/auth/login",           "destination": "/api/auth.js?action=login" },
+    { "source": "/api/auth/logout",          "destination": "/api/auth.js?action=logout" },
+    { "source": "/api/auth/me",              "destination": "/api/auth.js?action=me" },
+    { "source": "/api/auth/register",        "destination": "/api/auth.js?action=register" },
+    { "source": "/api/auth/telegram-verify", "destination": "/api/auth.js?action=telegram-verify" },
+    { "source": "/api/auth/telegram-link",   "destination": "/api/auth.js?action=telegram-link" },
+    { "source": "/api/outages/:id",          "destination": "/api/outages.js?id=:id" },
+    { "source": "/api/admin",                "destination": "/api/admin.js" },
+    { "source": "/((?!api/).*)",             "destination": "/index.html" }
   ]
 }

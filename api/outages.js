@@ -34,5 +34,12 @@ module.exports = async (req, res) => {
     return res.json({ ok: true });
   }
 
+  if (req.method === 'DELETE') {
+    const id = req.query.id;
+    if (!id) return res.status(400).json({ error: 'id requerido' });
+    await sql`DELETE FROM outages WHERE id = ${id} AND user_id = ${user.id}`;
+    return res.json({ ok: true });
+  }
+
   res.status(405).end();
 };
