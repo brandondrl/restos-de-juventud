@@ -275,26 +275,27 @@ async function handleUpdate(env, update) {
       return;
     }
     const now = new Date();
-    const day = now.getDay();
-    const windowStart = new Date(now);
-    windowStart.setDate(windowStart.getDate() - 84);
-    const completed = outages.filter(o => o.start && o.end && o.type !== 'fluctuacion' && new Date(o.start) >= windowStart);
-    const slots = {};
-    const observations = {};
-    const cur = new Date(windowStart);
-    cur.setHours(0, 0, 0, 0);
+    const localNow = new Date(now.getTime() + TZ_OFFSET_HOURS * 3600000);
+    const day = localNow.getUTCDay();
+    const currentHour = localNow.getUTCHours();
+    const windowStart = new Date(now); windowStart.setDate(windowStart.getDate() - 84);
+    const completed = outages.filter(o => o.start && o.end && (o.type || 'corte') !== 'fluctuacion' && new Date(o.start) >= windowStart);
+    const slots = {}, observations = {};
+    const cur = new Date(windowStart); cur.setHours(0, 0, 0, 0);
     while (cur <= now) {
       for (let h = 0; h < 24; h++) {
-        const k = `${cur.getDay()}_${h}`;
+        const localCur = new Date(cur.getTime() + TZ_OFFSET_HOURS * 3600000);
+        const k = `${localCur.getUTCDay()}_${h}`;
         observations[k] = (observations[k] || 0) + 1;
       }
       cur.setDate(cur.getDate() + 1);
     }
     completed.forEach(o => {
-      const s = new Date(o.start), e = new Date(o.end), c = new Date(s);
-      c.setMinutes(0, 0, 0);
+      const s = new Date(o.start), e = new Date(o.end);
+      const c = new Date(s); c.setMinutes(0, 0, 0);
       while (c < e) {
-        const k = `${c.getDay()}_${c.getHours()}`;
+        const localC = new Date(c.getTime() + TZ_OFFSET_HOURS * 3600000);
+        const k = `${localC.getUTCDay()}_${localC.getUTCHours()}`;
         slots[k] = (slots[k] || 0) + 1;
         c.setHours(c.getHours() + 1);
       }
@@ -302,19 +303,14 @@ async function handleUpdate(env, update) {
     const risky = [];
     for (let h = 5; h <= 23; h++) {
       const k = `${day}_${h}`;
-      const obs = observations[k] || 1;
-      const hits = slots[k] || 0;
-      const conf = Math.min(obs / 4, 1);
+      const obs = observations[k] || 1, hits = slots[k] || 0;
+      const conf = Math.min(obs / (4 * 7), 1);
       const prob = ((hits + 0.5) / (obs + 1)) * conf;
       if (prob >= 0.18) risky.push({ h, prob });
     }
-    if (!risky.length) {
-      await tg(env.BOT_TOKEN, chatId, '✅ Sin riesgo significativo hoy según tu historial.');
-      return;
-    }
+    if (!risky.length) { await tg(env.BOT_TOKEN, chatId, '✅ Sin riesgo significativo hoy según tu historial.'); return; }
     const peak = risky.reduce((a, b) => b.prob > a.prob ? b : a);
-    const ranges = [];
-    let rs = null, re = null;
+    const ranges = []; let rs = null, re = null;
     risky.forEach(({ h }) => {
       if (rs === null) { rs = h; re = h; }
       else if (h === re + 1) { re = h; }
@@ -324,7 +320,9 @@ async function handleUpdate(env, update) {
     const rangeText = ranges.map(([a, b]) =>
       a === b ? `${String(a).padStart(2, '0')}:00` : `${String(a).padStart(2, '0')}:00–${String(b + 1).padStart(2, '0')}:00`
     ).join(', ');
-    await tg(env.BOT_TOKEN, chatId, `🔮 *Predicción para hoy*\n\n⏰ Riesgo: *${rangeText}*\n📈 Pico: *${String(peak.h).padStart(2, '0')}:00* (${Math.round(peak.prob * 100)}%)\n\n_Basado en tu historial personal._`);
+    const inRisk = risky.some(p => p.h === currentHour);
+    const prefix = inRisk ? `⚠️ *Estás en una hora de riesgo ahora mismo.*\n\n` : '';
+    await tg(env.BOT_TOKEN, chatId, `${prefix}🔮 *Predicción para hoy*\n\n⏰ Riesgo: *${rangeText}*\n📈 Pico: *${String(peak.h).padStart(2, '0')}:00* (${Math.round(peak.prob * 100)}%)\n\n_Basado en tu historial personal._`);
     return;
   }
 

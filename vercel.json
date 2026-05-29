@@ -7,6 +7,7 @@
     { "source": "/api/auth/telegram-verify", "destination": "/api/auth.js?action=telegram-verify" },
     { "source": "/api/auth/telegram-link",   "destination": "/api/auth.js?action=telegram-link" },
     { "source": "/api/outages/:id",          "destination": "/api/outages.js?id=:id" },
+    { "source": "/api/active-sessions",      "destination": "/api/active-sessions.js" },
     { "source": "/api/admin",                "destination": "/api/admin.js" },
     { "source": "/((?!api/).*)",             "destination": "/index.html" }
   ]
