@@ -375,7 +375,10 @@ if (cmd === '/probabilidad') {
     const localNow = new Date(now.getTime() + TZ_OFFSET_HOURS * 3600000);
     const day = localNow.getUTCDay();
     const currentHour = localNow.getUTCHours();
-    const windowStart = new Date(now); windowStart.setDate(windowStart.getDate() - 84);
+    const allDates = outages.filter(o => o.start && o.end && (o.type || 'corte') !== 'fluctuacion').flatMap(o => [new Date(o.start), new Date(o.end)]);
+    const earliestDate = allDates.length ? new Date(Math.min(...allDates.map(d => d.getTime()))) : new Date(now - 84*86400000);
+    const hardWindow = new Date(now); hardWindow.setDate(hardWindow.getDate() - 84);
+    const windowStart = new Date(Math.max(earliestDate.getTime(), hardWindow.getTime()));
     const completed = outages.filter(o => o.start && o.end && (o.type || 'corte') !== 'fluctuacion' && new Date(o.start) >= windowStart);
     const slots = {}, observations = {};
     const cur = new Date(windowStart); cur.setHours(0, 0, 0, 0);
