@@ -517,6 +517,7 @@ function renderApp() {
         : [];
     window._activeOutage = activeOutage;
     const forecast = heatmap ? getDayForecast(todayPredictions, outages) : { type: 'nodata' };
+    const tomorrowForecast = getTomorrowForecast(outages);
 
     const navTabs = [
         { id: 'dashboard', icon: ICONS.dashboard, label: 'Panel' },
@@ -700,10 +701,30 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
 
     const floatingButton = `<button class="fab ${appState.activeOutage ? 'fab-off' : 'fab-on'}" onclick="setCurrentTab('log')">${appState.activeOutage ? ICONS.bulb : ICONS.plus}</button>`;
 
+    const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowName = DAYS_FULL[tomorrow.getDay()].toUpperCase();
+    let tomorrowContent;
+    if (!tomorrowForecast) {
+        tomorrowContent = `<div style="font-size:12px;color:var(--text3)">Sin datos suficientes.</div>`;
+    } else if (tomorrowForecast.type === 'safe') {
+        tomorrowContent = `<div style="font-size:13px;color:var(--grn-t)">&#10003; Sin riesgo significativo.</div>`;
+    } else {
+        const tmLevelColor = tomorrowForecast.peakLevel === 'alto' ? 'var(--red-t)' : '#fdba74';
+        tomorrowContent = `
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px">${tomorrowForecast.ranges}</div>
+            <div style="font-size:11px;color:${tmLevelColor}">${padZero(tomorrowForecast.peakHour)}:00 &middot; ${tomorrowForecast.peakPercent}% &middot; ${tomorrowForecast.peakLevel}</div>`;
+    }
+
     return `
-        <div class="forecast-card">
-            <div class="slabel">PRONÓSTICO — ${dayName}</div>
-            ${forecastContent}
+        <div class="forecast-card" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div>
+                <div class="slabel">PRONÓSTICO — ${dayName}</div>
+                ${forecastContent}
+            </div>
+            <div style="border-left:1px solid var(--border);padding-left:16px">
+                <div class="slabel">MAÑANA — ${tomorrowName}</div>
+                ${tomorrowContent}
+            </div>
         </div>
         <div class="sgrid">${statsGrid}</div>
         <div class="card card-ora" style="margin-bottom:12px">

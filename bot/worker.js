@@ -399,7 +399,7 @@ Llevas *${fmtDuration(elapsed)}* sin luz${etaLine}`,
     for (let h = 5; h <= 23; h++) {
       const k = `${day}_${h}`;
       const obs = observations[k] || 1, hits = slots[k] || 0;
-      const conf = Math.min(obs / 4, 1), prob = ((hits + 0.5) / (obs + 1)) * conf;
+      const prob = (hits + 0.5) / (obs + 1);
       if (prob >= 0.18) risky.push({ h, prob });
     }
     if (!risky.length) { await tg(env.BOT_TOKEN, chatId, '✅ Sin riesgo significativo hoy según tu historial.'); return; }

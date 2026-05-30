@@ -272,3 +272,59 @@ function computeTrainingProgress(outages) {
     const percent      = Math.min(Math.round((weeksElapsed / WEEKS_FOR_FULL_CONFIDENCE) * 100), 100);
     return { weeks: Math.floor(weeksElapsed), percent, isReady: weeksElapsed >= WEEKS_FOR_FULL_CONFIDENCE };
 }
+
+function getTomorrowForecast(outages) {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowDay = tomorrow.getDay();
+
+    const heatmap = buildHeatmap(outages);
+    if (!heatmap) return null;
+
+    const tomorrowPredictions = Array.from({ length: 24 }, (_, hour) => ({
+        hour,
+        ...(heatmap[`${tomorrowDay}_${hour}`] || { probability: 0, confidence: 0, startHits: 0 })
+    }));
+
+    const hasData = tomorrowPredictions.some(p => p.confidence >= 0.15);
+    if (!hasData) return null;
+
+    const riskyHours = tomorrowPredictions.filter(p => {
+        if (adjustedProbability(p.probability, p.confidence) < 0.18) return false;
+        if (p.hour <= 4 && (p.startHits || 0) === 0) return false;
+        return true;
+    });
+
+    if (!riskyHours.length) return { type: 'safe' };
+
+    const peak = riskyHours.reduce((a, b) =>
+        adjustedProbability(b.probability, b.confidence) > adjustedProbability(a.probability, a.confidence) ? b : a
+    );
+
+    const ranges = [];
+    let rs = null, re = null;
+    riskyHours.forEach(({ hour }) => {
+        if (rs === null) { rs = hour; re = hour; }
+        else if (hour === re + 1) { re = hour; }
+        else { ranges.push([rs, re]); rs = hour; re = hour; }
+    });
+    if (rs !== null) ranges.push([rs, re]);
+
+    const rangeTexts = ranges.map(([a, b]) =>
+        a === b ? `${padZero(a)}:00` : `${padZero(a)}:00–${padZero(b + 1)}:00`
+    );
+    const rangeDescription = rangeTexts.length === 1
+        ? rangeTexts[0]
+        : rangeTexts.slice(0, -1).join(', ') + ' y ' + rangeTexts.slice(-1);
+
+    const peakAdj = adjustedProbability(peak.probability, peak.confidence);
+
+    return {
+        type: 'risk',
+        ranges: rangeDescription,
+        peakHour: peak.hour,
+        peakPercent: Math.round(peakAdj * 100),
+        peakLevel: peakAdj < 0.4 ? 'moderado' : 'alto',
+    };
+}
