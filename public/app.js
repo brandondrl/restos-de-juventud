@@ -720,6 +720,10 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
         <div class="disclaimer">
             Herramienta independiente de uso personal. Los datos registrados son exclusivamente tuyos, cifrados en la base de datos y no se cruzan con ningún otro registro. Esta app no pertenece a ningún estudio sociológico, institución ni entidad gubernamental. La precisión de las predicciones mejora con la cantidad de datos registrados.
         </div>
+        <div class="disclaimer" style="margin-top:8px;text-align:center">
+            ¿Prefieres registrar desde el teléfono? Usa el bot de Telegram:
+            <a href="https://t.me/RestosDeJuventudBot" target="_blank" style="color:var(--amber);text-decoration:none;font-weight:600">@RestosDeJuventudBot</a>
+        </div>
         ${floatingButton}`;
 }
 
