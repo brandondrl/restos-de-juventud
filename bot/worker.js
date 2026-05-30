@@ -1,5 +1,6 @@
 const API = 'https://restos-de-juventud.vercel.app';
 const TZ_OFFSET_HOURS = -4;
+const WEEKS_FOR_FULL_CONFIDENCE = 4;
 
 const MOOD_PROMPT = `¿Cómo te quedaste con este corte?
 
@@ -362,7 +363,7 @@ Llevas *${fmtDuration(elapsed)}* sin luz${etaLine}`,
     return;
   }
 
-  if (cmd === '/probabilidad') {
+if (cmd === '/probabilidad') {
     const active = await apiGet('/api/active', session);
     if (active) {
       await tg(env.BOT_TOKEN, chatId, `😮‍💨 Ya se fue la luz. Respira, lo más probable es que no se vaya de nuevo hoy.\n\nUsa /volvio cuando regrese.`);
@@ -396,11 +397,13 @@ Llevas *${fmtDuration(elapsed)}* sin luz${etaLine}`,
       }
     });
     const risky = [];
-    for (let h = 5; h <= 23; h++) {
+    for (let h = 0; h < 24; h++) {
       const k = `${day}_${h}`;
       const obs = observations[k] || 1, hits = slots[k] || 0;
+      const conf = Math.min(obs / 4, 1);
       const prob = (hits + 0.5) / (obs + 1);
-      if (prob >= 0.18) risky.push({ h, prob });
+      const adjusted = conf < 0.15 ? 0 : prob * conf;
+      if (adjusted >= 0.18) risky.push({ h, prob: adjusted });
     }
     if (!risky.length) { await tg(env.BOT_TOKEN, chatId, '✅ Sin riesgo significativo hoy según tu historial.'); return; }
     const peak = risky.reduce((a, b) => b.prob > a.prob ? b : a);

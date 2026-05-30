@@ -517,7 +517,6 @@ function renderApp() {
         : [];
     window._activeOutage = activeOutage;
     const forecast = heatmap ? getDayForecast(todayPredictions, outages) : { type: 'nodata' };
-    const tomorrowForecast = getTomorrowForecast(outages);
 
     const navTabs = [
         { id: 'dashboard', icon: ICONS.dashboard, label: 'Panel' },
@@ -573,6 +572,7 @@ function renderApp() {
 
 function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions, forecast, minutesWithoutPower) {
     const dayName = DAYS_FULL[now.getDay()].toUpperCase();
+    const tomorrowForecast = getTomorrowForecast(appState.outages);
 
     let forecastContent;
     if (forecast.type === 'nodata') {
