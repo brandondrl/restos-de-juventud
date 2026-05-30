@@ -385,7 +385,8 @@ if (cmd === '/probabilidad') {
     while (cur <= now) {
       for (let h = 0; h < 24; h++) {
         const localCur = new Date(cur.getTime() + TZ_OFFSET_HOURS * 3600000);
-        const k = `${localCur.getUTCDay()}_${h}`;
+        const localH = new Date(cur.getTime() + TZ_OFFSET_HOURS * 3600000 + h * 3600000);
+        const k = `${localH.getUTCDay()}_${localH.getUTCHours()}`;
         observations[k] = (observations[k] || 0) + 1;
       }
       cur.setDate(cur.getDate() + 1);
