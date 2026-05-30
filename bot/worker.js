@@ -403,10 +403,10 @@ if (cmd === '/probabilidad') {
     for (let h = 0; h < 24; h++) {
       const k = `${day}_${h}`;
       const obs = observations[k] || 1, hits = slots[k] || 0;
-      const conf = Math.min(obs / 4, 1);
+      const conf = Math.min(obs / WEEKS_FOR_FULL_CONFIDENCE, 1);
       const prob = (hits + 0.5) / (obs + 1);
       const adjusted = conf < 0.15 ? 0 : prob * conf;
-      if (adjusted >= 0.18) risky.push({ h, prob });
+      if (adjusted >= 0.18) risky.push({ h, prob: adjusted });
     }
     if (!risky.length) { await tg(env.BOT_TOKEN, chatId, '✅ Sin riesgo significativo hoy según tu historial.'); return; }
     const peak = risky.reduce((a, b) => b.prob > a.prob ? b : a);
