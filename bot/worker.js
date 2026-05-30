@@ -406,7 +406,7 @@ if (cmd === '/probabilidad') {
       const conf = Math.min(obs / 4, 1);
       const prob = (hits + 0.5) / (obs + 1);
       const adjusted = conf < 0.15 ? 0 : prob * conf;
-      if (adjusted >= 0.18) risky.push({ h, prob: adjusted });
+      if (adjusted >= 0.18) risky.push({ h, prob });
     }
     if (!risky.length) { await tg(env.BOT_TOKEN, chatId, '✅ Sin riesgo significativo hoy según tu historial.'); return; }
     const peak = risky.reduce((a, b) => b.prob > a.prob ? b : a);
