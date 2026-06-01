@@ -937,10 +937,10 @@ function renderCommunityTab(now) {
     }
     if (communityState.isLoading) return `<div class="empty"><p>Cargando...</p></div>`;
 
-    const { active: activeUsers, todayByCity, totals } = communityState.data;
+    const { active: activeUsers, todayOutages, totals } = communityState.data;
     const myCity = authState.currentUser?.city || '';
 
-    const totalsGrid = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+    const totalsGrid = `<div class="community-totals-grid">
         <div class="scard"><div class="sval-grn">${totals.total_users}</div><div class="slb">Usuarios registrados</div></div>
         <div class="scard"><div class="${totals.active_now > 0 ? 'sval-ora' : 'sval-grn'}">${totals.active_now}</div><div class="slb">Sin luz ahora</div></div>
     </div>`;
@@ -950,14 +950,14 @@ function renderCommunityTab(now) {
         const userRows = activeUsers.map(user => {
             const minutesActive = (now - new Date(user.start_time)) / 60000;
             const isMe = user.username === authState.currentUser?.username;
-            const meTag = isMe ? ' <span style="color:var(--amber);font-size:11px">(tú)</span>' : '';
+            const meTag = isMe ? ' <span class="community-me-tag">(tú)</span>' : '';
             return `<div class="comm-user">
                 <div class="comm-dot"></div>
-                <div style="flex:1">
-                    <div style="font-size:14px;font-weight:600">@${user.username}${meTag}</div>
-                    <div style="font-size:12px;color:var(--text2)">${user.city}${user.zone ? ' &middot; ' + user.zone : ''}</div>
+                <div class="community-user-info">
+                    <div class="community-user-name">@${user.username}${meTag}</div>
+                    <div class="community-user-location">${user.city}${user.zone ? ' · ' + user.zone : ''}</div>
                 </div>
-                <div style="font-size:13px;font-weight:600;color:var(--red-t)">${formatDuration(minutesActive)}</div>
+                <div class="community-user-elapsed">${formatDuration(minutesActive)}</div>
             </div>`;
         }).join('');
         activeUsersCard = `<div class="card" style="margin-bottom:12px"><div class="slabel">SIN LUZ AHORA</div>${userRows}</div>`;
@@ -965,47 +965,58 @@ function renderCommunityTab(now) {
         activeUsersCard = `<div class="card card-grn" style="margin-bottom:12px"><div style="font-size:14px;color:var(--grn-t)">&#10003; Nadie sin luz ahora mismo.</div></div>`;
     }
 
-    let cityRankingCard = '';
-    if (todayByCity.length > 0) {
+    let cityTimelineCard = '';
+    if (todayOutages && todayOutages.length > 0) {
         const grouped = {};
-        todayByCity.forEach(row => {
-            if (!grouped[row.city]) grouped[row.city] = [];
-            grouped[row.city].push(row);
+        todayOutages.forEach(row => {
+            const key = `${row.city}||${row.zone}`;
+            if (!grouped[key]) grouped[key] = { city: row.city, zone: row.zone, outages: [] };
+            grouped[key].outages.push(row);
         });
 
-        const cities = Object.keys(grouped).sort((a, b) => {
-            if (a === myCity) return -1;
-            if (b === myCity) return 1;
-            return a.localeCompare(b);
+        const cityZoneKeys = Object.keys(grouped).sort((a, b) => {
+            const cityA = grouped[a].city, cityB = grouped[b].city;
+            if (cityA === myCity && cityB !== myCity) return -1;
+            if (cityB === myCity && cityA !== myCity) return 1;
+            return cityA.localeCompare(cityB);
         });
 
-        const cityBlocks = cities.map(city => {
-            const zones    = grouped[city];
+        const citiesMap = {};
+        const cityOrder = [];
+        cityZoneKeys.forEach(key => {
+            const { city, zone, outages } = grouped[key];
+            if (!citiesMap[city]) { citiesMap[city] = []; cityOrder.push(city); }
+            citiesMap[city].push({ zone, outages });
+        });
+
+        const blocks = cityOrder.map(city => {
             const isMyCity = city === myCity;
-            const maxMins  = Math.max(...zones.map(z => z.total_mins));
-
-            const zoneRows = zones.map(z => {
-                const barWidth = maxMins > 0 ? Math.round(z.total_mins / maxMins * 100) : 0;
-                return `<div class="comm-city-row">
-                    <div style="width:72px;font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${z.zone}</div>
-                    <div class="comm-bar-track"><div class="comm-bar-fill" style="width:${barWidth}%"></div></div>
-                    <div style="width:52px;text-align:right;font-size:12px;color:var(--text2)">${formatDuration(z.total_mins)}</div>
-                    <div style="width:52px;text-align:right;font-size:11px;color:var(--text3)">${z.cortes} corte${z.cortes !== 1 ? 's' : ''}</div>
+            const zoneBlocks = citiesMap[city].map(({ zone, outages }) => {
+                const totalMins = outages.reduce((s, o) => s + (o.duration_minutes || 0), 0);
+                const outageItems = outages.map(o =>
+                    `<div class="community-outage-item">
+                        <span class="community-outage-time">${formatTime(o.start_time)} – ${formatTime(o.end_time)}</span>
+                        <span class="community-outage-dur">${formatDuration(o.duration_minutes)}</span>
+                    </div>`
+                ).join('');
+                return `<div class="community-zone-block">
+                    <div class="community-zone-header">
+                        <span class="community-zone-name">${zone}</span>
+                        <span class="community-zone-summary">${outages.length} corte${outages.length !== 1 ? 's' : ''} · ${formatDuration(totalMins)}</span>
+                    </div>
+                    <div class="community-outage-list">${outageItems}</div>
                 </div>`;
             }).join('');
-
-            return `<div style="margin-bottom:14px">
-                <div style="font-size:13px;font-weight:700;color:${isMyCity ? 'var(--amber)' : 'var(--text)'};margin-bottom:6px">
-                    ${isMyCity ? '📍 ' : ''}${city}
-                </div>
-                ${zoneRows}
+            return `<div class="community-city-block">
+                <div class="community-city-name ${isMyCity ? 'community-city-mine' : ''}">${isMyCity ? '📍 ' : ''}${city}</div>
+                ${zoneBlocks}
             </div>`;
         }).join('');
 
-        cityRankingCard = `<div class="card card-last"><div class="slabel">HOY POR CIUDAD Y ZONA</div>${cityBlocks}</div>`;
+        cityTimelineCard = `<div class="card card-last"><div class="slabel">HOY POR CIUDAD Y ZONA</div>${blocks}</div>`;
     }
 
-    return totalsGrid + activeUsersCard + cityRankingCard + `<button class="bmore" onclick="refreshCommunity()">&#8635; Actualizar</button>`;
+    return totalsGrid + activeUsersCard + cityTimelineCard + `<button class="bmore" onclick="refreshCommunity()">&#8635; Actualizar</button>`;
 }
 
 function renderHistoryTab(now) {

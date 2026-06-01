@@ -6,7 +6,11 @@ module.exports = async (req, res) => {
   const sql = getSql();
   getUser(req);
 
-  const todayISO = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+  const TZ_OFFSET_HOURS = -4;
+  const now = new Date();
+  const localMidnight = new Date(now.getTime() + TZ_OFFSET_HOURS * 3600000);
+  localMidnight.setUTCHours(0, 0, 0, 0);
+  const todayISO = new Date(localMidnight.getTime() - TZ_OFFSET_HOURS * 3600000).toISOString();
 
   const active = await sql`
     SELECT u.username, u.city, u.zone, a.start_time
@@ -16,13 +20,20 @@ module.exports = async (req, res) => {
     ORDER BY a.start_time ASC
   `;
 
-  const todayByCity = await sql`
-    SELECT u.city, COALESCE(NULLIF(u.zone,''), 'Sin zona') AS zone,
-           COUNT(*)::int AS cortes, COALESCE(SUM(o.duration_minutes), 0)::int AS total_mins
+  const todayOutages = await sql`
+    SELECT
+      u.city,
+      COALESCE(NULLIF(u.zone,''), 'Sin zona') AS zone,
+      o.start_time,
+      o.end_time,
+      o.duration_minutes
     FROM outages o
     JOIN users u ON u.id = o.user_id
-    WHERE u.is_public = true AND o.type = 'corte' AND o.start_time >= ${todayISO} AND o.end_time IS NOT NULL
-    GROUP BY u.city, u.zone ORDER BY u.city, total_mins DESC
+    WHERE u.is_public = true
+      AND o.type = 'corte'
+      AND o.start_time >= ${todayISO}
+      AND o.end_time IS NOT NULL
+    ORDER BY u.city, u.zone, o.start_time ASC
   `;
 
   const cityUsers = await sql`
@@ -38,5 +49,5 @@ module.exports = async (req, res) => {
     WHERE u.is_public = true
   `;
 
-  res.json({ active, todayByCity, cityUsers, totals: totals[0] });
+  res.json({ active, todayOutages, cityUsers, totals: totals[0] });
 };

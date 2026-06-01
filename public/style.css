@@ -198,3 +198,23 @@ input[type=date]{color-scheme:dark;}
 .disclaimer{margin-top:16px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:var(--rs);font-size:11px;color:var(--text3);line-height:1.6;}
 
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.community-totals-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.community-me-tag{color:var(--amber);font-size:11px;}
+.community-user-info{flex:1;}
+.community-user-name{font-size:14px;font-weight:600;}
+.community-user-location{font-size:12px;color:var(--text2);}
+.community-user-elapsed{font-size:13px;font-weight:600;color:var(--red-t);}
+.community-city-block{margin-bottom:16px;}
+.community-city-block:last-child{margin-bottom:0;}
+.community-city-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;}
+.community-city-mine{color:var(--amber);}
+.community-zone-block{margin-bottom:10px;padding-left:8px;border-left:2px solid var(--border);}
+.community-zone-block:last-child{margin-bottom:0;}
+.community-zone-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.community-zone-name{font-size:12px;font-weight:600;color:var(--text2);}
+.community-zone-summary{font-size:11px;color:var(--text3);}
+.community-outage-list{display:flex;flex-direction:column;gap:3px;}
+.community-outage-item{display:flex;align-items:center;justify-content:space-between;padding:4px 8px;background:rgba(185,28,28,.12);border-radius:var(--rs);}
+.community-outage-time{font-size:12px;color:var(--red-t);}
+.community-outage-dur{font-size:12px;font-weight:600;color:var(--text2);}
