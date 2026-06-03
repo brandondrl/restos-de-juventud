@@ -16,10 +16,10 @@ const MOOD_MAP = { '1': 1, '2': 2, '3': 3, '4': 4, '5': 5 };
 const MOOD_LABELS = { 1: '😡 Arrecho', 2: '😢 Triste', 3: '😤 Frustrado', 4: '😐 Normal', 5: '😊 Feliz' };
 
 const REMINDERS = [
-  { minutes: 120, msg: (d) => `⚡ Llevas *${d}* sin luz. El bot está pendiente contigo.` },
-  { minutes: 240, msg: (d) => `🕯️ *${d}* sin luz. Ya esto es una odisea. Ánimo.` },
-  { minutes: 300, msg: (d) => `😤 *${d}* sin luz... ¿y el operador? Respira, ya debe faltar poco (o eso queremos creer).` },
-  { minutes: 360, msg: (d) => `💀 *${d}* SIN LUZ. Vergación nada que vuelve. A este punto ya el ventilador es un recuerdo. Aguanta.` },
+  { minutes: 120, msg: (d) => `⚡ Llevas *${d}* sin luz. Busca cotufas, va pa' rato.` },
+  { minutes: 240, msg: (d) => `🕯️ *${d}* sin luz. Ya esto es una odisea. Acomodaste el pasaporte?.` },
+  { minutes: 300, msg: (d) => `😤 *${d}* sin luz... ¿y el operador? Respira, ya debe faltar poco (aja xD).` },
+  { minutes: 360, msg: (d) => `💀 *${d}* SIN LUZ. Vergación nada que vuelve. Racionamiento o aguebamiento? ni modo...` },
 ];
 
 const STRINGS = {
