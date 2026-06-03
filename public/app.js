@@ -34,8 +34,9 @@ function generateId() {
 }
 function formatDuration(totalMinutes) {
     if (!totalMinutes || totalMinutes <= 0) return '0m';
-    const hours   = Math.floor(totalMinutes / 60);
-    const minutes = Math.round(totalMinutes % 60);
+    const total   = Math.round(totalMinutes);
+    const hours   = Math.floor(total / 60);
+    const minutes = total % 60;
     if (hours && minutes) return `${hours}h ${minutes}m`;
     return hours ? `${hours}h` : `${minutes}m`;
 }

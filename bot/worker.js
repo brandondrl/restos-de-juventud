@@ -54,7 +54,8 @@ function localTime(date = new Date()) {
 
 function fmtDuration(mins) {
   if (!mins || mins <= 0) return '0m';
-  const h = Math.floor(mins / 60), m = Math.round(mins % 60);
+  const total = Math.round(mins);
+  const h = Math.floor(total / 60), m = total % 60;
   if (h && m) return `${h}h ${m}m`;
   return h ? `${h}h` : `${m}m`;
 }
