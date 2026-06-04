@@ -2,11 +2,17 @@
   "name": "restos-de-juventud",
   "version": "2.0.0",
   "scripts": {
+    "lint": "eslint api/",
+    "lint:fix": "eslint api/ --fix",
+    "check": "eslint api/",
     "migrate": "node migrations/run.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.0",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1"
   }
 }
