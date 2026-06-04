@@ -1,10 +1,11 @@
 const { getSql } = require('./_db');
-const { getUser } = require('./_auth');
+const { requireAuth } = require('./_auth');
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).end();
+  const user = requireAuth(req, res);
+  if (!user) return;
   const sql = getSql();
-  getUser(req);
 
   const TZ_OFFSET_HOURS = -4;
   const now = new Date();
