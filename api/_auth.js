@@ -24,12 +24,12 @@ function requireAuth(req, res) {
 }
 
 function signToken(payload) {
-  return jwt.sign(payload, getSecret(), { expiresIn: '30d' });
+  return jwt.sign(payload, getSecret(), { expiresIn: '72h' });
 }
 
 function setCookie(res, token) {
   const secure = process.env.VERCEL_ENV === 'production' ? '; Secure' : '';
-  res.setHeader('Set-Cookie', `auth=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=2592000${secure}`);
+  res.setHeader('Set-Cookie', `auth=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=259200${secure}`);
 }
 
 function clearCookie(res) {
