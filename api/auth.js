@@ -1,11 +1,10 @@
 const bcrypt = require('bcryptjs');
-const { getSql, initDb } = require('./_db');
+const { getSql } = require('./_db');
 const { getUser, requireAuth, signToken, setCookie, clearCookie } = require('./_auth');
 const { badRequest, unauthorized, notFound, conflict, methodNotAllowed } = require('./_http');
 
 module.exports = async (req, res) => {
   const sql = getSql();
-  await initDb(sql);
   const action = req.query.action;
 
   if (action === 'login') {

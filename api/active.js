@@ -1,10 +1,9 @@
-const { getSql, initDb } = require('./_db');
+const { getSql } = require('./_db');
 const { requireAuth } = require('./_auth');
 const { badRequest, methodNotAllowed } = require('./_http');
 
 module.exports = async (req, res) => {
   const sql = getSql();
-  await initDb(sql);
   const user = requireAuth(req, res);
   if (!user) return;
 

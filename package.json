@@ -1,6 +1,9 @@
 {
   "name": "restos-de-juventud",
   "version": "2.0.0",
+  "scripts": {
+    "migrate": "node migrations/run.js"
+  },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.0",
     "bcryptjs": "^2.4.3",
