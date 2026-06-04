@@ -26,7 +26,7 @@ async function initDb(sql) {
     const content = fs.readFileSync(path.join(dir, file), 'utf8');
     const statements = content.split(';').filter(s => s.trim());
     for (const stmt of statements) {
-      await sql.unsafe(stmt);
+      await sql(stmt);
     }
     await sql`INSERT INTO _migrations (name) VALUES (${file})`;
 
