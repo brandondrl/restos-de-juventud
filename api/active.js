@@ -13,6 +13,9 @@ module.exports = async (req, res) => {
   }
   if (req.method === 'POST') {
     const { id, start } = req.body;
+    if (!id || !start) return res.status(400).json({ error: 'id y start requeridos' });
+    if (typeof id !== 'string') return res.status(400).json({ error: 'id debe ser texto' });
+    if (isNaN(Date.parse(start))) return res.status(400).json({ error: 'start debe ser una fecha válida' });
     await sql`INSERT INTO active_outage_v2 (user_id, outage_id, start_time) VALUES (${user.id}, ${id}, ${start}) ON CONFLICT (user_id) DO UPDATE SET outage_id=EXCLUDED.outage_id, start_time=EXCLUDED.start_time`;
     return res.json({ ok: true });
   }

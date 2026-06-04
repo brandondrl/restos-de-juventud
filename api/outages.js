@@ -23,6 +23,12 @@ module.exports = async (req, res) => {
   if (req.method === 'POST') {
     const { id, start, end, duration_minutes, type, mood, notes } = req.body;
     if (!id || !start) return res.status(400).json({ error: 'id y start requeridos' });
+    if (typeof id !== 'string') return res.status(400).json({ error: 'id debe ser texto' });
+    if (isNaN(Date.parse(start))) return res.status(400).json({ error: 'start debe ser una fecha válida' });
+    if (end != null && isNaN(Date.parse(end))) return res.status(400).json({ error: 'end debe ser una fecha válida' });
+    if (duration_minutes != null && (typeof duration_minutes !== 'number' || duration_minutes < 0)) return res.status(400).json({ error: 'duration_minutes debe ser un número válido' });
+    if (type != null && !['corte', 'fluctuacion'].includes(type)) return res.status(400).json({ error: 'type debe ser corte o fluctuacion' });
+    if (mood != null && (!Number.isInteger(mood) || mood < 1 || mood > 10)) return res.status(400).json({ error: 'mood debe ser un entero entre 1 y 10' });
     await sql`
       INSERT INTO outages (id, user_id, start_time, end_time, duration_minutes, type, mood, notes)
       VALUES (${id}, ${user.id}, ${start}, ${end ?? null}, ${duration_minutes ?? null}, ${type ?? 'corte'}, ${mood ?? null}, ${notes ?? null})

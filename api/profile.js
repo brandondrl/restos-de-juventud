@@ -26,6 +26,9 @@ module.exports = async (req, res) => {
   if (req.method === 'PUT') {
     const { city, zone, is_public, currentPassword, newPassword } = req.body;
 
+    if (is_public !== undefined && typeof is_public !== 'boolean') return res.status(400).json({ error: 'is_public debe ser booleano' });
+    if (city !== undefined && typeof city !== 'string') return res.status(400).json({ error: 'city debe ser texto' });
+    if (zone !== undefined && typeof zone !== 'string') return res.status(400).json({ error: 'zone debe ser texto' });
     await sql`
       UPDATE users SET city = ${city || ''}, zone = ${zone || ''}, is_public = ${is_public ?? true}
       WHERE id = ${user.id}
