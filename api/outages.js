@@ -1,5 +1,6 @@
 const { getSql, initDb } = require('./_db');
 const { requireAuth } = require('./_auth');
+const { badRequest, methodNotAllowed } = require('./_http');
 
 module.exports = async (req, res) => {
   const sql = getSql();
@@ -22,13 +23,13 @@ module.exports = async (req, res) => {
 
   if (req.method === 'POST') {
     const { id, start, end, duration_minutes, type, mood, notes } = req.body;
-    if (!id || !start) return res.status(400).json({ error: 'id y start requeridos' });
-    if (typeof id !== 'string') return res.status(400).json({ error: 'id debe ser texto' });
-    if (isNaN(Date.parse(start))) return res.status(400).json({ error: 'start debe ser una fecha válida' });
-    if (end != null && isNaN(Date.parse(end))) return res.status(400).json({ error: 'end debe ser una fecha válida' });
-    if (duration_minutes != null && (typeof duration_minutes !== 'number' || duration_minutes < 0)) return res.status(400).json({ error: 'duration_minutes debe ser un número válido' });
-    if (type != null && !['corte', 'fluctuacion'].includes(type)) return res.status(400).json({ error: 'type debe ser corte o fluctuacion' });
-    if (mood != null && (!Number.isInteger(mood) || mood < 1 || mood > 10)) return res.status(400).json({ error: 'mood debe ser un entero entre 1 y 10' });
+    if (!id || !start) return badRequest(res, 'id y start requeridos');
+    if (typeof id !== 'string') return badRequest(res, 'id debe ser texto');
+    if (isNaN(Date.parse(start))) return badRequest(res, 'start debe ser una fecha válida');
+    if (end != null && isNaN(Date.parse(end))) return badRequest(res, 'end debe ser una fecha válida');
+    if (duration_minutes != null && (typeof duration_minutes !== 'number' || duration_minutes < 0)) return badRequest(res, 'duration_minutes debe ser un número válido');
+    if (type != null && !['corte', 'fluctuacion'].includes(type)) return badRequest(res, 'type debe ser corte o fluctuacion');
+    if (mood != null && (!Number.isInteger(mood) || mood < 1 || mood > 10)) return badRequest(res, 'mood debe ser un entero entre 1 y 10');
     await sql`
       INSERT INTO outages (id, user_id, start_time, end_time, duration_minutes, type, mood, notes)
       VALUES (${id}, ${user.id}, ${start}, ${end ?? null}, ${duration_minutes ?? null}, ${type ?? 'corte'}, ${mood ?? null}, ${notes ?? null})
@@ -42,10 +43,10 @@ module.exports = async (req, res) => {
 
   if (req.method === 'DELETE') {
     const id = req.query.id;
-    if (!id) return res.status(400).json({ error: 'id requerido' });
+    if (!id) return badRequest(res, 'id requerido');
     await sql`DELETE FROM outages WHERE id = ${id} AND user_id = ${user.id}`;
     return res.json({ ok: true });
   }
 
-  res.status(405).end();
+  methodNotAllowed(res);
 };

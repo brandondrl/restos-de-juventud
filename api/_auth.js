@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { unauthorized } = require('./_http');
 
 function getSecret() {
   const s = process.env.JWT_SECRET;
@@ -19,7 +20,7 @@ function getUser(req) {
 
 function requireAuth(req, res) {
   const user = getUser(req);
-  if (!user) { res.status(401).json({ error: 'No autorizado' }); return null; }
+  if (!user) { unauthorized(res); return null; }
   return user;
 }
 

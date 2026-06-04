@@ -1,8 +1,9 @@
 const { getSql } = require('./_db');
+const { forbidden } = require('./_http');
 
 module.exports = async (req, res) => {
   if (req.headers['x-internal-secret'] !== process.env.ADMIN_SECRET) {
-    return res.status(403).end();
+    return forbidden(res);
   }
   const sql = getSql();
   const rows = await sql`

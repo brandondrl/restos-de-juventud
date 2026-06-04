@@ -1,8 +1,9 @@
 const { getSql } = require('./_db');
 const { requireAuth, clearCookie } = require('./_auth');
+const { methodNotAllowed } = require('./_http');
 
 module.exports = async (req, res) => {
-  if (req.method !== 'DELETE') return res.status(405).end();
+  if (req.method !== 'DELETE') return methodNotAllowed(res);
   const user = requireAuth(req, res);
   if (!user) return;
   const sql = getSql();
