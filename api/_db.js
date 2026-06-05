@@ -1,9 +1,14 @@
 const { neon } = require('@neondatabase/serverless');
 const fs = require('fs');
 const path = require('path');
+const config = require('./_config');
 
 function getSql() {
-  return neon(process.env.DATABASE_URL);
+  if (!config.DATABASE_URL) {
+    console.error('[Config] DATABASE_URL no configurado');
+    throw new Error('Error de configuración del servidor. Contacta con el administrador.');
+  }
+  return neon(config.DATABASE_URL);
 }
 
 async function initDb(sql) {

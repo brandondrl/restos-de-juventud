@@ -1,10 +1,17 @@
 const { getSql } = require('./_db');
 const { forbidden } = require('./_http');
+const config = require('./_config');
 
 module.exports = async (req, res) => {
-  if (req.headers['x-internal-secret'] !== process.env.ADMIN_SECRET) {
+  if (!config.ADMIN_SECRET) {
+    console.error('[Config] ADMIN_SECRET no configurado');
+    return res.status(500).json({ error: 'Error de configuración del servidor. Contacta con el administrador.' });
+  }
+
+  if (req.headers['x-internal-secret'] !== config.ADMIN_SECRET) {
     return forbidden(res);
   }
+
   const sql = getSql();
   const rows = await sql`
     SELECT a.user_id, a.start_time, u.telegram_chat_id
