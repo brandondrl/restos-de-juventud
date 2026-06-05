@@ -1,0 +1,30 @@
+const ICONS = {
+    bolt:     `<svg viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+    boltOff:  `<svg viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22"/><path d="M11.5 4H13L12 10h7L12 21v-7H5z"/></svg>`,
+    bulb:     `<svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/></svg>`,
+    dashboard:`<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`,
+    plus:     `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`,
+    chart:    `<svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+    history:  `<svg viewBox="0 0 24 24"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg>`,
+    users:    `<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+    trash:    `<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>`,
+    zap:      `<svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+    chevDown: `<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>`,
+    chevUp:   `<svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>`,
+    close:    `<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+    download: `<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+    clock:    `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    plugOff:  `<svg viewBox="0 0 24 24"><path d="M12 22V11M5 11l-.75-3M19 11l.75-3M8 11V5h8v6"/><line x1="3" y1="3" x2="21" y2="21"/></svg>`,
+    logout:   `<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+};
+
+const MOOD_OPTIONS = [
+    { value: 1, emoji: '😡', label: 'Arrecho',   color: '#ef4444' },
+    { value: 2, emoji: '😢', label: 'Triste',    color: '#f97316' },
+    { value: 3, emoji: '😤', label: 'Frustrado', color: '#f59e0b' },
+    { value: 4, emoji: '😐', label: 'Normal',    color: '#84cc16' },
+    { value: 5, emoji: '😊', label: 'Feliz',     color: '#22c55e' },
+];
+
+const HISTORY_PAGE_SIZE = 20;
+const ZONE_OPTIONS = ['Norte', 'Centro', 'Sur', 'Este', 'Oeste'];
