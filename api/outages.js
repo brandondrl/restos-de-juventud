@@ -29,7 +29,7 @@ module.exports = async (req, res) => {
     if (end != null && isNaN(Date.parse(end))) return badRequest(res, 'end debe ser una fecha válida');
     if (duration_minutes != null && (typeof duration_minutes !== 'number' || duration_minutes < 0)) return badRequest(res, 'duration_minutes debe ser un número válido');
     if (type != null && !['corte', 'fluctuacion'].includes(type)) return badRequest(res, 'type debe ser corte o fluctuacion');
-    if (mood != null && (!Number.isInteger(mood) || mood < 1 || mood > 10)) return badRequest(res, 'mood debe ser un entero entre 1 y 10');
+    if (mood != null && (!Number.isInteger(mood) || mood < 1 || mood > 5)) return badRequest(res, 'mood debe ser un entero entre 1 y 5');
     await sql`
       INSERT INTO outages (id, user_id, start_time, end_time, duration_minutes, type, mood, notes)
       VALUES (${id}, ${user.id}, ${start}, ${end ?? null}, ${duration_minutes ?? null}, ${type ?? 'corte'}, ${mood ?? null}, ${notes ?? null})

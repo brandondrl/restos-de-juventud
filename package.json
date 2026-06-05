@@ -5,7 +5,8 @@
     "lint": "eslint api/",
     "lint:fix": "eslint api/ --fix",
     "check": "eslint api/",
-    "migrate": "node migrations/run.js"
+    "migrate": "node migrations/run.js",
+    "test": "jest"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.0",
@@ -13,6 +14,7 @@
     "jsonwebtoken": "^9.0.0"
   },
   "devDependencies": {
-    "eslint": "^8.57.1"
+    "eslint": "^8.57.1",
+    "jest": "^30.4.2"
   }
 }
