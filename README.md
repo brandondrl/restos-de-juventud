@@ -13,7 +13,7 @@ A community-powered tool born out of necessity. Where I live, power outages happ
 - **Dashboard** with weekly, monthly, and yearly totals, longest outage, worst day, and a natural-language forecast
 - **CSV export** — download your full history
 - **Profile** — public/private toggle, city, zone, password change
-- Fully responsive, works as a mobile web app
+- Fully responsive, works as a mobile web app 
 
 ## Why I built it
 
