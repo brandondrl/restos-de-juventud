@@ -129,6 +129,7 @@ describe('POST', () => {
   });
 
   it('returns ok on valid POST', async () => {
+    mockSql.mockResolvedValueOnce([]);
     const req = { method: 'POST', query: {}, body: { id: 'abc', start: '2024-01-01' } };
     const res = mockRes();
     await handler(req, res);
@@ -136,12 +137,30 @@ describe('POST', () => {
   });
 
   it('accepts optional fields', async () => {
+    mockSql.mockResolvedValueOnce([]);
     const req = {
       method: 'POST', query: {}, body: {
         id: 'abc', start: '2024-01-01', end: '2024-01-02',
         duration_minutes: 120, type: 'fluctuacion', mood: 5, notes: 'ok',
       },
     };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.json).toHaveBeenCalledWith({ ok: true });
+  });
+
+  it('returns 403 if outage belongs to another user', async () => {
+    mockSql.mockResolvedValueOnce([{ user_id: 'user2' }]);
+    const req = { method: 'POST', query: {}, body: { id: 'abc', start: '2024-01-01' } };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Este outage no te pertenece' });
+  });
+
+  it('allows upsert when outage belongs to current user', async () => {
+    mockSql.mockResolvedValueOnce([{ user_id: 'user1' }]);
+    const req = { method: 'POST', query: {}, body: { id: 'abc', start: '2024-01-01', end: '2024-01-02', mood: 4 } };
     const res = mockRes();
     await handler(req, res);
     expect(res.json).toHaveBeenCalledWith({ ok: true });

@@ -1,6 +1,6 @@
 const { getSql, initDb } = require('./_db');
 const { requireAuth } = require('./_auth');
-const { badRequest, methodNotAllowed } = require('./_http');
+const { badRequest, methodNotAllowed, forbidden } = require('./_http');
 
 module.exports = async (req, res) => {
   const sql = getSql();
@@ -30,6 +30,8 @@ module.exports = async (req, res) => {
     if (duration_minutes != null && (typeof duration_minutes !== 'number' || duration_minutes < 0)) return badRequest(res, 'duration_minutes debe ser un número válido');
     if (type != null && !['corte', 'fluctuacion'].includes(type)) return badRequest(res, 'type debe ser corte o fluctuacion');
     if (mood != null && (!Number.isInteger(mood) || mood < 1 || mood > 5)) return badRequest(res, 'mood debe ser un entero entre 1 y 5');
+    const [existing] = await sql`SELECT user_id FROM outages WHERE id = ${id}`;
+    if (existing && existing.user_id !== user.id) return forbidden(res, 'Este outage no te pertenece');
     await sql`
       INSERT INTO outages (id, user_id, start_time, end_time, duration_minutes, type, mood, notes)
       VALUES (${id}, ${user.id}, ${start}, ${end ?? null}, ${duration_minutes ?? null}, ${type ?? 'corte'}, ${mood ?? null}, ${notes ?? null})
