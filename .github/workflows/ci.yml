@@ -1,10 +1,8 @@
-name: CI
+name: CI y Auto-Merge
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches: [dev]
 
 jobs:
   quality:
@@ -28,3 +26,19 @@ jobs:
       - name: Security audit
         run: npm audit --audit-level=high
         continue-on-error: true
+
+  automerge-to-main:
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Hacer merge a main y subir los cambios
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout main
+          git merge origin/dev --no-ff -m "Auto-merge: Tests, lint y auditoría pasados con éxito"
+          git push origin main
