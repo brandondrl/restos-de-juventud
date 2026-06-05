@@ -1,10 +1,13 @@
 const jwt = require('jsonwebtoken');
 const { unauthorized } = require('./_http');
+const config = require('./_config');
 
 function getSecret() {
-  const s = process.env.JWT_SECRET;
-  if (!s) throw new Error('JWT_SECRET no configurado en variables de entorno');
-  return s;
+  if (!config.JWT_SECRET) {
+    console.error('[Config] JWT_SECRET no configurado');
+    throw new Error('Error de configuración del servidor. Contacta con el administrador.');
+  }
+  return config.JWT_SECRET;
 }
 
 function getUser(req) {
@@ -29,7 +32,7 @@ function signToken(payload) {
 }
 
 function setCookie(res, token) {
-  const secure = process.env.VERCEL_ENV === 'production' ? '; Secure' : '';
+  const secure = config.VERCEL_ENV === 'production' ? '; Secure' : '';
   res.setHeader('Set-Cookie', `auth=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=259200${secure}`);
 }
 
