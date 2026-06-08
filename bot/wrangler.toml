@@ -7,7 +7,7 @@ binding = "KV"
 id = "b5272b896df941209d18a7e73650d000"
 
 [triggers]
-crons = ["*/30 * * * *"]
+crons = ["*/5 * * * *"]
 
 [observability]
 enabled = false
