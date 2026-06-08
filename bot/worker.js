@@ -240,6 +240,9 @@ async function handleUpdate(env, update) {
     await apiDelete('/api/active', session);
     await env.KV.delete(`pending_mood:${userId}`);
     await env.KV.delete(`reminded:${userId}`);
+    const localNowClose = new Date(new Date().getTime() + TZ_OFFSET_HOURS * 3600000);
+    const todayClose = localNowClose.toISOString().slice(0, 10);
+    await env.KV.put(`closed_today:${userId}:${todayClose}`, '1', { expirationTtl: 86400 });
     const outages = await apiGet('/api/outages', session);
     const summary = outages ? buildDaySummary(outages) : '';
     await tg(env.BOT_TOKEN, chatId, STRINGS.outageEnded(fmtDuration(mins), moodValue, summary));
@@ -374,91 +377,154 @@ if (cmd === '/probabilidad') {
     if (!outages || outages.length < 3) { await tg(env.BOT_TOKEN, chatId, 'ℹ️ Necesitas más registros para calcular probabilidades.'); return; }
     const now = new Date();
     const localNow = new Date(now.getTime() + TZ_OFFSET_HOURS * 3600000);
-    const day = localNow.getUTCDay();
     const currentHour = localNow.getUTCHours();
-    const allDates = outages.filter(o => o.start && o.end && (o.type || 'corte') !== 'fluctuacion').flatMap(o => [new Date(o.start), new Date(o.end)]);
-    const earliestDate = allDates.length ? new Date(Math.min(...allDates.map(d => d.getTime()))) : new Date(now - 84*86400000);
-    const hardWindow = new Date(now); hardWindow.setDate(hardWindow.getDate() - 84);
-    const windowStart = new Date(Math.max(earliestDate.getTime(), hardWindow.getTime()));
-    const completed = outages.filter(o => o.start && o.end && (o.type || 'corte') !== 'fluctuacion' && new Date(o.start) >= windowStart);
-    const slots = {}, observations = {};
-    const cur = new Date(windowStart); cur.setHours(0, 0, 0, 0);
-    while (cur <= now) {
-      for (let h = 0; h < 24; h++) {
-        const localCur = new Date(cur.getTime() + TZ_OFFSET_HOURS * 3600000);
-        const localH = new Date(cur.getTime() + TZ_OFFSET_HOURS * 3600000 + h * 3600000);
-        const k = `${localH.getUTCDay()}_${localH.getUTCHours()}`;
-        observations[k] = (observations[k] || 0) + 1;
-      }
-      cur.setDate(cur.getDate() + 1);
-    }
-    completed.forEach(o => {
-      const s = new Date(o.start), e = new Date(o.end), c = new Date(s); c.setMinutes(0, 0, 0);
-      while (c < e) {
-        const localC = new Date(c.getTime() + TZ_OFFSET_HOURS * 3600000);
-        const k = `${localC.getUTCDay()}_${localC.getUTCHours()}`;
-        slots[k] = (slots[k] || 0) + 1;
-        c.setHours(c.getHours() + 1);
-      }
-    });
-    const risky = [];
-    for (let h = 0; h < 24; h++) {
-      const k = `${day}_${h}`;
-      const obs = observations[k] || 1, hits = slots[k] || 0;
-      const conf = Math.min(obs / WEEKS_FOR_FULL_CONFIDENCE, 1);
-      const prob = (hits + 0.5) / (obs + 1);
-      const adjusted = conf < 0.15 ? 0 : prob * conf;
-      if (adjusted >= 0.18) risky.push({ h, prob: adjusted });
-    }
-    if (!risky.length) { await tg(env.BOT_TOKEN, chatId, '✅ Sin riesgo significativo hoy según tu historial.'); return; }
-    const peak = risky.reduce((a, b) => b.prob > a.prob ? b : a);
-    const ranges = []; let rs = null, re = null;
-    risky.forEach(({ h }) => {
-      if (rs === null) { rs = h; re = h; }
-      else if (h === re + 1) { re = h; }
-      else { ranges.push([rs, re]); rs = h; re = h; }
-    });
-    if (rs !== null) ranges.push([rs, re]);
-    const rangeText = ranges.map(([a, b]) =>
-      a === b ? `${String(a).padStart(2, '0')}:00` : `${String(a).padStart(2, '0')}:00–${String(b + 1).padStart(2, '0')}:00`
-    ).join(', ');
-    const inRisk = risky.some(p => p.h === currentHour);
+    const risk = calculateDayRisk(outages, localNow);
+    if (!risk) { await tg(env.BOT_TOKEN, chatId, '✅ Sin riesgo significativo hoy según tu historial.'); return; }
+    const inRisk = risk.risky.some(p => p.h === currentHour);
     const prefix = inRisk ? '⚠️ *Estás en una hora de riesgo ahora mismo.*\n\n' : '';
-    await tg(env.BOT_TOKEN, chatId, `${prefix}🔮 *Predicción para hoy*\n\n⏰ Riesgo: *${rangeText}*\n📈 Pico: *${String(peak.h).padStart(2, '0')}:00* (${Math.round(peak.prob * 100)}%)\n\n_Basado en tu historial personal._`);
+    await tg(env.BOT_TOKEN, chatId, `${prefix}🔮 *Predicción para hoy*\n\n⏰ Riesgo: *${risk.rangeText}*\n📈 Pico: *${String(risk.peak.h).padStart(2, '0')}:00* (${Math.round(risk.peak.prob * 100)}%)\n\n_Basado en tu historial personal._`);
     return;
   }
 
   await tg(env.BOT_TOKEN, chatId, STRINGS.unknown);
 }
 
+function calculateDayRisk(outages, localNow) {
+  const day = localNow.getUTCDay();
+  const now = new Date();
+  const allDates = outages.filter(o => o.start && o.end && (o.type || 'corte') !== 'fluctuacion').flatMap(o => [new Date(o.start), new Date(o.end)]);
+  if (!allDates.length) return null;
+  const earliestDate = new Date(Math.min(...allDates.map(d => d.getTime())));
+  const hardWindow = new Date(now); hardWindow.setDate(hardWindow.getDate() - 84);
+  const windowStart = new Date(Math.max(earliestDate.getTime(), hardWindow.getTime()));
+  const completed = outages.filter(o => o.start && o.end && (o.type || 'corte') !== 'fluctuacion' && new Date(o.start) >= windowStart);
+  const slots = {}, observations = {};
+  const cur = new Date(windowStart); cur.setHours(0, 0, 0, 0);
+  while (cur <= now) {
+    for (let h = 0; h < 24; h++) {
+      const localH = new Date(cur.getTime() + TZ_OFFSET_HOURS * 3600000 + h * 3600000);
+      const k = `${localH.getUTCDay()}_${localH.getUTCHours()}`;
+      observations[k] = (observations[k] || 0) + 1;
+    }
+    cur.setDate(cur.getDate() + 1);
+  }
+  completed.forEach(o => {
+    const s = new Date(o.start), e = new Date(o.end), c = new Date(s); c.setMinutes(0, 0, 0);
+    while (c < e) {
+      const localC = new Date(c.getTime() + TZ_OFFSET_HOURS * 3600000);
+      const k = `${localC.getUTCDay()}_${localC.getUTCHours()}`;
+      slots[k] = (slots[k] || 0) + 1;
+      c.setHours(c.getHours() + 1);
+    }
+  });
+  const risky = [];
+  for (let h = 0; h < 24; h++) {
+    const k = `${day}_${h}`;
+    const obs = observations[k] || 1, hits = slots[k] || 0;
+    const conf = Math.min(obs / WEEKS_FOR_FULL_CONFIDENCE, 1);
+    const prob = (hits + 0.5) / (obs + 1);
+    const adjusted = conf < 0.15 ? 0 : prob * conf;
+    if (adjusted >= 0.18) risky.push({ h, prob: adjusted });
+  }
+  if (!risky.length) return null;
+  const peak = risky.reduce((a, b) => b.prob > a.prob ? b : a);
+  const ranges = []; let rs = null, re = null;
+  risky.forEach(({ h }) => {
+    if (rs === null) { rs = h; re = h; }
+    else if (h === re + 1) { re = h; }
+    else { ranges.push([rs, re]); rs = h; re = h; }
+  });
+  if (rs !== null) ranges.push([rs, re]);
+  const rangeText = ranges.map(([a, b]) =>
+    a === b ? `${String(a).padStart(2, '0')}:00` : `${String(a).padStart(2, '0')}:00–${String(b + 1).padStart(2, '0')}:00`
+  ).join(', ');
+  return { risky, peak, rangeText };
+}
+
 async function handleCron(env) {
-  const r = await fetch(`${API}/api/active-sessions`, {
+  const now = Date.now();
+  const localNow = new Date(now + TZ_OFFSET_HOURS * 3600000);
+  const localHour = localNow.getUTCHours();
+  const localMinute = localNow.getUTCMinutes();
+  const today = localNow.toISOString().slice(0, 10);
+
+  const activeR = await fetch(`${API}/api/active-sessions`, {
     headers: { 'x-internal-secret': env.ADMIN_SECRET },
   });
-  if (!r.ok) return;
-  const sessions = await r.json();
-  if (!sessions.length) return;
+  if (activeR.ok) {
+    const sessions = await activeR.json();
+    for (const row of sessions) {
+      const { telegram_chat_id, start_time } = row;
+      if (!telegram_chat_id) continue;
+      const elapsedMins = (now - new Date(start_time).getTime()) / 60000;
+      const reminderKey = `reminded:${telegram_chat_id}`;
+      const alreadySent = await env.KV.get(reminderKey);
+      const sentSet = alreadySent ? new Set(JSON.parse(alreadySent)) : new Set();
+      for (const reminder of REMINDERS) {
+        if (elapsedMins >= reminder.minutes && !sentSet.has(reminder.minutes)) {
+          sentSet.add(reminder.minutes);
+          await tg(env.BOT_TOKEN, telegram_chat_id, reminder.msg(fmtDuration(elapsedMins)));
+          break;
+        }
+      }
+      if (sentSet.size > 0) {
+        await env.KV.put(reminderKey, JSON.stringify([...sentSet]), { expirationTtl: 86400 });
+      }
+    }
+  }
 
-  const now = Date.now();
+  if (localHour < 5 || localHour > 23) return;
 
-  for (const row of sessions) {
-    const { telegram_chat_id, start_time } = row;
-    if (!telegram_chat_id) continue;
-    const elapsedMins = (now - new Date(start_time).getTime()) / 60000;
-    const reminderKey = `reminded:${telegram_chat_id}`;
-    const alreadySent = await env.KV.get(reminderKey);
-    const sentSet = alreadySent ? new Set(JSON.parse(alreadySent)) : new Set();
+  const usersR = await fetch(`${API}/api/telegram-users`, {
+    headers: { 'x-internal-secret': env.ADMIN_SECRET },
+  });
+  if (!usersR.ok) return;
+  const users = await usersR.json();
 
-    for (const reminder of REMINDERS) {
-      if (elapsedMins >= reminder.minutes && !sentSet.has(reminder.minutes)) {
-        sentSet.add(reminder.minutes);
-        await tg(env.BOT_TOKEN, telegram_chat_id, reminder.msg(fmtDuration(elapsedMins)));
-        break;
+  for (const user of users) {
+    const { telegram_chat_id } = user;
+    const session = await env.KV.get(`session:${telegram_chat_id}`);
+    if (!session) continue;
+
+    const closedToday = await env.KV.get(`closed_today:${telegram_chat_id}:${today}`);
+    if (closedToday) continue;
+
+    const outages = await apiGet('/api/outages', session);
+    if (!outages || outages.length < 3) continue;
+
+    const startOfTodayUTC = new Date(`${today}T${String(Math.abs(TZ_OFFSET_HOURS)).padStart(2,'0')}:00:00Z`);
+    const hadOutageToday = outages.some(o =>
+      o.end && (o.type || 'corte') === 'corte' && new Date(o.start) >= startOfTodayUTC
+    );
+    if (hadOutageToday) continue;
+
+    const risk = calculateDayRisk(outages, localNow);
+    if (!risk) continue;
+
+    const notifBase = `notif:${telegram_chat_id}:${today}`;
+
+    if (localHour === 9 && localMinute < 5) {
+      const key = `${notifBase}:morning`;
+      if (!await env.KV.get(key)) {
+        await tg(env.BOT_TOKEN, telegram_chat_id, `🌅 *Buenos días*\n\nSegún tu historial, hoy hay riesgo entre las *${risk.rangeText}*\nPico: *${String(risk.peak.h).padStart(2,'0')}:00* (${Math.round(risk.peak.prob * 100)}%)\n\n_Ojo pelao._`);
+        await env.KV.put(key, '1', { expirationTtl: 86400 });
       }
     }
 
-    if (sentSet.size > 0) {
-      await env.KV.put(reminderKey, JSON.stringify([...sentSet]), { expirationTtl: 86400 });
+    if (localHour === risk.peak.h - 1 && localMinute < 5) {
+      const key = `${notifBase}:prehour`;
+      if (!await env.KV.get(key)) {
+        await tg(env.BOT_TOKEN, telegram_chat_id, `⏰ En 1 hora entra la hora pico (*${String(risk.peak.h).padStart(2,'0')}:00*) según tu historial. Por si las moscas.`);
+        await env.KV.put(key, '1', { expirationTtl: 86400 });
+      }
+    }
+
+    if (localHour === risk.peak.h && localMinute < 5) {
+      const key = `${notifBase}:peakhour`;
+      if (!await env.KV.get(key)) {
+        await tg(env.BOT_TOKEN, telegram_chat_id, `⚡ *Hora pico ahora* (${Math.round(risk.peak.prob * 100)}%)\n\nSi se va, usa /corte para registrarlo.`);
+        await env.KV.put(key, '1', { expirationTtl: 86400 });
+      }
     }
   }
 }
