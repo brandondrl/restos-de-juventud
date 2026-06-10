@@ -16,6 +16,13 @@ function checkRiskNotification() {
     const now  = new Date();
     const hour = now.getHours();
     if (hour === lastNotifiedHour) return;
+
+    const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+    const hadOutageToday = appState.outages.some(o =>
+        o.end && (o.type || 'corte') === 'corte' && new Date(o.start) >= startOfToday
+    );
+    if (hadOutageToday) return;
+
     const heatmap = buildHeatmap(appState.outages);
     if (!heatmap) return;
     const slot = heatmap[`${now.getDay()}_${hour}`] || { probability: 0, confidence: 0 };
@@ -175,12 +182,15 @@ async function deleteOutage(id) {
 }
 
 async function openProfile() {
-    profileState.isOpen        = true;
-    profileState.isLoading     = true;
-    profileState.passwordError  = '';
-    profileState.passwordUpdated = false;
-    profileState.changesSaved   = false;
-    profileState.confirmDelete  = false;
+    profileState.isOpen               = true;
+    profileState.isLoading            = true;
+    profileState.passwordError        = '';
+    profileState.passwordUpdated      = false;
+    profileState.changesSaved         = false;
+    profileState.confirmDelete        = false;
+    profileState.telegramToken        = null;
+    profileState.telegramTokenExpiry  = null;
+    profileState.telegramTokenLoading = false;
     render();
     const data = await http.get('/api/profile');
     profileState.profileData = data;
@@ -222,6 +232,28 @@ async function deleteAccount() {
     appState.outages      = [];
     appState.activeOutage = null;
     profileState.isOpen   = false;
+    render();
+}
+
+async function generateTelegramToken() {
+    profileState.telegramTokenLoading = true;
+    render();
+    const response = await http.post('/api/auth/telegram-token', {});
+    if (response.ok) {
+        const body = await response.json();
+        profileState.telegramToken       = body.token;
+        profileState.telegramTokenExpiry = new Date(body.expiresAt);
+    }
+    profileState.telegramTokenLoading = false;
+    render();
+}
+
+async function unlinkTelegram() {
+    const response = await http.post('/api/auth/telegram-unlink', {});
+    if (!response.ok) { alert('Error al desvincular. Reintenta.'); return; }
+    profileState.profileData.has_telegram = false;
+    profileState.telegramToken            = null;
+    profileState.telegramTokenExpiry      = null;
     render();
 }
 

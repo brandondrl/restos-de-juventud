@@ -3,6 +3,11 @@ const { getSql, initDb } = require('./_db');
 const { getUser, requireAuth, signToken, setCookie, clearCookie } = require('./_auth');
 const { badRequest, unauthorized, notFound, conflict, methodNotAllowed } = require('./_http');
 
+function generateLinkToken() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
 module.exports = async (req, res) => {
   const sql = getSql();
   await initDb(sql);
@@ -52,17 +57,54 @@ module.exports = async (req, res) => {
     return res.json({ ok: true, user: { id, username: username.toLowerCase(), city, zone, is_public: true } });
   }
 
+  if (action === 'telegram-token') {
+    if (req.method !== 'POST') return methodNotAllowed(res);
+    const user = requireAuth(req, res);
+    if (!user) return;
+    const token = generateLinkToken();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    await sql`
+      UPDATE users
+      SET telegram_link_token = ${token}, telegram_link_token_expires_at = ${expiresAt}
+      WHERE id = ${user.id}
+    `;
+    return res.json({ token, expiresAt });
+  }
+
   if (action === 'telegram-verify') {
     if (req.method !== 'POST') return methodNotAllowed(res);
     const { token, chat_id } = req.body;
     if (!token || !chat_id) return badRequest(res, 'Faltan datos');
     if (typeof token !== 'string') return badRequest(res, 'Token inválido');
-    const rows = await sql`SELECT * FROM users WHERE username = ${token.toLowerCase()}`;
-    if (!rows.length) return unauthorized(res, 'Token inválido');
+    const rows = await sql`
+      SELECT * FROM users
+      WHERE telegram_link_token = ${token.toUpperCase()}
+      AND telegram_link_token_expires_at::timestamptz > NOW()
+    `;
+    if (!rows.length) return unauthorized(res, 'Código inválido o expirado');
     const user = rows[0];
-    await sql`UPDATE users SET telegram_chat_id = ${String(chat_id)}, telegram_linked_at = NOW()::text WHERE id = ${user.id}`;
+    await sql`
+      UPDATE users
+      SET telegram_chat_id = ${String(chat_id)},
+          telegram_linked_at = NOW()::text,
+          telegram_link_token = NULL,
+          telegram_link_token_expires_at = NULL
+      WHERE id = ${user.id}
+    `;
     const jwt = signToken({ id: user.id, username: user.username });
     return res.json({ ok: true, token: jwt, username: user.username });
+  }
+
+  if (action === 'telegram-unlink') {
+    if (req.method !== 'POST') return methodNotAllowed(res);
+    const user = requireAuth(req, res);
+    if (!user) return;
+    await sql`
+      UPDATE users
+      SET telegram_chat_id = NULL, telegram_linked_at = NULL
+      WHERE id = ${user.id}
+    `;
+    return res.json({ ok: true });
   }
 
   if (action === 'telegram-link') {

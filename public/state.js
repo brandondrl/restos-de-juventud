@@ -26,18 +26,21 @@ let appState = {
 };
 
 let profileState = {
-    isOpen:          false,
-    profileData:     null,
-    isLoading:       false,
-    editCity:        '',
-    editZone:        '',
-    isPublic:        true,
-    currentPassword: '',
-    newPassword:     '',
-    passwordError:   '',
-    passwordUpdated: false,
-    changesSaved:    false,
-    confirmDelete:   false,
+    isOpen:               false,
+    profileData:          null,
+    isLoading:            false,
+    editCity:             '',
+    editZone:             '',
+    isPublic:             true,
+    currentPassword:      '',
+    newPassword:          '',
+    passwordError:        '',
+    passwordUpdated:      false,
+    changesSaved:         false,
+    confirmDelete:        false,
+    telegramToken:        null,
+    telegramTokenExpiry:  null,
+    telegramTokenLoading: false,
 };
 
 let communityState = {

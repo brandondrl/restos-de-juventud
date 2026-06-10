@@ -10,7 +10,9 @@ module.exports = async (req, res) => {
 
   if (req.method === 'GET') {
     const [profile] = await sql`
-      SELECT id, username, city, zone, is_public, created_at FROM users WHERE id = ${user.id}
+      SELECT id, username, city, zone, is_public, created_at,
+             (telegram_chat_id IS NOT NULL) AS has_telegram
+      FROM users WHERE id = ${user.id}
     `;
     if (!profile) return notFound(res, 'No encontrado');
 

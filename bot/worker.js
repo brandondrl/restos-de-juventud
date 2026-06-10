@@ -17,23 +17,22 @@ const MOOD_LABELS = { 1: '😡 Arrecho', 2: '😢 Triste', 3: '😤 Frustrado', 
 
 const REMINDERS = [
   { minutes: 120, msg: (d) => `⚡ Llevas *${d}* sin luz. Busca cotufas, va pa' rato.` },
-  { minutes: 240, msg: (d) => `🕯️ *${d}* sin luz. Ya esto es una odisea. Acomodaste el pasaporte?.` },
+  { minutes: 240, msg: (d) => `🕯️ *${d}* sin luz. Ya esto es una odisea. Acomodaste el pasaporte?` },
   { minutes: 300, msg: (d) => `😤 *${d}* sin luz... ¿y el operador? Respira, ya debe faltar poco (aja xD).` },
   { minutes: 360, msg: (d) => `💀 *${d}* SIN LUZ. Vergación nada que vuelve. Racionamiento o aguebamiento? ni modo...` },
 ];
 
 const STRINGS = {
-  welcome: `⚡ *Restos de Juventud Bot*\n\n¿Sin luz otra vez? Este bot te ayuda a registrarlo sin abrir la app.\n\n*Si ya tienes cuenta:* envía tu usuario ahora.\n\n*Si no tienes cuenta:* regístrate primero en:\nhttps://restos-de-juventud.vercel.app\n\nEs gratis y tarda 30 segundos.`,
-  linked: (u) => `✅ Cuenta *@${u}* vinculada. Ya puedes usar los comandos.\n\nManda /ayuda si no sabes por dónde empezar.`,
-  noAccount: `❌ No encontré ese usuario. Verifica en la app web.`,
-  notLinked: `🔗 Primero vincula tu cuenta enviando /start y luego tu usuario.`,
+  welcome: `⚡ *Restos de Juventud Bot*\n\n¿Sin luz otra vez? Este bot te ayuda a registrar cortes sin abrir la app.\n\n*Para vincularte:*\n1. Entra a la app web\n2. Abre tu perfil\n3. Toca *Vincular Telegram*\n4. Usa el botón o manda el código aquí con /start CÓDIGO\n\n_Si no tienes cuenta, regístrate primero en la app._`,
+  linked: (u) => `✅ Cuenta *@${u}* vinculada.\n\nYa puedes usar los comandos. Manda /ayuda para verlos.`,
+  invalidToken: `❌ Código inválido o expirado.\n\nGenera uno nuevo desde tu perfil en la app.`,
+  notLinked: `🔗 Tu cuenta no está vinculada.\n\nEntra a la app, abre tu perfil y toca *Vincular Telegram* para obtener un código de acceso.`,
   outageStarted: (t, summary) => `⚡ Corte registrado a las *${t}*\n${summary}\nUsa /volvio cuando regrese la luz.`,
   outageAlreadyActive: (t) => `⚠️ Ya tienes un corte activo desde las *${t}*\n\nUsa /volvio cuando regrese la luz.`,
   askMood: MOOD_PROMPT,
   outageEnded: (d, mood, summary) => `💡 Luz de vuelta. Duración: *${d}*\nEstado: ${MOOD_LABELS[mood]}\n\n${summary}`,
   moodInvalid: `Responde solo con un número del 1 al 5.`,
   noActiveOutage: `ℹ️ No hay corte activo registrado.\n\nUsa /corte si se fue la luz.`,
-  statusOn: (t, elapsed) => `⚡ Sin luz desde las *${t}* — llevas *${elapsed}*\n\nUsa /volvio cuando regrese.`,
   statusOff: `💡 Con luz`,
   fluctuationSaved: (t) => `🔌 Fluctuación registrada a las *${t}*`,
   fluctuationDuringOutage: `⚠️ No puedes registrar una fluctuación con un corte activo.`,
@@ -126,11 +125,11 @@ async function getSession(kv, userId) {
   return kv.get(`session:${userId}`);
 }
 
-async function handleLogin(env, userId, username) {
+async function handleTokenLink(env, userId, token) {
   const r = await fetch(`${API}/api/auth/telegram-verify`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token: username, chat_id: userId }),
+    body: JSON.stringify({ token: token.toUpperCase(), chat_id: userId }),
   });
   if (!r.ok) return null;
   const data = await r.json();
@@ -187,7 +186,8 @@ async function handleUpdate(env, update) {
   const chatId = msg.chat.id;
   const isGroup = msg.chat.type === 'group' || msg.chat.type === 'supergroup';
   const text = msg.text.trim();
-  const rawCmd = text.split(' ')[0].toLowerCase();
+  const parts = text.split(' ');
+  const rawCmd = parts[0].toLowerCase();
   const cmd = rawCmd.replace(`@${(env.BOT_USERNAME || '').toLowerCase()}`, '');
 
   if (cmd === '/start') {
@@ -195,8 +195,20 @@ async function handleUpdate(env, update) {
       await tg(env.BOT_TOKEN, chatId, `${STRINGS.groupOnly} @${env.BOT_USERNAME}`);
       return;
     }
+    const tokenArg = parts[1];
+    if (tokenArg) {
+      const linked = await handleTokenLink(env, userId, tokenArg);
+      if (linked) {
+        await tg(env.BOT_TOKEN, chatId, STRINGS.linked(linked));
+      } else {
+        await tgButtons(env.BOT_TOKEN, chatId, STRINGS.invalidToken, [
+          [{ text: '🌐 Ir a la app', url: API }],
+        ]);
+      }
+      return;
+    }
     await tgButtons(env.BOT_TOKEN, chatId, STRINGS.welcome, [
-      [{ text: '🌐 Ir a la app web', url: 'https://restos-de-juventud.vercel.app' }],
+      [{ text: '🌐 Ir a la app', url: API }],
     ]);
     return;
   }
@@ -206,27 +218,10 @@ async function handleUpdate(env, update) {
     return;
   }
 
-  if (cmd === '/desconectar') {
-    const session = await getSession(env.KV, userId);
-    let summary = '';
-    if (session) {
-      const outages = await apiGet('/api/outages', session);
-      if (outages) {
-        const total = outages.filter(o => o.end && (o.type || 'corte') === 'corte');
-        const mins = total.reduce((s, o) => s + (o.duration_minutes || 0), 0);
-        summary = `Registraste *${total.length}* cortes · *${fmtDuration(mins)}* sin luz en total.`;
-      }
-    }
-    await env.KV.delete(`session:${userId}`);
-    await env.KV.delete(`pending_mood:${userId}`);
-    await tg(env.BOT_TOKEN, chatId, STRINGS.disconnected(summary));
-    return;
-  }
-
   const session = await getSession(env.KV, userId);
 
   const pendingMoodRaw = await env.KV.get(`pending_mood:${userId}`);
-  if (pendingMoodRaw && !cmd.startsWith('/')) {
+  if (pendingMoodRaw && session && !cmd.startsWith('/')) {
     const moodValue = MOOD_MAP[text];
     if (!moodValue) { await tg(env.BOT_TOKEN, chatId, STRINGS.moodInvalid); return; }
     let pending;
@@ -249,18 +244,26 @@ async function handleUpdate(env, update) {
     return;
   }
 
-  if (!session && !cmd.startsWith('/')) {
-    if (isGroup) return;
-    const linked = await handleLogin(env, userId, text);
-    if (linked) {
-      await tg(env.BOT_TOKEN, chatId, STRINGS.linked(linked));
-    } else {
-      await tg(env.BOT_TOKEN, chatId, STRINGS.noAccount);
-    }
+  if (!session) {
+    await tgButtons(env.BOT_TOKEN, chatId, STRINGS.notLinked, [
+      [{ text: '🌐 Ir a la app', url: API }],
+    ]);
     return;
   }
 
-  if (!session) { await tg(env.BOT_TOKEN, chatId, STRINGS.notLinked); return; }
+  if (cmd === '/desconectar') {
+    let summary = '';
+    const outages = await apiGet('/api/outages', session);
+    if (outages) {
+      const total = outages.filter(o => o.end && (o.type || 'corte') === 'corte');
+      const mins = total.reduce((s, o) => s + (o.duration_minutes || 0), 0);
+      summary = `Registraste *${total.length}* cortes · *${fmtDuration(mins)}* sin luz en total.`;
+    }
+    await env.KV.delete(`session:${userId}`);
+    await env.KV.delete(`pending_mood:${userId}`);
+    await tg(env.BOT_TOKEN, chatId, STRINGS.disconnected(summary));
+    return;
+  }
 
   if (cmd === '/corte') {
     if (await isDuplicate(env.KV, userId, 'start')) { await tg(env.BOT_TOKEN, chatId, STRINGS.duplicate); return; }
@@ -306,15 +309,12 @@ async function handleUpdate(env, update) {
         const avg = completed.reduce((s, o) => s + o.duration_minutes, 0) / completed.length;
         const remaining = avg - elapsed;
         etaLine = remaining > 0
-          ? `
-⏳ Estimado restante: *${fmtDuration(remaining)}* (promedio: ${fmtDuration(avg)})`
-          : `
-⚠️ Superó el promedio histórico de *${fmtDuration(avg)}*`;
+          ? `\n⏳ Estimado restante: *${fmtDuration(remaining)}* (promedio: ${fmtDuration(avg)})`
+          : `\n⚠️ Superó el promedio histórico de *${fmtDuration(avg)}*`;
       }
     }
     await tgButtons(env.BOT_TOKEN, chatId,
-      `⚡ Sin luz desde las *${localTime(new Date(active.start))}*
-Llevas *${fmtDuration(elapsed)}* sin luz${etaLine}`,
+      `⚡ Sin luz desde las *${localTime(new Date(active.start))}*\nLlevas *${fmtDuration(elapsed)}* sin luz${etaLine}`,
       [[{ text: '💡 Ya volvió la luz', callback_data: '/volvio' }]]
     );
     return;
@@ -367,7 +367,7 @@ Llevas *${fmtDuration(elapsed)}* sin luz${etaLine}`,
     return;
   }
 
-if (cmd === '/probabilidad') {
+  if (cmd === '/probabilidad') {
     const active = await apiGet('/api/active', session);
     if (active) {
       await tg(env.BOT_TOKEN, chatId, `😮‍💨 Ya se fue la luz. Respira, lo más probable es que no se vaya de nuevo hoy.\n\nUsa /volvio cuando regrese.`);
@@ -460,14 +460,16 @@ async function handleCron(env) {
       const reminderKey = `reminded:${telegram_chat_id}`;
       const alreadySent = await env.KV.get(reminderKey);
       const sentSet = alreadySent ? new Set(JSON.parse(alreadySent)) : new Set();
+      let sentNew = false;
       for (const reminder of REMINDERS) {
         if (elapsedMins >= reminder.minutes && !sentSet.has(reminder.minutes)) {
           sentSet.add(reminder.minutes);
           await tg(env.BOT_TOKEN, telegram_chat_id, reminder.msg(fmtDuration(elapsedMins)));
+          sentNew = true;
           break;
         }
       }
-      if (sentSet.size > 0) {
+      if (sentNew || sentSet.size > 0) {
         await env.KV.put(reminderKey, JSON.stringify([...sentSet]), { expirationTtl: 86400 });
       }
     }
