@@ -54,12 +54,12 @@ function buildMoodGauge(moodData) {
     }
 
     const { average, totalCount } = moodData;
-    const needleAngle = 180 - ((average - 1) / 4) * 180;
-    const [nx, ny]    = polarPoint(needleAngle, needleLen);
-    const moodIndex   = Math.min(4, Math.max(0, Math.round(average) - 1));
-    const displayValue = Math.round(((average - 1) / 4) * 100);
-    const currentMood  = MOOD_OPTIONS[moodIndex];
-    const countLabel   = `${totalCount} registro${totalCount !== 1 ? 's' : ''}`;
+    const needleAngle   = 180 - ((average - 1) / 4) * 180;
+    const [nx, ny]      = polarPoint(needleAngle, needleLen);
+    const moodIndex     = Math.min(4, Math.max(0, Math.round(average) - 1));
+    const displayValue  = Math.round(((average - 1) / 4) * 100);
+    const currentMood   = MOOD_OPTIONS[moodIndex];
+    const countLabel    = `${totalCount} registro${totalCount !== 1 ? 's' : ''}`;
     const f = v => v.toFixed(2);
 
     return `<svg viewBox="0 0 200 125" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:240px;display:block;margin:0 auto">
@@ -69,6 +69,51 @@ function buildMoodGauge(moodData) {
         <text x="${cx}" y="108" text-anchor="middle" fill="white" font-size="26" font-weight="700" font-family="system-ui">${displayValue}</text>
         <text x="${cx}" y="122" text-anchor="middle" fill="${currentMood.color}" font-size="12" font-weight="600" font-family="system-ui">${currentMood.label} &middot; <tspan fill="#475569" font-weight="400">${countLabel}</tspan></text>
     </svg>`;
+}
+
+function buildTelegramSection() {
+    const { profileData, telegramToken, telegramTokenExpiry, telegramTokenLoading } = profileState;
+    if (!profileData) return '';
+
+    if (profileData.has_telegram) {
+        return `<div class="toggle-row">
+            <div>
+                <div style="font-size:14px;color:var(--grn-t)">&#10003; Telegram vinculado</div>
+                <div style="font-size:12px;color:var(--text3)">@RestosDeJuventudBot</div>
+            </div>
+            <button class="bno" style="font-size:12px;padding:5px 12px" onclick="unlinkTelegram()">Desvincular</button>
+        </div>`;
+    }
+
+    if (telegramToken) {
+        const expiryText = telegramTokenExpiry
+            ? telegramTokenExpiry.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })
+            : '';
+        const deepLink = `https://t.me/RestosDeJuventudBot?start=${telegramToken}`;
+        return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
+            <div style="font-size:12px;color:var(--text2);margin-bottom:8px">
+                Código de vinculación
+                <span style="color:var(--text3);margin-left:6px">expira a las ${expiryText}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <div style="font-size:26px;font-weight:700;letter-spacing:6px;color:var(--amber);font-family:monospace">${telegramToken}</div>
+                <button class="bsm" onclick="navigator.clipboard.writeText('${telegramToken}').then(() => { this.textContent = '✓ Copiado'; setTimeout(() => this.textContent = 'Copiar', 1500) })">Copiar</button>
+            </div>
+            <a class="bsm" href="${deepLink}" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+                Abrir bot en Telegram
+            </a>
+            <div style="font-size:11px;color:var(--text3);margin-top:6px">Al abrir el bot, el código se enviará automáticamente y la cuenta quedará vinculada.</div>
+        </div>`;
+    }
+
+    return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
+        <button class="bsm" onclick="generateTelegramToken()" ${telegramTokenLoading ? 'disabled' : ''}>
+            <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+            ${telegramTokenLoading ? 'Generando...' : 'Vincular Telegram'}
+        </button>
+        <div style="font-size:11px;color:var(--text3);margin-top:5px">Recibe alertas y registra cortes sin abrir la app.</div>
+    </div>`;
 }
 
 function render() {
@@ -109,7 +154,7 @@ function renderAuthScreen() {
         </div>
         <div class="trow" style="margin-bottom:12px">
             <div class="field" style="margin:0"><label>Ciudad</label>
-                <input placeholder="Caracas" value="${authState.registerForm.city}" oninput="authState.registerForm.city = this.value">
+                <input placeholder="Cabudare" value="${authState.registerForm.city}" oninput="authState.registerForm.city = this.value">
             </div>
             <div class="field" style="margin:0"><label>Zona <span style="color:var(--text3)">(opcional)</span></label>
                 ${buildZoneSelect('authState.registerForm.zone', authState.registerForm.zone)}
@@ -735,19 +780,20 @@ function renderProfileOverlay() {
         </div>
         <div class="trow" style="margin-bottom:12px">
             <div class="field" style="margin:0"><label>Ciudad</label>
-                <input value="${profileState.editCity}" oninput="profileState.editCity = this.value" placeholder="Caracas">
+                <input value="${profileState.editCity}" oninput="profileState.editCity = this.value" placeholder="Cabudare">
             </div>
             <div class="field" style="margin:0"><label>Zona</label>
                 ${buildZoneSelect('profileState.editZone', profileState.editZone)}
             </div>
         </div>
-        <div class="toggle-row" style="margin-bottom:14px">
+        <div class="toggle-row">
             <div>
                 <div style="font-size:14px">Perfil público</div>
                 <div style="font-size:12px;color:var(--text2)">Tu actividad es visible en Comunidad</div>
             </div>
             <button class="toggle ${profileState.isPublic ? 'on' : 'off'}" onclick="profileState.isPublic = !profileState.isPublic; render()"></button>
         </div>
+        ${buildTelegramSection()}
         <details style="margin-bottom:14px">
             <summary style="cursor:pointer;font-size:13px;color:var(--text2);padding:8px 0">Cambiar contraseña</summary>
             <div style="margin-top:10px">
