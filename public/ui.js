@@ -1,6 +1,6 @@
 function buildMoodPicker() {
     const buttons = MOOD_OPTIONS.map(mood => {
-        const isSelected = appState.selectedMood === mood.value;
+        const isSelected  = appState.selectedMood === mood.value;
         const borderColor = isSelected ? mood.color : 'var(--border)';
         const labelColor  = isSelected ? mood.color : 'var(--text3)';
         return `<button class="mood-btn${isSelected ? ' selected' : ''}"
@@ -10,11 +10,8 @@ function buildMoodPicker() {
             <div style="color:${labelColor}">${mood.label}</div>
         </button>`;
     }).join('');
-
     return `<div style="margin-bottom:12px">
-        <div style="font-size:12px;color:var(--text2);margin-bottom:6px">
-            ¿Cómo te sientes con este corte?
-        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px">¿Cómo te sientes con este corte?</div>
         <div class="mood-row">${buttons}</div>
     </div>`;
 }
@@ -22,28 +19,19 @@ function buildMoodPicker() {
 function buildMoodGauge(moodData) {
     const cx = 100, cy = 88, outerR = 72, innerR = 50, needleLen = 60;
     const GAP_DEGREES = 2;
-
     function polarPoint(angleDeg, r) {
         const rad = angleDeg * Math.PI / 180;
         return [cx + r * Math.cos(rad), cy - r * Math.sin(rad)];
     }
-
     function arcSegment(startAngle, endAngle, color, opacity) {
-        const s1 = startAngle - GAP_DEGREES;
-        const e1 = endAngle   + GAP_DEGREES;
+        const s1 = startAngle - GAP_DEGREES, e1 = endAngle + GAP_DEGREES;
         const f  = v => v.toFixed(2);
-        const [ox1, oy1] = polarPoint(s1, outerR);
-        const [ox2, oy2] = polarPoint(e1, outerR);
-        const [ix1, iy1] = polarPoint(s1, innerR);
-        const [ix2, iy2] = polarPoint(e1, innerR);
+        const [ox1,oy1] = polarPoint(s1, outerR), [ox2,oy2] = polarPoint(e1, outerR);
+        const [ix1,iy1] = polarPoint(s1, innerR),  [ix2,iy2] = polarPoint(e1, innerR);
         return `<path d="M ${f(ox1)} ${f(oy1)} A ${outerR} ${outerR} 0 0 0 ${f(ox2)} ${f(oy2)} L ${f(ix2)} ${f(iy2)} A ${innerR} ${innerR} 0 0 1 ${f(ix1)} ${f(iy1)} Z" fill="${color}" opacity="${opacity}"/>`;
     }
-
     const opacity  = moodData ? '0.92' : '0.18';
-    const segments = MOOD_OPTIONS.map((mood, i) =>
-        arcSegment(180 - i * 36, 180 - (i + 1) * 36, mood.color, opacity)
-    ).join('');
-
+    const segments = MOOD_OPTIONS.map((mood, i) => arcSegment(180 - i * 36, 180 - (i + 1) * 36, mood.color, opacity)).join('');
     if (!moodData) {
         return `<svg viewBox="0 0 200 125" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:240px;display:block;margin:0 auto">
             ${segments}
@@ -52,16 +40,14 @@ function buildMoodGauge(moodData) {
             <text x="${cx}" y="122" text-anchor="middle" fill="#334155" font-size="10" font-family="system-ui">Registra tu estado de ánimo para verlo aquí</text>
         </svg>`;
     }
-
     const { average, totalCount } = moodData;
-    const needleAngle   = 180 - ((average - 1) / 4) * 180;
-    const [nx, ny]      = polarPoint(needleAngle, needleLen);
-    const moodIndex     = Math.min(4, Math.max(0, Math.round(average) - 1));
-    const displayValue  = Math.round(((average - 1) / 4) * 100);
-    const currentMood   = MOOD_OPTIONS[moodIndex];
-    const countLabel    = `${totalCount} registro${totalCount !== 1 ? 's' : ''}`;
+    const needleAngle  = 180 - ((average - 1) / 4) * 180;
+    const [nx, ny]     = polarPoint(needleAngle, needleLen);
+    const moodIndex    = Math.min(4, Math.max(0, Math.round(average) - 1));
+    const displayValue = Math.round(((average - 1) / 4) * 100);
+    const currentMood  = MOOD_OPTIONS[moodIndex];
+    const countLabel   = `${totalCount} registro${totalCount !== 1 ? 's' : ''}`;
     const f = v => v.toFixed(2);
-
     return `<svg viewBox="0 0 200 125" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:240px;display:block;margin:0 auto">
         ${segments}
         <line x1="${cx}" y1="${cy}" x2="${f(nx)}" y2="${f(ny)}" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
@@ -74,7 +60,6 @@ function buildMoodGauge(moodData) {
 function buildTelegramSection() {
     const { profileData, telegramToken, telegramTokenExpiry, telegramTokenLoading } = profileState;
     if (!profileData) return '';
-
     if (profileData.has_telegram) {
         return `<div class="toggle-row">
             <div>
@@ -84,7 +69,6 @@ function buildTelegramSection() {
             <button class="bno" style="font-size:12px;padding:5px 12px" onclick="unlinkTelegram()">Desvincular</button>
         </div>`;
     }
-
     if (telegramToken) {
         const expiryText = telegramTokenExpiry
             ? telegramTokenExpiry.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })
@@ -96,17 +80,16 @@ function buildTelegramSection() {
                 <span style="color:var(--text3);margin-left:6px">expira a las ${expiryText}</span>
             </div>
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-                <div style="font-size:26px;font-weight:700;letter-spacing:6px;color:var(--amber);font-family:monospace">${telegramToken}</div>
-                <button class="bsm" onclick="navigator.clipboard.writeText('${telegramToken}').then(() => { this.textContent = '✓ Copiado'; setTimeout(() => this.textContent = 'Copiar', 1500) })">Copiar</button>
+                <div style="font-size:26px;font-weight:700;letter-spacing:6px;color:var(--amber);font-family:monospace">${escapeHtml(telegramToken)}</div>
+                <button class="bsm" onclick="navigator.clipboard.writeText('${escapeHtml(telegramToken)}').then(() => { this.textContent = '✓ Copiado'; setTimeout(() => this.textContent = 'Copiar', 1500) })">Copiar</button>
             </div>
             <a class="bsm" href="${deepLink}" target="_blank" rel="noopener">
                 <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
                 Abrir bot en Telegram
             </a>
-            <div style="font-size:11px;color:var(--text3);margin-top:6px">Al abrir el bot, el código se enviará automáticamente y la cuenta quedará vinculada.</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:6px">Al abrir el bot, el código se enviará automáticamente.</div>
         </div>`;
     }
-
     return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
         <button class="bsm" onclick="generateTelegramToken()" ${telegramTokenLoading ? 'disabled' : ''}>
             <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
@@ -126,35 +109,33 @@ function render() {
 }
 
 function renderAuthScreen() {
-    const isLoginTab   = authState.activeTab === 'login';
-    const errorBanner  = authState.errorMessage
-        ? `<div class="auth-err">${authState.errorMessage}</div>`
+    const isLoginTab  = authState.activeTab === 'login';
+    const errorBanner = authState.errorMessage
+        ? `<div class="auth-err">${escapeHtml(authState.errorMessage)}</div>`
         : '';
-
     const loginForm = `
         <div class="field"><label>Usuario</label>
-            <input autocomplete="username" placeholder="tu_usuario" value="${authState.loginForm.username}"
+            <input autocomplete="username" placeholder="tu_usuario" value="${escapeHtml(authState.loginForm.username)}"
                 oninput="authState.loginForm.username = this.value">
         </div>
         <div class="field"><label>Contraseña</label>
-            <input type="password" autocomplete="current-password" value="${authState.loginForm.password}"
+            <input type="password" autocomplete="current-password" value="${escapeHtml(authState.loginForm.password)}"
                 oninput="authState.loginForm.password = this.value"
                 onkeydown="if (event.key === 'Enter') login()">
         </div>
         <button class="bmain bdanger" style="margin-top:4px" onclick="login()">${ICONS.bolt}Entrar</button>`;
-
     const registerForm = `
         <div class="field"><label>Usuario</label>
-            <input autocomplete="username" placeholder="mi_usuario" value="${authState.registerForm.username}"
+            <input autocomplete="username" placeholder="mi_usuario" value="${escapeHtml(authState.registerForm.username)}"
                 oninput="authState.registerForm.username = this.value">
         </div>
         <div class="field"><label>Contraseña <span style="color:var(--text3)">(mín. 6 caracteres)</span></label>
-            <input type="password" autocomplete="new-password" value="${authState.registerForm.password}"
+            <input type="password" autocomplete="new-password" value="${escapeHtml(authState.registerForm.password)}"
                 oninput="authState.registerForm.password = this.value">
         </div>
         <div class="trow" style="margin-bottom:12px">
             <div class="field" style="margin:0"><label>Ciudad</label>
-                <input placeholder="Cabudare" value="${authState.registerForm.city}" oninput="authState.registerForm.city = this.value">
+                <input placeholder="Cabudare" value="${escapeHtml(authState.registerForm.city)}" oninput="authState.registerForm.city = this.value">
             </div>
             <div class="field" style="margin:0"><label>Zona <span style="color:var(--text3)">(opcional)</span></label>
                 ${buildZoneSelect('authState.registerForm.zone', authState.registerForm.zone)}
@@ -162,7 +143,6 @@ function renderAuthScreen() {
         </div>
         <button class="bmain bsuccess" onclick="register()">${ICONS.bolt}Crear cuenta</button>
         <p class="auth-note">Tu actividad será visible en Comunidad si mantienes el perfil público.</p>`;
-
     return `<div class="auth-wrap"><div class="auth-card">
         <div class="auth-logo">
             <svg viewBox="0 0 24 24" style="width:26px;height:26px;stroke:#f59e0b;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -184,7 +164,6 @@ function renderApp() {
     const now = new Date();
     const { outages, activeOutage, currentTab } = appState;
     const minutesWithoutPower = activeOutage ? (now - new Date(activeOutage.start)) / 60000 : 0;
-
     const heatmap          = buildHeatmap(outages);
     const statistics       = computeStatistics(outages);
     const moodData         = computeAverageMood(outages);
@@ -193,7 +172,6 @@ function renderApp() {
         : [];
     window._activeOutage = activeOutage;
     const forecast = heatmap ? getDayForecast(todayPredictions, outages) : { type: 'nodata' };
-
     const navTabs = [
         { id: 'dashboard', icon: ICONS.dashboard, label: 'Panel' },
         { id: 'log',       icon: ICONS.plus,      label: 'Registrar' },
@@ -201,29 +179,23 @@ function renderApp() {
         { id: 'community', icon: ICONS.users,     label: 'Comunidad' },
         { id: 'history',   icon: ICONS.history,   label: 'Historial' },
     ];
-
-    const tabButtons = navTabs.map(tab =>
+    const tabButtons  = navTabs.map(tab =>
         `<button class="tab ${currentTab === tab.id ? 'active' : ''}" onclick="setCurrentTab('${tab.id}')">${tab.icon}${tab.label}</button>`
     ).join('');
-
-    const badgeClass = activeOutage ? 'badge boff' : 'badge bon';
-    const badgeText  = activeOutage ? `Sin luz &middot; ${formatDuration(minutesWithoutPower)}` : 'Con luz';
-
+    const badgeClass  = activeOutage ? 'badge boff' : 'badge bon';
+    const badgeText   = activeOutage ? `Sin luz &middot; ${formatDuration(minutesWithoutPower)}` : 'Con luz';
     let tabContent = '';
     if (currentTab === 'dashboard') tabContent = renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions, forecast, minutesWithoutPower);
     if (currentTab === 'log')       tabContent = renderLogTab(minutesWithoutPower);
     if (currentTab === 'predict')   tabContent = renderPredictTab(now, heatmap, todayPredictions);
     if (currentTab === 'community') tabContent = renderCommunityTab(now);
     if (currentTab === 'history')   tabContent = renderHistoryTab(now);
-
     const profileOverlay = profileState.isOpen ? renderProfileOverlay() : '';
-
     const activeBanner = activeOutage ? `
         <div class="active-banner">
             <span>⚡ CORTE ACTIVO — ¿Ya regresó la luz?</span>
             <button onclick="setCurrentTab('log')">Registrar →</button>
         </div>` : '';
-
     return `
         <div class="header">
             <div class="hleft">
@@ -235,24 +207,21 @@ function renderApp() {
             </div>
             <div class="hright">
                 <div class="${badgeClass}"><div class="dot"></div>${badgeText}</div>
-                <button class="profile-btn" onclick="openProfile()">@${authState.currentUser.username}</button>
+                <button class="profile-btn" onclick="openProfile()">@${escapeHtml(authState.currentUser.username)}</button>
             </div>
         </div>
         <div class="tabs">${tabButtons}</div>
         ${activeBanner}
-        <div class="content">
-            ${tabContent}
-        </div>
+        <div class="content">${tabContent}</div>
         ${profileOverlay}`;
 }
 
 function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions, forecast, minutesWithoutPower) {
-    const dayName = DAYS_FULL[now.getDay()].toUpperCase();
+    const dayName          = DAYS_FULL[now.getDay()].toUpperCase();
     const tomorrowForecast = getTomorrowForecast(appState.outages);
-
     let forecastContent;
     if (forecast.type === 'nodata') {
-        const progress = computeTrainingProgress(appState.outages);
+        const progress  = computeTrainingProgress(appState.outages);
         if (progress.weeks === 0) {
             forecastContent = `<div style="font-size:13px;color:var(--text3)">Registra tu primer corte para empezar a calibrar el modelo.</div>`;
         } else {
@@ -288,20 +257,19 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
             a === b ? `${padZero(a)}:00` : `${padZero(a)}:00–${padZero(b+1)}:00`
         ).join(' y ');
         forecastContent = `<div style="font-size:15px;font-weight:600;margin-bottom:4px">Era probable que se fuera entre las ${rangeTexts}…</div>
-            <div style="font-size:13px;color:var(--text2)">pero no se fue. Sospechoso 👀 — igual podría irse a otra hora, estate pendiente.</div>`;
+            <div style="font-size:13px;color:var(--text2)">pero no se fue. Sospechoso 👀 — igual podría irse a otra hora.</div>`;
     } else {
-        const levelColor = forecast.peakLevel === 'alto' ? 'var(--red-t)' : '#fdba74';
+        const levelColor  = forecast.peakLevel === 'alto' ? 'var(--red-t)' : '#fdba74';
         const durationLine = forecast.estimatedMinutes
             ? `<div style="font-size:12px;color:var(--text2)">Duración esperada: <strong style="color:var(--text)">${formatDuration(forecast.estimatedMinutes)}</strong> (promedio histórico)</div>`
             : '';
         forecastContent = `
-            <div style="font-size:15px;font-weight:600;margin-bottom:6px">${forecast.message}</div>
+            <div style="font-size:15px;font-weight:600;margin-bottom:6px">${escapeHtml(forecast.message)}</div>
             <div style="font-size:12px;color:${levelColor};margin-bottom:${forecast.estimatedMinutes ? '4px' : '0'}">
                 A las: ${padZero(forecast.peakHour)}:00 &middot; ${forecast.peakPercent}% &middot; riesgo ${forecast.peakLevel}
             </div>
             ${durationLine}`;
     }
-
     const statCards = [
         { label: 'Esta semana', value: formatDuration(statistics.weekMinutes),  sub: `${statistics.weekCount} cortes` },
         { label: 'Este mes',    value: formatDuration(statistics.monthMinutes), sub: `${statistics.monthCount} cortes` },
@@ -311,7 +279,6 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
     const statsGrid = statCards.map(c =>
         `<div class="scard"><div class="sval">${c.value}</div><div class="slb">${c.label}</div><div class="ssub">${c.sub}</div></div>`
     ).join('');
-
     const fluctCards = [
         { label: 'Hoy',    value: statistics.fluctuationsToday },
         { label: 'Semana', value: statistics.fluctuationsThisWeek },
@@ -320,7 +287,6 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
     const fluctGrid = fluctCards.map(c =>
         `<div class="scard"><div class="sval-ora">${c.value}</div><div class="slb">${c.label}</div></div>`
     ).join('');
-
     let recordCards = '';
     if (statistics.longestOutage || statistics.worstDay || statistics.peakHour !== null) {
         const longestCard = statistics.longestOutage ? `<div class="rcard">
@@ -328,22 +294,18 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
             <div class="rval">${formatDuration(statistics.longestOutage.duration_minutes)}</div>
             <div class="rsub">${formatDate(statistics.longestOutage.start)} &middot; ${formatTime(statistics.longestOutage.start)}&ndash;${formatTime(statistics.longestOutage.end)}</div>
         </div>` : '';
-
         const worstDayCard = statistics.worstDay ? `<div class="rcard">
             <div class="slabel">DÍA MÁS AFECTADO</div>
             <div class="rval" style="font-size:17px">${statistics.worstDay.date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}</div>
             <div class="rsub" style="color:var(--amber2)">${formatDuration(statistics.worstDay.minutes)} &middot; ${statistics.worstDay.count} cortes</div>
         </div>` : '';
-
         const peakHourCard = statistics.peakHour !== null ? `<div class="rcard">
             <div class="slabel">HORA PICO HISTÓRICA</div>
             <div class="rval">${padZero(statistics.peakHour)}:00</div>
             <div class="rsub">más cortes registrados</div>
         </div>` : '';
-
         recordCards = `<div class="rgrid">${longestCard}${worstDayCard}${peakHourCard}</div>`;
     }
-
     let hourlyBars = '';
     if (heatmap) {
         const currentSlot = heatmap[`${now.getDay()}_${now.getHours()}`] || { probability: 0, confidence: 0 };
@@ -357,10 +319,7 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
             const label   = hour % 6 === 0 ? `<span class="bl">${padZero(hour)}</span>` : '';
             return `<div class="bcol"><div class="b" style="height:${height}px;background:${bgColor};${outline}"></div>${label}</div>`;
         }).join('');
-
-        const confidenceInfo = currentSlot.confidence >= 0.15
-            ? ` &middot; ${Math.round(currentProb * 100)}%`
-            : '';
+        const confidenceInfo = currentSlot.confidence >= 0.15 ? ` &middot; ${Math.round(currentProb * 100)}%` : '';
         hourlyBars = `<div class="card card-last">
             <div class="slabel">DETALLE POR HORA — HOY</div>
             <div class="barwrap">${bars}</div>
@@ -370,14 +329,10 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
             </div>
         </div>`;
     }
-
-    const emptyState = appState.outages.length === 0
-        ? `<div class="empty">${ICONS.plugOff}<p>Sin registros. Toca + para comenzar.</p></div>`
-        : '';
-
+    const emptyState     = appState.outages.length === 0
+        ? `<div class="empty">${ICONS.plugOff}<p>Sin registros. Toca + para comenzar.</p></div>` : '';
     const floatingButton = `<button class="fab ${appState.activeOutage ? 'fab-off' : 'fab-on'}" onclick="setCurrentTab('log')">${appState.activeOutage ? ICONS.bulb : ICONS.plus}</button>`;
-
-    const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrow     = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowName = DAYS_FULL[tomorrow.getDay()].toUpperCase();
     let tomorrowContent;
     if (!tomorrowForecast) {
@@ -390,7 +345,6 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
             <div style="font-size:13px;font-weight:600;margin-bottom:4px">${tomorrowForecast.ranges}</div>
             <div style="font-size:11px;color:${tmLevelColor}">${padZero(tomorrowForecast.peakHour)}:00 &middot; ${tomorrowForecast.peakPercent}% &middot; ${tomorrowForecast.peakLevel}</div>`;
     }
-
     return `
         <div class="forecast-card" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
             <div>
@@ -415,7 +369,7 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
         ${hourlyBars}
         ${emptyState}
         <div class="disclaimer">
-            Herramienta independiente de uso personal. Los datos registrados son exclusivamente tuyos, cifrados en la base de datos y no se cruzan con ningún otro registro. Esta app no pertenece a ningún estudio sociológico, institución ni entidad gubernamental. La precisión de las predicciones mejora con la cantidad de datos registrados.
+            Herramienta independiente de uso personal. Los datos registrados son exclusivamente tuyos, cifrados en la base de datos y no se cruzan con ningún otro registro. Esta app no pertenece a ningún estudio sociológico, institución ni entidad gubernamental.
         </div>
         <div class="disclaimer" style="margin-top:8px;text-align:center">
             ¿Prefieres registrar desde el teléfono? Usa el bot de Telegram:
@@ -426,7 +380,6 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
 
 function renderLogTab(minutesWithoutPower) {
     const { activeOutage, startDate, startTime, endDate, endTime, showManualForm, manualDate, manualStartTime, manualEndTime } = appState;
-
     const startCard = `<div class="card card-red">
         <div class="slabel">REGISTRAR SALIDA DE LUZ</div>
         <div class="trow">
@@ -435,7 +388,6 @@ function renderLogTab(minutesWithoutPower) {
         </div>
         <button class="bmain bdanger" onclick="startOutage()">${ICONS.boltOff}Se fue la luz</button>
     </div>`;
-
     const endCard = `<div class="card card-red">
         <div class="abanner">
             <div class="al">Corte activo desde las ${formatTime(activeOutage ? activeOutage.start : '')}</div>
@@ -458,7 +410,6 @@ function renderLogTab(minutesWithoutPower) {
         ${buildMoodPicker()}
         <button class="bmain bsuccess" onclick="endOutage()">${ICONS.bulb}Volvió la luz</button>
     </div>`;
-
     let survivalCard = '';
     if (activeOutage) {
         const survivalData = computeSurvivalCurve(appState.outages);
@@ -467,12 +418,8 @@ function renderLogTab(minutesWithoutPower) {
             const pct     = Math.min((minutesWithoutPower / lambda) * 100, 100);
             const overdue = minutesWithoutPower > lambda;
             const checkpoints = [
-                { label: '30 min', t: 30 },
-                { label: '1h',     t: 60 },
-                { label: '2h',     t: 120 },
-                { label: '3h',     t: 180 },
-                { label: '4h',     t: 240 },
-                { label: '5h',     t: 300 },
+                { label: '30 min', t: 30 }, { label: '1h', t: 60 }, { label: '2h', t: 120 },
+                { label: '3h', t: 180 },    { label: '4h', t: 240 }, { label: '5h', t: 300 },
             ];
             const cells = checkpoints.map(({ label, t }) => {
                 const p     = Math.round((1 - Math.exp(-t / lambda)) * 100);
@@ -499,7 +446,6 @@ function renderLogTab(minutesWithoutPower) {
             </div>`;
         }
     }
-
     const fluctuationDisabled = !!activeOutage;
     const disabledWarning = `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(239,68,68,.1);border-radius:var(--rs);margin-bottom:10px;font-size:13px;color:var(--red-t)">
         <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -510,21 +456,18 @@ function renderLogTab(minutesWithoutPower) {
             <div class="ff"><label>Fecha</label><input type="date" value="${startDate}" onchange="updateAppState('startDate', this.value)"></div>
             <div class="ff"><label>Hora</label>${buildTimePicker('startTime', startTime)}</div>
         </div>`;
-
     const fluctuationCard = `<div class="card card-ora" style="${fluctuationDisabled ? 'opacity:.6' : ''}">
         <div class="slabel" style="color:var(--ora-t)">REGISTRAR FLUCTUACIÓN</div>
         ${fluctuationDisabled ? disabledWarning : fluctuationFields}
         <button id="fluctuation-button" class="bmain borange" ${fluctuationDisabled ? 'disabled' : 'onclick="recordFluctuation()"'}>${ICONS.zap}Registrar fluctuación</button>
     </div>`;
-
     let manualFormContent = '';
     if (showManualForm) {
-        const manualStart    = new Date(`${manualDate}T${manualStartTime}`);
-        const manualEnd      = new Date(`${manualDate}T${manualEndTime}`);
-        const duration       = !isNaN(manualStart) && !isNaN(manualEnd) ? (manualEnd - manualStart) / 60000 : 0;
+        const manualStart     = new Date(`${manualDate}T${manualStartTime}`);
+        const manualEnd       = new Date(`${manualDate}T${manualEndTime}`);
+        const duration        = !isNaN(manualStart) && !isNaN(manualEnd) ? (manualEnd - manualStart) / 60000 : 0;
         const durationPreview = duration > 0
-            ? `<div style="font-size:12px;color:#94a3b8;margin-bottom:10px">Duración: ${formatDuration(duration)}</div>`
-            : '';
+            ? `<div style="font-size:12px;color:#94a3b8;margin-bottom:10px">Duración: ${formatDuration(duration)}</div>` : '';
         manualFormContent = `<div style="margin-top:14px">
             <div class="trow3">
                 <div class="field" style="margin:0"><label>Fecha</label><input type="date" value="${manualDate}" onchange="updateAppState('manualDate', this.value)"></div>
@@ -536,13 +479,11 @@ function renderLogTab(minutesWithoutPower) {
             <button class="bsm" onclick="saveManualOutage()">Guardar</button>
         </div>`;
     }
-
     const toggleIcon = showManualForm ? ICONS.chevUp : ICONS.chevDown;
     const manualCard = `<div class="card card-last">
         <button class="bghost" onclick="appState.showManualForm = !appState.showManualForm; render()">${toggleIcon}Registrar corte pasado completo</button>
         ${manualFormContent}
     </div>`;
-
     return (activeOutage ? endCard : startCard) + survivalCard + fluctuationCard + manualCard;
 }
 
@@ -550,9 +491,7 @@ function renderPredictTab(now, heatmap, todayPredictions) {
     if (!heatmap) {
         return `<div class="empty">${ICONS.chart}<p>Necesitas al menos 1 corte para ver predicciones.</p></div>`;
     }
-
-    const dayName = DAYS_FULL[now.getDay()].toUpperCase();
-
+    const dayName  = DAYS_FULL[now.getDay()].toUpperCase();
     const hourRows = todayPredictions
         .filter(p => p.hour >= 5 && p.hour <= 23)
         .map(({ hour, probability, confidence }) => {
@@ -566,30 +505,26 @@ function renderPredictTab(now, heatmap, todayPredictions) {
                 <div class="plabel" style="color:${riskColor(prob)}">${riskLabel(prob, confidence)}</div>
             </div>`;
         }).join('');
-
-    const heatmapRows = DAYS_SHORT.map((dayName, dayIndex) => {
+    const heatmapRows = DAYS_SHORT.map((dayLabel, dayIndex) => {
         const isToday = dayIndex === now.getDay();
         const cells   = Array.from({ length: 24 }, (_, hour) => {
             const slot    = heatmap[`${dayIndex}_${hour}`] || { probability: 0, confidence: 0 };
             const prob    = adjustedProbability(slot.probability, slot.confidence);
             const isNow   = isToday && hour === now.getHours();
             const bgColor = prob < 0.03 ? 'rgba(255,255,255,.05)' : `rgba(239,68,68,${Math.min(prob * 2, 0.9)})`;
-            const title   = `${dayName} ${padZero(hour)}:00 — ${Math.round(prob * 100)}%`;
-            return `<div class="hmcell ${isNow ? 'now' : ''}" title="${title}" style="background:${bgColor}"></div>`;
+            return `<div class="hmcell ${isNow ? 'now' : ''}" title="${dayLabel} ${padZero(hour)}:00 — ${Math.round(prob * 100)}%" style="background:${bgColor}"></div>`;
         }).join('');
         return `<div class="hmrow">
-            <div class="hmday ${isToday ? 'today' : ''}">${dayName}</div>
+            <div class="hmday ${isToday ? 'today' : ''}">${dayLabel}</div>
             <div class="hmcells">${cells}</div>
         </div>`;
     }).join('');
-
     const legendItems = [['Bajo', '0.2'], ['Medio', '0.5'], ['Alto', '0.85']].map(([label, opacity]) =>
         `<div style="display:flex;align-items:center;gap:3px">
             <div class="legbox" style="background:rgba(239,68,68,${opacity})"></div>
             <span style="font-size:10px;color:#475569">${label}</span>
         </div>`
     ).join('');
-
     return `<div class="card">
         <div class="slabel">HOY — ${dayName} — RIESGO POR HORA</div>
         ${hourRows}
@@ -597,11 +532,10 @@ function renderPredictTab(now, heatmap, todayPredictions) {
     <div class="card card-last">
         <div class="slabel">MAPA DE CALOR SEMANAL</div>
         <div class="hmwrap"><div class="hm">
-            <div class="hmhours">${[0, 4, 8, 12, 16, 20].map(h => `<span>${padZero(h)}</span>`).join('')}</div>
+            <div class="hmhours">${[0,4,8,12,16,20].map(h => `<span>${padZero(h)}</span>`).join('')}</div>
             ${heatmapRows}
             <div class="hmleg"><span style="font-size:10px;color:#475569">Riesgo:</span>${legendItems}</div>
-            <div class="infobox">Solo cortes alimentan el modelo. La columna derecha muestra duración estimada en horas de riesgo real.</div>
-            <div class="infobox" style="margin-top:4px">El modelo considera los últimos 3 meses de registros para mantener los patrones actualizados.</div>
+            <div class="infobox">Solo cortes alimentan el modelo. El modelo considera los últimos 3 meses de registros.</div>
         </div></div>
     </div>`;
 }
@@ -612,26 +546,23 @@ function renderCommunityTab(now) {
         return `<div class="empty"><p>Cargando...</p></div>`;
     }
     if (communityState.isLoading) return `<div class="empty"><p>Cargando...</p></div>`;
-
     const { active: activeUsers, todayOutages, totals } = communityState.data;
     const myCity = authState.currentUser?.city || '';
-
     const totalsGrid = `<div class="community-totals-grid">
         <div class="scard"><div class="sval-grn">${totals.total_users}</div><div class="slb">Usuarios registrados</div></div>
         <div class="scard"><div class="${totals.active_now > 0 ? 'sval-ora' : 'sval-grn'}">${totals.active_now}</div><div class="slb">Sin luz ahora</div></div>
     </div>`;
-
     let activeUsersCard;
     if (activeUsers.length > 0) {
         const userRows = activeUsers.map(user => {
             const minutesActive = (now - new Date(user.start_time)) / 60000;
-            const isMe = user.username === authState.currentUser?.username;
+            const isMe  = user.username === authState.currentUser?.username;
             const meTag = isMe ? ' <span class="community-me-tag">(tú)</span>' : '';
             return `<div class="comm-user">
                 <div class="comm-dot"></div>
                 <div class="community-user-info">
-                    <div class="community-user-name">@${user.username}${meTag}</div>
-                    <div class="community-user-location">${user.city}${user.zone ? ' · ' + user.zone : ''}</div>
+                    <div class="community-user-name">@${escapeHtml(user.username)}${meTag}</div>
+                    <div class="community-user-location">${escapeHtml(user.city)}${user.zone ? ' · ' + escapeHtml(user.zone) : ''}</div>
                 </div>
                 <div class="community-user-elapsed">${formatDuration(minutesActive)}</div>
             </div>`;
@@ -640,7 +571,6 @@ function renderCommunityTab(now) {
     } else {
         activeUsersCard = `<div class="card card-grn" style="margin-bottom:12px"><div style="font-size:14px;color:var(--grn-t)">&#10003; Nadie sin luz ahora mismo.</div></div>`;
     }
-
     let cityTimelineCard = '';
     if (todayOutages && todayOutages.length > 0) {
         const grouped = {};
@@ -649,26 +579,22 @@ function renderCommunityTab(now) {
             if (!grouped[key]) grouped[key] = { city: row.city, zone: row.zone, outages: [] };
             grouped[key].outages.push(row);
         });
-
         const cityZoneKeys = Object.keys(grouped).sort((a, b) => {
             const cityA = grouped[a].city, cityB = grouped[b].city;
             if (cityA === myCity && cityB !== myCity) return -1;
             if (cityB === myCity && cityA !== myCity) return 1;
             return cityA.localeCompare(cityB);
         });
-
-        const citiesMap = {};
-        const cityOrder = [];
+        const citiesMap = {}, cityOrder = [];
         cityZoneKeys.forEach(key => {
             const { city, zone, outages } = grouped[key];
             if (!citiesMap[city]) { citiesMap[city] = []; cityOrder.push(city); }
             citiesMap[city].push({ zone, outages });
         });
-
         const blocks = cityOrder.map(city => {
-            const isMyCity = city === myCity;
+            const isMyCity   = city === myCity;
             const zoneBlocks = citiesMap[city].map(({ zone, outages }) => {
-                const totalMins = outages.reduce((s, o) => s + (o.duration_minutes || 0), 0);
+                const totalMins   = outages.reduce((s, o) => s + (o.duration_minutes || 0), 0);
                 const outageItems = outages.map(o =>
                     `<div class="community-outage-item">
                         <span class="community-outage-time">${formatTime(o.start_time)} – ${formatTime(o.end_time)}</span>
@@ -677,21 +603,19 @@ function renderCommunityTab(now) {
                 ).join('');
                 return `<div class="community-zone-block">
                     <div class="community-zone-header">
-                        <span class="community-zone-name">${zone}</span>
+                        <span class="community-zone-name">${escapeHtml(zone)}</span>
                         <span class="community-zone-summary">${outages.length} corte${outages.length !== 1 ? 's' : ''} · ${formatDuration(totalMins)}</span>
                     </div>
                     <div class="community-outage-list">${outageItems}</div>
                 </div>`;
             }).join('');
             return `<div class="community-city-block">
-                <div class="community-city-name ${isMyCity ? 'community-city-mine' : ''}">${isMyCity ? '📍 ' : ''}${city}</div>
+                <div class="community-city-name ${isMyCity ? 'community-city-mine' : ''}">${isMyCity ? '📍 ' : ''}${escapeHtml(city)}</div>
                 ${zoneBlocks}
             </div>`;
         }).join('');
-
         cityTimelineCard = `<div class="card card-last"><div class="slabel">HOY POR CIUDAD Y ZONA</div>${blocks}</div>`;
     }
-
     return totalsGrid + activeUsersCard + cityTimelineCard + `<button class="bmore" onclick="refreshCommunity()">&#8635; Actualizar</button>`;
 }
 
@@ -699,45 +623,38 @@ function renderHistoryTab(now) {
     const completedOutages = appState.outages.filter(o => o.end && (o.type || 'corte') === 'corte');
     const fluctuations     = appState.outages.filter(o => (o.type || 'corte') === 'fluctuacion');
     const totalMinutes     = completedOutages.reduce((sum, o) => sum + (o.duration_minutes || 0), 0);
-
     const summary = `<div style="font-size:13px;color:#94a3b8;margin-bottom:12px">
         ${completedOutages.length} corte${completedOutages.length !== 1 ? 's' : ''}
         &middot; ${formatDuration(totalMinutes)} sin luz
         &middot; ${fluctuations.length} fluctuación${fluctuations.length !== 1 ? 'es' : ''}
     </div>`;
-
     if (appState.outages.length === 0) {
         return summary + `<div class="empty">${ICONS.history}<p>Sin registros aún.</p></div>`;
     }
-
     const visibleOutages = appState.outages.slice(0, appState.historyPage * HISTORY_PAGE_SIZE);
     const hasMorePages   = appState.outages.length > visibleOutages.length;
     const remainingCount = appState.outages.length - visibleOutages.length;
-
     const outageRows = visibleOutages.map(outage => {
         const isFluctuation   = (outage.type || 'corte') === 'fluctuacion';
         const isActive        = appState.activeOutage && outage.id === appState.activeOutage.id;
         const activeMinutes   = isActive ? (now - new Date(outage.start)) / 60000 : 0;
         const moodOption      = outage.mood ? MOOD_OPTIONS.find(m => m.value === outage.mood) : null;
         const isPendingDelete = appState.confirmDeleteId === outage.id;
-
-        const moodEmoji    = moodOption ? `<span title="${moodOption.label}" style="font-size:14px">${moodOption.emoji}</span>` : '';
-        const fluctuationTag = isFluctuation ? `<span class="tag tag-fluc">FLUCTUACIÓN</span>` : '';
-        const timeRange    = isFluctuation ? '' : ` &ndash; ${outage.end ? formatTime(outage.end) : 'en curso'}`;
-        const durationText = isFluctuation
+        const moodEmoji       = moodOption ? `<span title="${escapeHtml(moodOption.label)}" style="font-size:14px">${moodOption.emoji}</span>` : '';
+        const fluctuationTag  = isFluctuation ? `<span class="tag tag-fluc">FLUCTUACIÓN</span>` : '';
+        const timeRange       = isFluctuation ? '' : ` &ndash; ${outage.end ? formatTime(outage.end) : 'en curso'}`;
+        const durationText    = isFluctuation
             ? `<div class="hdur-fluc">&#9889;</div>`
             : `<div class="hdur">
                 ${outage.end ? formatDuration(outage.duration_minutes) : formatDuration(activeMinutes)}
                 ${!outage.end ? '<div class="hactive">en curso</div>' : ''}
               </div>`;
-
         const deleteControls = isPendingDelete
             ? `<div style="display:flex;gap:4px">
-                <button class="byes" onclick="deleteOutage('${outage.id}')">Sí</button>
-                <button class="bno" onclick="cancelDeleteRequest()">No</button>
+                <button class="byes" onclick="deleteOutage('${escapeHtml(outage.id)}')">Sí</button>
+                <button class="bno"  onclick="cancelDeleteRequest()">No</button>
               </div>`
-            : `<button class="bicon" onclick="requestDeleteConfirmation('${outage.id}')">${ICONS.trash}</button>`;
-
+            : `<button class="bicon" onclick="requestDeleteConfirmation('${escapeHtml(outage.id)}')">${ICONS.trash}</button>`;
         return `<div class="hitem ${isFluctuation ? 'hitem-fluc' : ''}">
             <div class="hmeta">
                 <div class="hdate">${formatDate(outage.start)}${fluctuationTag}${moodEmoji}</div>
@@ -747,32 +664,28 @@ function renderHistoryTab(now) {
             ${deleteControls}
         </div>`;
     }).join('');
-
     const loadMoreButton = hasMorePages
         ? `<button class="bmore" onclick="appState.historyPage++; render()">Cargar ${Math.min(remainingCount, HISTORY_PAGE_SIZE)} más &middot; ${remainingCount} restantes</button>`
         : '';
-
     return summary + `<div class="hlist">${outageRows}</div>` + loadMoreButton;
 }
 
 function renderProfileOverlay() {
     const stats = profileState.profileData?.stats;
-
     let content;
     if (profileState.isLoading) {
         content = `<p style="color:var(--text3);font-size:14px">Cargando...</p>`;
     } else if (profileState.profileData) {
-        const savedMessage    = profileState.changesSaved   ? `<div style="color:var(--grn-t);font-size:13px;margin-bottom:10px">&#10003; Cambios guardados</div>` : '';
+        const savedMessage    = profileState.changesSaved    ? `<div style="color:var(--grn-t);font-size:13px;margin-bottom:10px">&#10003; Cambios guardados</div>` : '';
         const passwordSuccess = profileState.passwordUpdated ? `<div style="color:var(--grn-t);font-size:13px;margin-bottom:8px">&#10003; Contraseña actualizada</div>` : '';
-        const passwordError   = profileState.passwordError   ? `<div class="auth-err">${profileState.passwordError}</div>` : '';
+        const passwordError   = profileState.passwordError   ? `<div class="auth-err">${escapeHtml(profileState.passwordError)}</div>` : '';
         const deleteConfirm   = profileState.confirmDelete
             ? `<div style="font-size:13px;color:var(--red-t);margin-bottom:8px;font-weight:600">¿Seguro? Se borrarán ${stats.total_cortes} cortes y ${stats.total_flucs} fluctuaciones.</div>
                <div style="display:flex;gap:8px">
                    <button class="byes" onclick="deleteAccount()">Sí, borrar todo</button>
-                   <button class="bno" onclick="profileState.confirmDelete = false; render()">Cancelar</button>
+                   <button class="bno"  onclick="profileState.confirmDelete = false; render()">Cancelar</button>
                </div>`
             : `<button class="bdel-account" onclick="deleteAccount()">Borrar mi cuenta</button>`;
-
         content = `<div class="sgrid3" style="margin-bottom:16px">
             <div class="scard"><div class="sval" style="font-size:16px">${stats.total_cortes}</div><div class="slb">Cortes</div></div>
             <div class="scard"><div class="sval" style="font-size:16px">${formatDuration(stats.total_mins)}</div><div class="slb">Sin luz</div></div>
@@ -780,7 +693,7 @@ function renderProfileOverlay() {
         </div>
         <div class="trow" style="margin-bottom:12px">
             <div class="field" style="margin:0"><label>Ciudad</label>
-                <input value="${profileState.editCity}" oninput="profileState.editCity = this.value" placeholder="Cabudare">
+                <input value="${escapeHtml(profileState.editCity)}" oninput="profileState.editCity = this.value" placeholder="Cabudare">
             </div>
             <div class="field" style="margin:0"><label>Zona</label>
                 ${buildZoneSelect('profileState.editZone', profileState.editZone)}
@@ -798,10 +711,10 @@ function renderProfileOverlay() {
             <summary style="cursor:pointer;font-size:13px;color:var(--text2);padding:8px 0">Cambiar contraseña</summary>
             <div style="margin-top:10px">
                 <div class="field"><label>Contraseña actual</label>
-                    <input type="password" value="${profileState.currentPassword}" oninput="profileState.currentPassword = this.value">
+                    <input type="password" value="${escapeHtml(profileState.currentPassword)}" oninput="profileState.currentPassword = this.value">
                 </div>
                 <div class="field"><label>Nueva contraseña</label>
-                    <input type="password" value="${profileState.newPassword}" oninput="profileState.newPassword = this.value">
+                    <input type="password" value="${escapeHtml(profileState.newPassword)}" oninput="profileState.newPassword = this.value">
                 </div>
                 ${passwordError}${passwordSuccess}
             </div>
@@ -819,11 +732,10 @@ function renderProfileOverlay() {
             ${deleteConfirm}
         </div>`;
     }
-
     return `<div class="overlay" onclick="if (event.target.classList.contains('overlay')) { profileState.isOpen = false; render(); }">
         <div class="overlay-card">
             <div class="overlay-header">
-                <div class="overlay-title">@${authState.currentUser.username}</div>
+                <div class="overlay-title">@${escapeHtml(authState.currentUser.username)}</div>
                 <button class="bicon" onclick="profileState.isOpen = false; render()">${ICONS.close}</button>
             </div>
             ${content}
