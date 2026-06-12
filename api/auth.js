@@ -1,7 +1,29 @@
 const bcrypt = require('bcryptjs');
 const { getSql, initDb } = require('./_db');
 const { getUser, requireAuth, signToken, setCookie, clearCookie } = require('./_auth');
-const { badRequest, unauthorized, notFound, conflict, methodNotAllowed } = require('./_http');
+const { badRequest, unauthorized, notFound, conflict, methodNotAllowed, log } = require('./_http');
+
+const authAttempts = new Map();
+
+function getClientIp(req) {
+  return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+}
+
+function checkAndRecordAttempt(key, limit = 10, windowMs = 900000) {
+  const now = Date.now();
+  const entry = authAttempts.get(key) || { count: 0, resetAt: now + windowMs };
+  if (now > entry.resetAt) {
+    authAttempts.set(key, { count: 1, resetAt: now + windowMs });
+    return false;
+  }
+  entry.count++;
+  authAttempts.set(key, entry);
+  return entry.count > limit;
+}
+
+function clearAttempts(key) {
+  authAttempts.delete(key);
+}
 
 function generateLinkToken() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -17,11 +39,28 @@ module.exports = async (req, res) => {
     if (req.method !== 'POST') return methodNotAllowed(res);
     const { username, password } = req.body;
     if (!username || !password) return badRequest(res, 'Datos requeridos');
+    const ip = getClientIp(req);
     const rows = await sql`SELECT * FROM users WHERE username = ${username.toLowerCase()}`;
-    if (!rows.length) return unauthorized(res, 'Usuario o contraseña incorrectos');
+    if (!rows.length) {
+      if (checkAndRecordAttempt(`login:${ip}`)) {
+        log('warn', 'auth.rate_limited', { ip, action: 'login' });
+        return res.status(429).json({ error: 'Demasiados intentos fallidos. Espera 15 minutos.' });
+      }
+      log('warn', 'auth.login.failed', { username: username.toLowerCase(), ip, reason: 'user_not_found' });
+      return unauthorized(res, 'Usuario o contraseña incorrectos');
+    }
     const user = rows[0];
     const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) return unauthorized(res, 'Usuario o contraseña incorrectos');
+    if (!valid) {
+      if (checkAndRecordAttempt(`login:${ip}`)) {
+        log('warn', 'auth.rate_limited', { ip, action: 'login' });
+        return res.status(429).json({ error: 'Demasiados intentos fallidos. Espera 15 minutos.' });
+      }
+      log('warn', 'auth.login.failed', { username: username.toLowerCase(), ip, reason: 'wrong_password' });
+      return unauthorized(res, 'Usuario o contraseña incorrectos');
+    }
+    clearAttempts(`login:${ip}`);
+    log('info', 'auth.login.success', { username: user.username, ip });
     const token = signToken({ id: user.id, username: user.username });
     setCookie(res, token);
     return res.json({ ok: true, user: { id: user.id, username: user.username, city: user.city, zone: user.zone, is_public: user.is_public } });
@@ -42,16 +81,25 @@ module.exports = async (req, res) => {
 
   if (action === 'register') {
     if (req.method !== 'POST') return methodNotAllowed(res);
+    const ip = getClientIp(req);
+    if (checkAndRecordAttempt(`register:${ip}`, 5, 900000)) {
+      log('warn', 'auth.rate_limited', { ip, action: 'register' });
+      return res.status(429).json({ error: 'Demasiados intentos. Espera 15 minutos.' });
+    }
     const { username, password, city = '', zone = '' } = req.body;
     if (!username || !password) return badRequest(res, 'Usuario y contraseña requeridos');
     if (username.length < 3) return badRequest(res, 'El usuario debe tener al menos 3 caracteres');
+    if (username.length > 30) return badRequest(res, 'El usuario no puede superar 30 caracteres');
     if (password.length < 6) return badRequest(res, 'La contraseña debe tener al menos 6 caracteres');
     if (!/^[a-zA-Z0-9_]+$/.test(username)) return badRequest(res, 'Solo letras, números y guión bajo');
+    if (city.length > 60) return badRequest(res, 'La ciudad no puede superar 60 caracteres');
+    if (zone.length > 30) return badRequest(res, 'La zona no puede superar 30 caracteres');
     const exists = await sql`SELECT id FROM users WHERE username = ${username.toLowerCase()}`;
     if (exists.length) return conflict(res, 'Ese usuario ya existe');
     const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
     const password_hash = await bcrypt.hash(password, 10);
     await sql`INSERT INTO users (id, username, password_hash, city, zone) VALUES (${id}, ${username.toLowerCase()}, ${password_hash}, ${city}, ${zone})`;
+    log('info', 'auth.register.success', { username: username.toLowerCase(), ip });
     const token = signToken({ id, username: username.toLowerCase() });
     setCookie(res, token);
     return res.json({ ok: true, user: { id, username: username.toLowerCase(), city, zone, is_public: true } });
@@ -76,12 +124,16 @@ module.exports = async (req, res) => {
     const { token, chat_id } = req.body;
     if (!token || !chat_id) return badRequest(res, 'Faltan datos');
     if (typeof token !== 'string') return badRequest(res, 'Token inválido');
+    const ip = getClientIp(req);
     const rows = await sql`
       SELECT * FROM users
       WHERE telegram_link_token = ${token.toUpperCase()}
       AND telegram_link_token_expires_at::timestamptz > NOW()
     `;
-    if (!rows.length) return unauthorized(res, 'Código inválido o expirado');
+    if (!rows.length) {
+      log('warn', 'auth.telegram_verify.failed', { ip, token: token.slice(0, 3) + '***' });
+      return unauthorized(res, 'Código inválido o expirado');
+    }
     const user = rows[0];
     await sql`
       UPDATE users
