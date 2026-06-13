@@ -408,7 +408,9 @@ function renderLogTab(minutesWithoutPower) {
             </div>
         </div>
         ${buildMoodPicker()}
-        <button class="bmain bsuccess" onclick="endOutage()">${ICONS.bulb}Volvió la luz</button>
+        <textarea class="notes-input" maxlength="120" placeholder="Nota opcional..."
+            oninput="appState.endNotes = this.value">${escapeHtml(appState.endNotes)}</textarea>
+        <button class="bmain bsuccess" style="margin-top:10px" onclick="endOutage()">${ICONS.bulb}Volvió la luz</button>
     </div>`;
     let survivalCard = '';
     if (activeOutage) {
@@ -476,7 +478,9 @@ function renderLogTab(minutesWithoutPower) {
             </div>
             ${durationPreview}
             ${buildMoodPicker()}
-            <button class="bsm" onclick="saveManualOutage()">Guardar</button>
+            <textarea class="notes-input" maxlength="120" placeholder="Nota opcional..."
+                oninput="appState.manualNotes = this.value">${escapeHtml(appState.manualNotes)}</textarea>
+            <button class="bsm" style="margin-top:10px" onclick="saveManualOutage()">Guardar</button>
         </div>`;
     }
     const toggleIcon = showManualForm ? ICONS.chevUp : ICONS.chevDown;
@@ -659,6 +663,7 @@ function renderHistoryTab(now) {
             <div class="hmeta">
                 <div class="hdate">${formatDate(outage.start)}${fluctuationTag}${moodEmoji}</div>
                 <div class="htime">${formatTime(outage.start)}${timeRange}</div>
+                ${outage.notes ? `<div class="hnotes">${escapeHtml(outage.notes)}</div>` : ''}
             </div>
             ${durationText}
             ${deleteControls}

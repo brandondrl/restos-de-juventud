@@ -6,19 +6,26 @@ const { badRequest, unauthorized, notFound, conflict, methodNotAllowed, log } = 
 const authAttempts = new Map();
 
 function getClientIp(req) {
-  return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+  const forwarded = (req.headers || {})['x-forwarded-for'];
+  return forwarded ? forwarded.split(',')[0].trim() : 'unknown';
 }
 
-function checkAndRecordAttempt(key, limit = 10, windowMs = 900000) {
-  const now = Date.now();
-  const entry = authAttempts.get(key) || { count: 0, resetAt: now + windowMs };
-  if (now > entry.resetAt) {
+function isRateLimited(key, limit = 10) {
+  const now   = Date.now();
+  const entry = authAttempts.get(key);
+  if (!entry || now > entry.resetAt) return false;
+  return entry.count >= limit;
+}
+
+function incrementAttempts(key, windowMs = 900000) {
+  const now   = Date.now();
+  const entry = authAttempts.get(key);
+  if (!entry || now > entry.resetAt) {
     authAttempts.set(key, { count: 1, resetAt: now + windowMs });
-    return false;
+  } else {
+    entry.count++;
+    authAttempts.set(key, entry);
   }
-  entry.count++;
-  authAttempts.set(key, entry);
-  return entry.count > limit;
 }
 
 function clearAttempts(key) {
@@ -40,22 +47,20 @@ module.exports = async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return badRequest(res, 'Datos requeridos');
     const ip = getClientIp(req);
+    if (isRateLimited(`login:${ip}`)) {
+      log('warn', 'auth.rate_limited', { ip, action: 'login' });
+      return res.status(429).json({ error: 'Demasiados intentos fallidos. Espera 15 minutos.' });
+    }
     const rows = await sql`SELECT * FROM users WHERE username = ${username.toLowerCase()}`;
     if (!rows.length) {
-      if (checkAndRecordAttempt(`login:${ip}`)) {
-        log('warn', 'auth.rate_limited', { ip, action: 'login' });
-        return res.status(429).json({ error: 'Demasiados intentos fallidos. Espera 15 minutos.' });
-      }
+      incrementAttempts(`login:${ip}`);
       log('warn', 'auth.login.failed', { username: username.toLowerCase(), ip, reason: 'user_not_found' });
       return unauthorized(res, 'Usuario o contraseña incorrectos');
     }
-    const user = rows[0];
+    const user  = rows[0];
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
-      if (checkAndRecordAttempt(`login:${ip}`)) {
-        log('warn', 'auth.rate_limited', { ip, action: 'login' });
-        return res.status(429).json({ error: 'Demasiados intentos fallidos. Espera 15 minutos.' });
-      }
+      incrementAttempts(`login:${ip}`);
       log('warn', 'auth.login.failed', { username: username.toLowerCase(), ip, reason: 'wrong_password' });
       return unauthorized(res, 'Usuario o contraseña incorrectos');
     }
@@ -82,21 +87,22 @@ module.exports = async (req, res) => {
   if (action === 'register') {
     if (req.method !== 'POST') return methodNotAllowed(res);
     const ip = getClientIp(req);
-    if (checkAndRecordAttempt(`register:${ip}`, 5, 900000)) {
+    if (isRateLimited(`register:${ip}`, 5)) {
       log('warn', 'auth.rate_limited', { ip, action: 'register' });
       return res.status(429).json({ error: 'Demasiados intentos. Espera 15 minutos.' });
     }
     const { username, password, city = '', zone = '' } = req.body;
     if (!username || !password) return badRequest(res, 'Usuario y contraseña requeridos');
-    if (username.length < 3) return badRequest(res, 'El usuario debe tener al menos 3 caracteres');
+    if (username.length < 3)  return badRequest(res, 'El usuario debe tener al menos 3 caracteres');
     if (username.length > 30) return badRequest(res, 'El usuario no puede superar 30 caracteres');
-    if (password.length < 6) return badRequest(res, 'La contraseña debe tener al menos 6 caracteres');
+    if (password.length < 6)  return badRequest(res, 'La contraseña debe tener al menos 6 caracteres');
     if (!/^[a-zA-Z0-9_]+$/.test(username)) return badRequest(res, 'Solo letras, números y guión bajo');
     if (city.length > 60) return badRequest(res, 'La ciudad no puede superar 60 caracteres');
     if (zone.length > 30) return badRequest(res, 'La zona no puede superar 30 caracteres');
     const exists = await sql`SELECT id FROM users WHERE username = ${username.toLowerCase()}`;
     if (exists.length) return conflict(res, 'Ese usuario ya existe');
-    const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    incrementAttempts(`register:${ip}`);
+    const id            = Math.random().toString(36).slice(2) + Date.now().toString(36);
     const password_hash = await bcrypt.hash(password, 10);
     await sql`INSERT INTO users (id, username, password_hash, city, zone) VALUES (${id}, ${username.toLowerCase()}, ${password_hash}, ${city}, ${zone})`;
     log('info', 'auth.register.success', { username: username.toLowerCase(), ip });
@@ -109,7 +115,7 @@ module.exports = async (req, res) => {
     if (req.method !== 'POST') return methodNotAllowed(res);
     const user = requireAuth(req, res);
     if (!user) return;
-    const token = generateLinkToken();
+    const token     = generateLinkToken();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     await sql`
       UPDATE users
@@ -124,7 +130,7 @@ module.exports = async (req, res) => {
     const { token, chat_id } = req.body;
     if (!token || !chat_id) return badRequest(res, 'Faltan datos');
     if (typeof token !== 'string') return badRequest(res, 'Token inválido');
-    const ip = getClientIp(req);
+    const ip   = getClientIp(req);
     const rows = await sql`
       SELECT * FROM users
       WHERE telegram_link_token = ${token.toUpperCase()}
@@ -151,11 +157,7 @@ module.exports = async (req, res) => {
     if (req.method !== 'POST') return methodNotAllowed(res);
     const user = requireAuth(req, res);
     if (!user) return;
-    await sql`
-      UPDATE users
-      SET telegram_chat_id = NULL, telegram_linked_at = NULL
-      WHERE id = ${user.id}
-    `;
+    await sql`UPDATE users SET telegram_chat_id = NULL, telegram_linked_at = NULL WHERE id = ${user.id}`;
     return res.json({ ok: true });
   }
 
