@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
       duration_minutes: row.duration_minutes,
       type: row.type || 'corte',
       mood: row.mood || null,
-      notes: row.notes,
+      notes: row.notes || null,
     })));
   }
 
@@ -30,6 +30,7 @@ module.exports = async (req, res) => {
     if (duration_minutes != null && (typeof duration_minutes !== 'number' || duration_minutes < 0)) return badRequest(res, 'duration_minutes debe ser un número válido');
     if (type != null && !['corte', 'fluctuacion'].includes(type)) return badRequest(res, 'type debe ser corte o fluctuacion');
     if (mood != null && (!Number.isInteger(mood) || mood < 1 || mood > 5)) return badRequest(res, 'mood debe ser un entero entre 1 y 5');
+    if (notes != null && (typeof notes !== 'string' || notes.length > 120)) return badRequest(res, 'notes no puede superar 120 caracteres');
     const [existing] = await sql`SELECT user_id FROM outages WHERE id = ${id}`;
     if (existing && existing.user_id !== user.id) return forbidden(res, 'Este outage no te pertenece');
     await sql`
@@ -38,7 +39,8 @@ module.exports = async (req, res) => {
       ON CONFLICT (id) DO UPDATE
         SET end_time = EXCLUDED.end_time,
             duration_minutes = EXCLUDED.duration_minutes,
-            mood = EXCLUDED.mood
+            mood = EXCLUDED.mood,
+            notes = EXCLUDED.notes
     `;
     return res.json({ ok: true });
   }

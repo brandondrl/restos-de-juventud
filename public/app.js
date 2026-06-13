@@ -16,13 +16,11 @@ function checkRiskNotification() {
     const now  = new Date();
     const hour = now.getHours();
     if (hour === lastNotifiedHour) return;
-
     const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
     const hadOutageToday = appState.outages.some(o =>
         o.end && (o.type || 'corte') === 'corte' && new Date(o.start) >= startOfToday
     );
     if (hadOutageToday) return;
-
     const heatmap = buildHeatmap(appState.outages);
     if (!heatmap) return;
     const slot = heatmap[`${now.getDay()}_${hour}`] || { probability: 0, confidence: 0 };
@@ -113,6 +111,7 @@ async function endOutage() {
         duration_minutes: (endTime - startTime) / 60000,
         type:             'corte',
         mood:             appState.selectedMood || null,
+        notes:            appState.endNotes.trim() || null,
     };
     const response = await http.post('/api/outages', completedOutage);
     if (!response.ok) { alert('Error al guardar. Reintenta.'); return; }
@@ -122,6 +121,7 @@ async function endOutage() {
     appState.endDate      = getTodayDate();
     appState.endTime      = getCurrentTime();
     appState.selectedMood = null;
+    appState.endNotes     = '';
     render();
 }
 
@@ -161,6 +161,7 @@ async function saveManualOutage() {
         duration_minutes: (endTime - startTime) / 60000,
         type:             'corte',
         mood:             appState.selectedMood || null,
+        notes:            appState.manualNotes.trim() || null,
     };
     const response = await http.post('/api/outages', outage);
     if (!response.ok) { alert('Error al guardar. Reintenta.'); return; }
@@ -170,6 +171,7 @@ async function saveManualOutage() {
     appState.manualEndTime   = '00:00';
     appState.showManualForm  = false;
     appState.selectedMood    = null;
+    appState.manualNotes     = '';
     render();
 }
 
@@ -275,44 +277,24 @@ function setCurrentTab(tab) {
     render();
 }
 
-function updateAppState(key, value) {
-    appState[key] = value;
-    render();
-}
-
-function updateAuthState(key, value) {
-    authState[key]        = value;
-    authState.errorMessage = '';
-    render();
-}
+function updateAppState(key, value) { appState[key] = value; render(); }
+function updateAuthState(key, value) { authState[key] = value; authState.errorMessage = ''; render(); }
 
 function setTimeHour(stateKey, hour) {
-    const parts       = (appState[stateKey] || '00:00').split(':');
+    const parts = (appState[stateKey] || '00:00').split(':');
     appState[stateKey] = `${hour}:${parts[1] || '00'}`;
     render();
 }
 
 function setTimeMinute(stateKey, minute) {
-    const parts       = (appState[stateKey] || '00:00').split(':');
+    const parts = (appState[stateKey] || '00:00').split(':');
     appState[stateKey] = `${parts[0] || '00'}:${minute}`;
     render();
 }
 
-function requestDeleteConfirmation(id) {
-    appState.confirmDeleteId = id;
-    render();
-}
-
-function cancelDeleteRequest() {
-    appState.confirmDeleteId = null;
-    render();
-}
-
-function syncEndTimeToNow() {
-    appState.endDate = getTodayDate();
-    appState.endTime = getCurrentTime();
-    render();
-}
+function requestDeleteConfirmation(id) { appState.confirmDeleteId = id; render(); }
+function cancelDeleteRequest() { appState.confirmDeleteId = null; render(); }
+function syncEndTimeToNow() { appState.endDate = getTodayDate(); appState.endTime = getCurrentTime(); render(); }
 
 window.addEventListener('beforeunload', e => {
     if (appState.activeOutage) { e.preventDefault(); e.returnValue = ''; }

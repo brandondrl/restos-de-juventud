@@ -214,3 +214,8 @@ input[type=date]{color-scheme:dark;}
 .community-outage-item{display:flex;align-items:center;justify-content:space-between;padding:4px 8px;background:rgba(185,28,28,.12);border-radius:var(--rs);}
 .community-outage-time{font-size:12px;color:var(--red-t);}
 .community-outage-dur{font-size:12px;font-weight:600;color:var(--text2);}
+
+.notes-input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;background:var(--bg);color:var(--text2);resize:none;height:56px;font-family:inherit;}
+.notes-input::placeholder{color:var(--text3);}
+.notes-input:focus{outline:none;border-color:var(--border);color:var(--text);}
+.hnotes{font-size:11px;color:var(--text3);margin-top:3px;word-break:break-word;}
