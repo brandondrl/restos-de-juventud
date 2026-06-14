@@ -135,7 +135,7 @@ function renderAuthScreen() {
         </div>
         <div class="trow" style="margin-bottom:12px">
             <div class="field" style="margin:0"><label>Ciudad</label>
-                <input placeholder="Cabudare" value="${escapeHtml(authState.registerForm.city)}" oninput="authState.registerForm.city = this.value">
+                ${buildCitySelect('authState.registerForm.city', authState.registerForm.city)}
             </div>
             <div class="field" style="margin:0"><label>Zona <span style="color:var(--text3)">(opcional)</span></label>
                 ${buildZoneSelect('authState.registerForm.zone', authState.registerForm.zone)}
@@ -698,7 +698,7 @@ function renderProfileOverlay() {
         </div>
         <div class="trow" style="margin-bottom:12px">
             <div class="field" style="margin:0"><label>Ciudad</label>
-                <input value="${escapeHtml(profileState.editCity)}" oninput="profileState.editCity = this.value" placeholder="Cabudare">
+                ${buildCitySelect('profileState.editCity', profileState.editCity)}
             </div>
             <div class="field" style="margin:0"><label>Zona</label>
                 ${buildZoneSelect('profileState.editZone', profileState.editZone)}
