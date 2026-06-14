@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const { getSql, initDb } = require('./_db');
 const { getUser, requireAuth, signToken, setCookie, clearCookie } = require('./_auth');
 const { badRequest, unauthorized, notFound, conflict, methodNotAllowed, log } = require('./_http');
+const { isValidCity, isValidZone } = require('./_cities');
 
 const authAttempts = new Map();
 
@@ -97,8 +98,8 @@ module.exports = async (req, res) => {
     if (username.length > 30) return badRequest(res, 'El usuario no puede superar 30 caracteres');
     if (password.length < 6)  return badRequest(res, 'La contraseña debe tener al menos 6 caracteres');
     if (!/^[a-zA-Z0-9_]+$/.test(username)) return badRequest(res, 'Solo letras, números y guión bajo');
-    if (city.length > 60) return badRequest(res, 'La ciudad no puede superar 60 caracteres');
-    if (zone.length > 30) return badRequest(res, 'La zona no puede superar 30 caracteres');
+    if (!isValidCity(city))   return badRequest(res, 'Ciudad no válida');
+    if (!isValidZone(zone))   return badRequest(res, 'Zona no válida');
     const exists = await sql`SELECT id FROM users WHERE username = ${username.toLowerCase()}`;
     if (exists.length) return conflict(res, 'Ese usuario ya existe');
     incrementAttempts(`register:${ip}`);
@@ -117,11 +118,7 @@ module.exports = async (req, res) => {
     if (!user) return;
     const token     = generateLinkToken();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-    await sql`
-      UPDATE users
-      SET telegram_link_token = ${token}, telegram_link_token_expires_at = ${expiresAt}
-      WHERE id = ${user.id}
-    `;
+    await sql`UPDATE users SET telegram_link_token = ${token}, telegram_link_token_expires_at = ${expiresAt} WHERE id = ${user.id}`;
     return res.json({ token, expiresAt });
   }
 

@@ -196,7 +196,7 @@ async function openProfile() {
     render();
     const data = await http.get('/api/profile');
     profileState.profileData = data;
-    profileState.editCity    = data.city;
+    profileState.editCity    = VENEZUELA_CITIES.includes(data.city) ? data.city : '';
     profileState.editZone    = data.zone;
     profileState.isPublic    = data.is_public;
     profileState.isLoading   = false;

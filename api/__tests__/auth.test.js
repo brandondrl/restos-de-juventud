@@ -309,3 +309,53 @@ describe('logout', () => {
     expect(res.setHeader).toHaveBeenCalledWith('Set-Cookie', 'auth=; HttpOnly; Path=/; Max-Age=0');
   });
 });
+
+describe('city and zone validation', () => {
+  it('returns 400 if city is not in the allowed list', async () => {
+    const req = { method: 'POST', query: { action: 'register' }, body: { username: 'valid', password: '123456', city: 'Mordor' }, headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Ciudad no válida' });
+  });
+
+  it('returns 400 if zone is not in the allowed list', async () => {
+    const req = { method: 'POST', query: { action: 'register' }, body: { username: 'valid', password: '123456', zone: 'Universo' }, headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Zona no válida' });
+  });
+
+  it('allows empty city on register', async () => {
+    mockSql.mockResolvedValueOnce([]);
+    jest.spyOn(bcrypt, 'hash').mockResolvedValueOnce('hashed');
+    const req = { method: 'POST', query: { action: 'register' }, body: { username: 'nocity', password: '123456', city: '' }, headers: { 'x-forwarded-for': '3.0.0.1' } };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ ok: true }));
+  });
+
+  it('allows valid city from the list on register', async () => {
+    mockSql.mockResolvedValueOnce([]);
+    jest.spyOn(bcrypt, 'hash').mockResolvedValueOnce('hashed');
+    const req = { method: 'POST', query: { action: 'register' }, body: { username: 'cabudare', password: '123456', city: 'Cabudare' }, headers: { 'x-forwarded-for': '3.0.0.2' } };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ ok: true }));
+  });
+
+  it('blocks SQL injection attempt in city field', async () => {
+    const req = { method: 'POST', query: { action: 'register' }, body: { username: 'valid', password: '123456', city: "'; DROP TABLE users;--" }, headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('blocks XSS attempt in city field', async () => {
+    const req = { method: 'POST', query: { action: 'register' }, body: { username: 'valid', password: '123456', city: '<script>alert(1)</script>' }, headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+});
