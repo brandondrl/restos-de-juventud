@@ -273,6 +273,7 @@ async function handleUpdate(env, update) {
     const outage = { id: generateId(), start: now.toISOString() };
     const ok = await apiPost('/api/active', outage, session);
     if (!ok) { await tg(env.BOT_TOKEN, chatId, STRINGS.error); return; }
+    await env.KV.delete(`reminded:${userId}`);
     const outages = await apiGet('/api/outages', session);
     const summary = outages ? buildDaySummary(outages) : '';
     await tgButtons(env.BOT_TOKEN, chatId, STRINGS.outageStarted(localTime(now), summary), [
