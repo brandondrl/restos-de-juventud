@@ -50,7 +50,11 @@ async function loadApplicationData() {
     }
     render();
     if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
+        Notification.requestPermission().then(perm => {
+            if (perm === 'granted') registerPushSubscription();
+        });
+    } else if ('Notification' in window && Notification.permission === 'granted') {
+        registerPushSubscription();
     }
     checkRiskNotification();
     setInterval(() => {
@@ -299,5 +303,41 @@ function syncEndTimeToNow() { appState.endDate = getTodayDate(); appState.endTim
 window.addEventListener('beforeunload', e => {
     if (appState.activeOutage) { e.preventDefault(); e.returnValue = ''; }
 });
+
+async function registerPushSubscription() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    const VAPID_PUBLIC_KEY = window.VAPID_PUBLIC_KEY;
+    if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY === 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY') return;
+    try {
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.ready;
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) return;
+        const sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+        await http.post('/api/push', { subscription: sub.toJSON() });
+    } catch (e) {
+        console.error('Push subscription failed', e);
+    }
+}
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(base64);
+    return new Uint8Array([...raw].map(c => c.charCodeAt(0)));
+}
+
+async function unsubscribePush() {
+    if (!('serviceWorker' in navigator)) return;
+    const reg = await navigator.serviceWorker.getRegistration('/sw.js');
+    if (reg) {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) await sub.unsubscribe();
+    }
+    await http.delete('/api/push');
+}
 
 initialize();

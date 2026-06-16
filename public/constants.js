@@ -77,3 +77,5 @@ const VENEZUELA_CITIES = [
     'Yaguaraparo', 'Yaritagua',
     'Zaraza', 'Zuata',
 ];
+
+window.VAPID_PUBLIC_KEY = 'BNzlCn-574ILZWCxQWpGps8En4x9jFlt3pABc7wRk9b9AJRbASKUcTWEm93K1BbvMeUVx0RXl1l6vBolHOml5_A';
