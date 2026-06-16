@@ -6,7 +6,9 @@ module.exports = async (req, res) => {
   }
   const sql = getSql();
   const rows = await sql`
-    SELECT id, telegram_chat_id FROM users WHERE telegram_chat_id IS NOT NULL
+    SELECT id, telegram_chat_id, push_subscription
+    FROM users
+    WHERE telegram_chat_id IS NOT NULL
   `;
   res.json(rows);
 };

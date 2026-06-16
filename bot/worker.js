@@ -357,9 +357,21 @@ async function handleUpdate(env, update) {
     const outages = await apiGet('/api/outages', session);
     if (!outages) { await tg(env.BOT_TOKEN, chatId, STRINGS.error); return; }
     const now = new Date();
-    const cutoff = new Date(now);
-    if (cmd === '/semana') { cutoff.setDate(now.getDate() - now.getDay()); cutoff.setHours(0, 0, 0, 0); }
-    else { cutoff.setDate(1); cutoff.setHours(0, 0, 0, 0); }
+    const localNowPeriod = new Date(now.getTime() + TZ_OFFSET_HOURS * 3600000);
+    let cutoff;
+    if (cmd === '/semana') {
+      const day = localNowPeriod.getUTCDay();
+      const daysBack = day === 0 ? 6 : day - 1;
+      const localMon = new Date(localNowPeriod);
+      localMon.setUTCDate(localNowPeriod.getUTCDate() - daysBack);
+      localMon.setUTCHours(0, 0, 0, 0);
+      cutoff = new Date(localMon.getTime() - TZ_OFFSET_HOURS * 3600000);
+    } else {
+      const localFirst = new Date(localNowPeriod);
+      localFirst.setUTCDate(1);
+      localFirst.setUTCHours(0, 0, 0, 0);
+      cutoff = new Date(localFirst.getTime() - TZ_OFFSET_HOURS * 3600000);
+    }
     const period = outages.filter(o => o.end && (o.type || 'corte') === 'corte' && new Date(o.start) >= cutoff);
     const flucs = outages.filter(o => (o.type || 'corte') === 'fluctuacion' && new Date(o.start) >= cutoff);
     const total = period.reduce((s, o) => s + (o.duration_minutes || 0), 0);
@@ -455,12 +467,18 @@ async function handleCron(env) {
   if (activeR.ok) {
     const sessions = await activeR.json();
     for (const row of sessions) {
-      const { telegram_chat_id, start_time } = row;
+      const { telegram_chat_id, start_time, outage_id } = row;
       if (!telegram_chat_id) continue;
       const elapsedMins = (now - new Date(start_time).getTime()) / 60000;
       const reminderKey = `reminded:${telegram_chat_id}`;
-      const alreadySent = await env.KV.get(reminderKey);
-      const sentSet = alreadySent ? new Set(JSON.parse(alreadySent)) : new Set();
+      const stored = await env.KV.get(reminderKey);
+      let sentSet = new Set();
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed.outageId === outage_id) sentSet = new Set(parsed.sent);
+        } catch { /* stale format, fresh start */ }
+      }
       let sentNew = false;
       for (const reminder of REMINDERS) {
         if (elapsedMins >= reminder.minutes && !sentSet.has(reminder.minutes)) {
@@ -471,7 +489,7 @@ async function handleCron(env) {
         }
       }
       if (sentNew || sentSet.size > 0) {
-        await env.KV.put(reminderKey, JSON.stringify([...sentSet]), { expirationTtl: 86400 });
+        await env.KV.put(reminderKey, JSON.stringify({ outageId: outage_id, sent: [...sentSet] }), { expirationTtl: 86400 });
       }
     }
   }
@@ -485,7 +503,7 @@ async function handleCron(env) {
   const users = await usersR.json();
 
   for (const user of users) {
-    const { telegram_chat_id } = user;
+    const { telegram_chat_id, push_subscription } = user;
     const session = await env.KV.get(`session:${telegram_chat_id}`);
     if (!session) continue;
 
@@ -506,28 +524,46 @@ async function handleCron(env) {
 
     const notifBase = `notif:${telegram_chat_id}:${today}`;
 
-    if (localHour === 9 && localMinute < 5) {
-      const key = `${notifBase}:morning`;
-      if (!await env.KV.get(key)) {
-        await tg(env.BOT_TOKEN, telegram_chat_id, `🌅 *Buenos días*\n\nSegún tu historial, hoy hay riesgo entre las *${risk.rangeText}*\nPico: *${String(risk.peak.h).padStart(2,'0')}:00* (${Math.round(risk.peak.prob * 100)}%)\n\n_Ojo pelao._`);
-        await env.KV.put(key, '1', { expirationTtl: 86400 });
+    async function sendAlert(key, tgMsg, pushTitle, pushBody) {
+      if (await env.KV.get(key)) return;
+      if (telegram_chat_id) await tg(env.BOT_TOKEN, telegram_chat_id, tgMsg);
+      if (push_subscription) {
+        try {
+          await fetch(`${API}/api/push`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-internal-secret': env.ADMIN_SECRET },
+            body: JSON.stringify({ subscription: JSON.parse(push_subscription), title: pushTitle, body: pushBody }),
+          });
+        } catch {}
       }
+      await env.KV.put(key, '1', { expirationTtl: 86400 });
+    }
+
+    if (localHour === 9 && localMinute < 5) {
+      await sendAlert(
+        `${notifBase}:morning`,
+        `🌅 *Buenos días*\n\nSegún tu historial, hoy hay riesgo entre las *${risk.rangeText}*\nPico: *${String(risk.peak.h).padStart(2,'0')}:00* (${Math.round(risk.peak.prob * 100)}%)\n\n_Ojo pelao._`,
+        '🌅 Riesgo de corte hoy',
+        `Según tu historial: ${risk.rangeText} — pico ${Math.round(risk.peak.prob * 100)}%`
+      );
     }
 
     if (localHour === risk.peak.h - 1 && localMinute < 5) {
-      const key = `${notifBase}:prehour`;
-      if (!await env.KV.get(key)) {
-        await tg(env.BOT_TOKEN, telegram_chat_id, `⏰ En 1 hora entra la hora pico (*${String(risk.peak.h).padStart(2,'0')}:00*) según tu historial. Por si las moscas.`);
-        await env.KV.put(key, '1', { expirationTtl: 86400 });
-      }
+      await sendAlert(
+        `${notifBase}:prehour`,
+        `⏰ En 1 hora entra la hora pico (*${String(risk.peak.h).padStart(2,'0')}:00*) según tu historial. Por si las moscas.`,
+        '⏰ Hora pico en 1 hora',
+        `${String(risk.peak.h).padStart(2,'0')}:00 — ${Math.round(risk.peak.prob * 100)}% de probabilidad`
+      );
     }
 
     if (localHour === risk.peak.h && localMinute < 5) {
-      const key = `${notifBase}:peakhour`;
-      if (!await env.KV.get(key)) {
-        await tg(env.BOT_TOKEN, telegram_chat_id, `⚡ *Hora pico ahora* (${Math.round(risk.peak.prob * 100)}%)\n\nSi se va, usa /corte para registrarlo.`);
-        await env.KV.put(key, '1', { expirationTtl: 86400 });
-      }
+      await sendAlert(
+        `${notifBase}:peakhour`,
+        `⚡ *Hora pico ahora* (${Math.round(risk.peak.prob * 100)}%)\n\nSi se va, usa /corte para registrarlo.`,
+        '⚡ Hora pico ahora',
+        `${Math.round(risk.peak.prob * 100)}% de probabilidad. Si se va, registra el corte.`
+      );
     }
   }
 }
