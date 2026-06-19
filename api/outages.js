@@ -37,7 +37,8 @@ module.exports = async (req, res) => {
       INSERT INTO outages (id, user_id, start_time, end_time, duration_minutes, type, mood, notes)
       VALUES (${id}, ${user.id}, ${start}, ${end ?? null}, ${duration_minutes ?? null}, ${type ?? 'corte'}, ${mood ?? null}, ${notes ?? null})
       ON CONFLICT (id) DO UPDATE
-        SET end_time = EXCLUDED.end_time,
+        SET start_time = EXCLUDED.start_time,
+            end_time = EXCLUDED.end_time,
             duration_minutes = EXCLUDED.duration_minutes,
             mood = EXCLUDED.mood,
             notes = EXCLUDED.notes

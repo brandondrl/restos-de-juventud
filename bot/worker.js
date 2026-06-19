@@ -41,7 +41,7 @@ const STRINGS = {
   disconnected: (summary) => `🔌 Cuenta desvinculada.\n\n${summary}\n\nHasta la próxima apagón 👋`,
   groupOnly: `Para vincular tu cuenta háblame en privado 👉`,
   unknown: `Comando no reconocido.\n\nUsa /ayuda para ver los comandos disponibles.`,
-  help: `⚡ *Comandos disponibles*\n\n/corte — Se fue la luz\n/volvio — Volvió la luz\n/fluctuacion — Bajón o pico rápido\n/estado — Ver estado actual\n/hoy — Resumen del día\n/semana — Resumen de esta semana\n/mes — Resumen de este mes\n/probabilidad — Riesgo de corte hoy\n/ayuda — Esta lista\n/desconectar — Desvincular cuenta`,
+  help: `⚡ *Comandos disponibles*\n\n/corte — Se fue la luz\n/volvio — Volvió la luz\n/fluctuacion — Bajón o pico rápido\n/estado — Ver estado actual\n/hoy — Resumen del día\n/semana — Resumen de esta semana\n/mes — Resumen de este mes\n/probabilidad — Riesgo de corte hoy\n/resetpass — Cambiar contraseña\n/ayuda — Esta lista\n/desconectar — Desvincular cuenta`,
 };
 
 function localTime(date = new Date()) {
@@ -134,7 +134,7 @@ async function handleTokenLink(env, userId, token) {
   if (!r.ok) return null;
   const data = await r.json();
   if (!data.ok) return null;
-  await env.KV.put(`session:${userId}`, data.token, { expirationTtl: 2592000 });
+  await env.KV.put(`session:${userId}`, data.token, { expirationTtl: 31536000 });
   return data.username;
 }
 
@@ -399,6 +399,18 @@ async function handleUpdate(env, update) {
     return;
   }
 
+  if (cmd === '/resetpass') {
+    if (!session) { await tg(env.BOT_TOKEN, chatId, STRINGS.notLinked); return; }
+    const r = await fetch(`${API}/api/auth/reset-token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: `auth=${session}` },
+    });
+    if (!r.ok) { await tg(env.BOT_TOKEN, chatId, STRINGS.error); return; }
+    const { token } = await r.json();
+    await tg(env.BOT_TOKEN, chatId, `🔑 *Cambio de contraseña*\n\nAbre este enlace (válido 15 min):\n${API}?reset=${token}\n\n_No lo compartas con nadie._`);
+    return;
+  }
+
   await tg(env.BOT_TOKEN, chatId, STRINGS.unknown);
 }
 
@@ -513,9 +525,12 @@ async function handleCron(env) {
     const outages = await apiGet('/api/outages', session);
     if (!outages || outages.length < 3) continue;
 
+    const activeNow = await apiGet('/api/active', session);
+    if (activeNow) continue;
+
     const startOfTodayUTC = new Date(`${today}T${String(Math.abs(TZ_OFFSET_HOURS)).padStart(2,'0')}:00:00Z`);
     const hadOutageToday = outages.some(o =>
-      o.end && (o.type || 'corte') === 'corte' && new Date(o.start) >= startOfTodayUTC
+      (o.type || 'corte') === 'corte' && new Date(o.start) >= startOfTodayUTC
     );
     if (hadOutageToday) continue;
 
@@ -570,6 +585,19 @@ async function handleCron(env) {
 
 export default {
   async fetch(req, env) {
+    const url = new URL(req.url);
+
+    if (url.pathname === '/invalidate' && req.method === 'POST') {
+      if (req.headers.get('x-internal-secret') !== env.WEBHOOK_SECRET) {
+        return new Response('forbidden', { status: 403 });
+      }
+      const { chat_id } = await req.json();
+      await env.KV.delete(`session:${chat_id}`);
+      await env.KV.delete(`pending_mood:${chat_id}`);
+      await env.KV.delete(`reminded:${chat_id}`);
+      return new Response('ok');
+    }
+
     if (req.method !== 'POST') return new Response('ok');
     const secret = req.headers.get('X-Telegram-Bot-Api-Secret-Token');
     if (secret !== env.WEBHOOK_SECRET) return new Response('forbidden', { status: 403 });

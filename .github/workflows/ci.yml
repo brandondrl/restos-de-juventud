@@ -7,22 +7,19 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 24
           cache: npm
-
       - run: npm ci
-
       - name: Lint
         run: npm run lint
-
       - name: Tests
         run: npm test
-
       - name: Security audit
         run: npm audit --audit-level=high
         continue-on-error: true
@@ -30,11 +27,12 @@ jobs:
   automerge-to-main:
     needs: quality
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
       - name: Hacer merge a main y subir los cambios
         run: |
           git config --global user.name "github-actions[bot]"

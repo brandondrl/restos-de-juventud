@@ -219,7 +219,7 @@ input[type=date]{color-scheme:dark;}
 .notes-input::placeholder{color:var(--text3);}
 .notes-input:focus{outline:none;border-color:var(--border);color:var(--text);}
 .hnotes{font-size:11px;color:var(--text3);margin-top:3px;word-break:break-word;}
-
+ 
 .city-select-wrap{position:relative;width:100%;}
 .city-input{width:100%;padding:9px 12px;min-height:42px;border:1px solid var(--border);border-radius:var(--rs);font-size:14px;background:var(--bg);color:var(--text);box-sizing:border-box;}
 .city-input:focus{outline:none;border-color:var(--amber);}
@@ -229,3 +229,5 @@ input[type=date]{color-scheme:dark;}
 .city-option:last-child{border-bottom:none;}
 .city-option:hover,.city-option:active{background:var(--bg3);color:var(--amber);}
 .city-no-results{padding:10px 12px;font-size:13px;color:var(--text3);}
+ 
+.hitem:has(.trow3){align-items:flex-start;}

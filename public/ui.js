@@ -109,6 +109,32 @@ function render() {
 }
 
 function renderAuthScreen() {
+    if (authState.resetMode) {
+        const resetErrorBanner = authState.resetError
+            ? `<div class="auth-err">${escapeHtml(authState.resetError)}</div>`
+            : '';
+        return `<div class="auth-wrap"><div class="auth-card">
+            <div class="auth-logo">
+                <svg viewBox="0 0 24 24" style="width:26px;height:26px;stroke:#f59e0b;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <div>
+                    <div class="auth-title">Nueva contraseña</div>
+                    <div style="font-size:12px;color:var(--text2)">Restos de Juventud</div>
+                </div>
+            </div>
+            ${resetErrorBanner}
+            <div class="field"><label>Contraseña nueva <span style="color:var(--text3)">(mín. 6 caracteres)</span></label>
+                <div style="position:relative">
+                    <input id="reset-pass" type="password" value="${escapeHtml(authState.resetPassword)}"
+                        oninput="authState.resetPassword = this.value"
+                        onkeydown="if (event.key === 'Enter') resetPassword()"
+                        style="padding-right:40px;width:100%">
+                    <button type="button" class="bicon" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:none;width:28px;height:28px"
+                        onclick="togglePasswordVisibility('reset-pass')">${ICONS.eye}</button>
+                </div>
+            </div>
+            <button class="bmain bdanger" onclick="resetPassword()">${ICONS.bolt}Cambiar contraseña</button>
+        </div></div>`;
+    }
     const isLoginTab  = authState.activeTab === 'login';
     const errorBanner = authState.errorMessage
         ? `<div class="auth-err">${escapeHtml(authState.errorMessage)}</div>`
@@ -119,9 +145,14 @@ function renderAuthScreen() {
                 oninput="authState.loginForm.username = this.value">
         </div>
         <div class="field"><label>Contraseña</label>
-            <input type="password" autocomplete="current-password" value="${escapeHtml(authState.loginForm.password)}"
-                oninput="authState.loginForm.password = this.value"
-                onkeydown="if (event.key === 'Enter') login()">
+            <div style="position:relative">
+                <input id="login-pass" type="password" autocomplete="current-password" value="${escapeHtml(authState.loginForm.password)}"
+                    oninput="authState.loginForm.password = this.value"
+                    onkeydown="if (event.key === 'Enter') login()"
+                    style="padding-right:40px;width:100%">
+                <button type="button" class="bicon" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:none;width:28px;height:28px"
+                    onclick="togglePasswordVisibility('login-pass')">${ICONS.eye}</button>
+            </div>
         </div>
         <button class="bmain bdanger" style="margin-top:4px" onclick="login()">${ICONS.bolt}Entrar</button>`;
     const registerForm = `
@@ -130,8 +161,13 @@ function renderAuthScreen() {
                 oninput="authState.registerForm.username = this.value">
         </div>
         <div class="field"><label>Contraseña <span style="color:var(--text3)">(mín. 6 caracteres)</span></label>
-            <input type="password" autocomplete="new-password" value="${escapeHtml(authState.registerForm.password)}"
-                oninput="authState.registerForm.password = this.value">
+            <div style="position:relative">
+                <input id="reg-pass" type="password" autocomplete="new-password" value="${escapeHtml(authState.registerForm.password)}"
+                    oninput="authState.registerForm.password = this.value"
+                    style="padding-right:40px;width:100%">
+                <button type="button" class="bicon" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:none;width:28px;height:28px"
+                    onclick="togglePasswordVisibility('reg-pass')">${ICONS.eye}</button>
+            </div>
         </div>
         <div class="trow" style="margin-bottom:12px">
             <div class="field" style="margin:0"><label>Ciudad</label>
@@ -155,8 +191,13 @@ function renderAuthScreen() {
             <button class="auth-tab ${isLoginTab ? 'active' : ''}" onclick="updateAuthState('activeTab', 'login')">Entrar</button>
             <button class="auth-tab ${!isLoginTab ? 'active' : ''}" onclick="updateAuthState('activeTab', 'register')">Registrarse</button>
         </div>
+        ${authState.resetSuccess ? `<div style="background:var(--grn-bg);border:1px solid var(--grn-bd);color:var(--grn-t);padding:8px 12px;border-radius:var(--rs);font-size:13px;margin-bottom:12px">&#10003; Contraseña actualizada. Ya puedes entrar.</div>` : ''}
         ${errorBanner}
         ${isLoginTab ? loginForm : registerForm}
+        <p class="auth-note" style="margin-top:18px">
+            ¿Olvidaste tu contraseña? Usa /resetpass en <a href="https://t.me/RestosDeJuventudBot" target="_blank" style="color:var(--amber)">@RestosDeJuventudBot</a>
+            <br>¿Algún problema? <a href="https://t.me/RestosDeJuventudBot" target="_blank" style="color:var(--text2)">Contáctame por Telegram</a>
+        </p>
     </div></div>`;
 }
 
@@ -644,6 +685,7 @@ function renderHistoryTab(now) {
         const activeMinutes   = isActive ? (now - new Date(outage.start)) / 60000 : 0;
         const moodOption      = outage.mood ? MOOD_OPTIONS.find(m => m.value === outage.mood) : null;
         const isPendingDelete = appState.confirmDeleteId === outage.id;
+        const isEditing       = appState.editOutageId === outage.id;
         const moodEmoji       = moodOption ? `<span title="${escapeHtml(moodOption.label)}" style="font-size:14px">${moodOption.emoji}</span>` : '';
         const fluctuationTag  = isFluctuation ? `<span class="tag tag-fluc">FLUCTUACIÓN</span>` : '';
         const timeRange       = isFluctuation ? '' : ` &ndash; ${outage.end ? formatTime(outage.end) : 'en curso'}`;
@@ -653,12 +695,44 @@ function renderHistoryTab(now) {
                 ${outage.end ? formatDuration(outage.duration_minutes) : formatDuration(activeMinutes)}
                 ${!outage.end ? '<div class="hactive">en curso</div>' : ''}
               </div>`;
+        const canEdit = !isFluctuation && !isActive && outage.end;
         const deleteControls = isPendingDelete
             ? `<div style="display:flex;gap:4px">
                 <button class="byes" onclick="deleteOutage('${escapeHtml(outage.id)}')">Sí</button>
                 <button class="bno"  onclick="cancelDeleteRequest()">No</button>
               </div>`
-            : `<button class="bicon" onclick="requestDeleteConfirmation('${escapeHtml(outage.id)}')">${ICONS.trash}</button>`;
+            : `<div style="display:flex;gap:4px">
+                ${canEdit ? `<button class="bicon" onclick="startEditOutage(JSON.parse(decodeURIComponent('${encodeURIComponent(JSON.stringify(outage))}')))">${ICONS.pencil}</button>` : ''}
+                <button class="bicon" onclick="requestDeleteConfirmation('${escapeHtml(outage.id)}')">${ICONS.trash}</button>
+              </div>`;
+
+        if (isEditing) {
+            const editMoodButtons = MOOD_OPTIONS.map(mood => {
+                const sel = appState.editMood === mood.value;
+                return `<button class="mood-btn${sel ? ' selected' : ''}"
+                    style="border-color:${sel ? mood.color : 'var(--border)'}"
+                    onclick="appState.editMood = appState.editMood === ${mood.value} ? null : ${mood.value}; render()">
+                    <div>${mood.emoji}</div>
+                    <div style="color:${sel ? mood.color : 'var(--text3)'}">${mood.label}</div>
+                </button>`;
+            }).join('');
+            return `<div class="hitem">
+                <div style="width:100%">
+                    <div class="trow3">
+                        <div class="field" style="margin:0"><label>Fecha</label><input type="date" value="${appState.editDate}" onchange="appState.editDate = this.value; render()"></div>
+                        <div class="field" style="margin:0"><label>Inicio</label>${buildTimePicker('editStartTime', appState.editStartTime)}</div>
+                        <div class="field" style="margin:0"><label>Fin</label>${buildTimePicker('editEndTime', appState.editEndTime)}</div>
+                    </div>
+                    <div class="mood-row">${editMoodButtons}</div>
+                    <textarea class="notes-input" placeholder="Nota opcional..." maxlength="120" oninput="appState.editNotes = this.value">${escapeHtml(appState.editNotes)}</textarea>
+                    <div style="display:flex;gap:8px;margin-top:10px">
+                        <button class="bsm" onclick="saveEditOutage()">Guardar</button>
+                        <button class="bno" onclick="cancelEdit()">Cancelar</button>
+                    </div>
+                </div>
+            </div>`;
+        }
+
         return `<div class="hitem ${isFluctuation ? 'hitem-fluc' : ''}">
             <div class="hmeta">
                 <div class="hdate">${formatDate(outage.start)}${fluctuationTag}${moodEmoji}</div>

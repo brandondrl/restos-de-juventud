@@ -168,5 +168,33 @@ module.exports = async (req, res) => {
     return res.json({ ok: true });
   }
 
+  if (action === 'reset-token') {
+    if (req.method !== 'POST') return methodNotAllowed(res);
+    const user = requireAuth(req, res);
+    if (!user) return;
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    let token = '';
+    for (let i = 0; i < 8; i++) token += chars[Math.floor(Math.random() * chars.length)];
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    await sql`UPDATE users SET reset_token = ${token}, reset_token_expires_at = ${expiresAt} WHERE id = ${user.id}`;
+    return res.json({ token });
+  }
+
+  if (action === 'reset-password') {
+    if (req.method !== 'POST') return methodNotAllowed(res);
+    const { token, password } = req.body;
+    if (!token || !password) return badRequest(res, 'Datos requeridos');
+    if (password.length < 6) return badRequest(res, 'Mínimo 6 caracteres');
+    const rows = await sql`
+      SELECT id FROM users
+      WHERE reset_token = ${token}
+      AND reset_token_expires_at::timestamptz > NOW()
+    `;
+    if (!rows.length) return badRequest(res, 'Token inválido o expirado');
+    const hash = await bcrypt.hash(password, 10);
+    await sql`UPDATE users SET password_hash = ${hash}, reset_token = NULL, reset_token_expires_at = NULL WHERE id = ${rows[0].id}`;
+    return res.json({ ok: true });
+  }
+
   notFound(res, 'Acción no encontrada');
 };
