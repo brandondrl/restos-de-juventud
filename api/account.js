@@ -1,6 +1,6 @@
 const { getSql } = require('./_db');
 const { requireAuth, clearCookie } = require('./_auth');
-const { methodNotAllowed } = require('./_http');
+const { methodNotAllowed, log } = require('./_http');
 const config = require('./_config');
 
 module.exports = async (req, res) => {
@@ -22,7 +22,9 @@ module.exports = async (req, res) => {
         headers: { 'Content-Type': 'application/json', 'x-internal-secret': config.WEBHOOK_SECRET },
         body: JSON.stringify({ chat_id: row.telegram_chat_id }),
       });
-    } catch {}
+    } catch (err) {
+      log('warn', 'account.invalidate_bot_failed', { userId: user.id, error: err.message });
+    }
   }
 
   clearCookie(res);

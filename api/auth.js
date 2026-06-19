@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const { getSql, initDb } = require('./_db');
-const { getUser, requireAuth, signToken, setCookie, clearCookie } = require('./_auth');
+const { requireAuth, signToken, setCookie, clearCookie } = require('./_auth');
 const { badRequest, unauthorized, notFound, conflict, methodNotAllowed, log } = require('./_http');
 const { isValidCity, isValidZone } = require('./_cities');
 
