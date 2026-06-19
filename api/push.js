@@ -1,7 +1,7 @@
 const webpush = require('web-push');
 const { getSql } = require('./_db');
 const { requireAuth } = require('./_auth');
-const { badRequest, methodNotAllowed, forbidden } = require('./_http');
+const { badRequest, methodNotAllowed } = require('./_http');
 
 function initVapid() {
   const pub  = process.env.VAPID_PUBLIC_KEY;

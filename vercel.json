@@ -21,6 +21,8 @@
     { "source": "/api/auth/telegram-verify",  "destination": "/api/auth.js?action=telegram-verify" },
     { "source": "/api/auth/telegram-unlink",  "destination": "/api/auth.js?action=telegram-unlink" },
     { "source": "/api/auth/telegram-link",    "destination": "/api/auth.js?action=telegram-link" },
+    { "source": "/api/auth/reset-token",      "destination": "/api/auth.js?action=reset-token" },
+    { "source": "/api/auth/reset-password",   "destination": "/api/auth.js?action=reset-password" },
     { "source": "/api/outages/:id",           "destination": "/api/outages.js?id=:id" },
     { "source": "/api/active-sessions",       "destination": "/api/active-sessions.js" },
     { "source": "/api/push",                  "destination": "/api/push.js" },

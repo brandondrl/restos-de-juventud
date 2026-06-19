@@ -12,6 +12,7 @@ module.exports = async (req, res) => {
   if (req.method === 'GET') {
     const [profile] = await sql`
       SELECT id, username, city, zone, is_public, created_at,
+             telegram_chat_id,
              (telegram_chat_id IS NOT NULL) AS has_telegram
       FROM users WHERE id = ${user.id}
     `;

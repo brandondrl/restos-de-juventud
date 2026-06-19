@@ -1,10 +1,15 @@
 let authState = {
-    isLoading:    true,
-    currentUser:  null,
-    activeTab:    'login',
-    errorMessage: '',
-    loginForm:    { username: '', password: '' },
-    registerForm: { username: '', password: '', city: '', zone: '' },
+    isLoading:       true,
+    currentUser:     null,
+    activeTab:       'login',
+    errorMessage:    '',
+    loginForm:       { username: '', password: '' },
+    registerForm:    { username: '', password: '', city: '', zone: '' },
+    resetMode:       false,
+    resetToken:      '',
+    resetPassword:   '',
+    resetSuccess:    false,
+    resetError:      '',
 };
 
 let appState = {
@@ -23,6 +28,12 @@ let appState = {
     manualEndTime:    '00:00',
     manualNotes:      '',
     confirmDeleteId:  null,
+    editOutageId:     null,
+    editDate:         '',
+    editStartTime:    '00:00',
+    editEndTime:      '00:00',
+    editMood:         null,
+    editNotes:        '',
     historyPage:      1,
     selectedMood:     null,
 };

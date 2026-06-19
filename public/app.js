@@ -1,4 +1,14 @@
 async function initialize() {
+    const params     = new URLSearchParams(window.location.search);
+    const resetToken = params.get('reset');
+    if (resetToken) {
+        authState.resetToken  = resetToken;
+        authState.resetMode   = true;
+        authState.isLoading   = false;
+        window.history.replaceState({}, '', '/');
+        render();
+        return;
+    }
     try {
         const user = await http.get('/api/auth/me');
         authState.currentUser = user;
@@ -153,7 +163,12 @@ async function saveManualOutage() {
     if (!manualDate) { alert('Completa todos los campos'); return; }
     if (!appState.selectedMood) { alert('Selecciona cómo te sientes antes de guardar.'); return; }
     const startTime = new Date(`${manualDate}T${manualStartTime}`);
-    const endTime   = new Date(`${manualDate}T${manualEndTime}`);
+    let endTime   = new Date(`${manualDate}T${manualEndTime}`);
+    if (!isNaN(startTime) && !isNaN(endTime) && endTime <= startTime) {
+        const nextDay = new Date(startTime);
+        nextDay.setDate(nextDay.getDate() + 1);
+        endTime = new Date(`${nextDay.toISOString().slice(0, 10)}T${manualEndTime}`);
+    }
     if (isNaN(startTime) || isNaN(endTime) || endTime <= startTime) {
         alert('La hora de fin debe ser posterior al inicio');
         return;
@@ -299,6 +314,99 @@ function setTimeMinute(stateKey, minute) {
 function requestDeleteConfirmation(id) { appState.confirmDeleteId = id; render(); }
 function cancelDeleteRequest() { appState.confirmDeleteId = null; render(); }
 function syncEndTimeToNow() { appState.endDate = getTodayDate(); appState.endTime = getCurrentTime(); render(); }
+
+function startEditOutage(outage) {
+    const s = new Date(outage.start);
+    const e = outage.end ? new Date(outage.end) : null;
+    appState.editOutageId  = outage.id;
+    appState.editDate      = s.toLocaleDateString('en-CA');
+    appState.editStartTime = `${padZero(s.getHours())}:${padZero(s.getMinutes())}`;
+    appState.editEndTime   = e ? `${padZero(e.getHours())}:${padZero(e.getMinutes())}` : '00:00';
+    appState.editMood      = outage.mood || null;
+    appState.editNotes     = outage.notes || '';
+    appState.confirmDeleteId = null;
+    render();
+}
+
+function cancelEdit() { appState.editOutageId = null; render(); }
+
+async function saveEditOutage() {
+    const { editOutageId, editDate, editStartTime, editEndTime, editMood, editNotes } = appState;
+    const startTime = new Date(`${editDate}T${editStartTime}`);
+    let endTime = new Date(`${editDate}T${editEndTime}`);
+    if (!isNaN(startTime) && !isNaN(endTime) && endTime <= startTime) {
+        const nextDay = new Date(startTime);
+        nextDay.setDate(nextDay.getDate() + 1);
+        endTime = new Date(`${nextDay.toISOString().slice(0, 10)}T${editEndTime}`);
+    }
+    if (isNaN(startTime) || isNaN(endTime) || endTime <= startTime) {
+        alert('La hora de fin debe ser posterior al inicio');
+        return;
+    }
+    const updated = {
+        id: editOutageId,
+        start: startTime.toISOString(),
+        end: endTime.toISOString(),
+        duration_minutes: (endTime - startTime) / 60000,
+        type: 'corte',
+        mood: editMood,
+        notes: editNotes.trim() || null,
+    };
+    const response = await http.post('/api/outages', updated);
+    if (!response.ok) { alert('Error al guardar. Reintenta.'); return; }
+    const idx = appState.outages.findIndex(o => o.id === editOutageId);
+    if (idx !== -1) appState.outages[idx] = { ...appState.outages[idx], ...updated };
+    appState.editOutageId = null;
+    render();
+}
+
+function togglePasswordVisibility(id) {
+    const input = document.getElementById(id);
+    if (!input) return;
+    input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+async function resetPassword() {
+    authState.resetError = '';
+    if (!authState.resetPassword || authState.resetPassword.length < 6) {
+        authState.resetError = 'Mínimo 6 caracteres';
+        render();
+        return;
+    }
+    const response = await http.post('/api/auth/reset-password', {
+        token: authState.resetToken,
+        password: authState.resetPassword,
+    });
+    const body = await response.json();
+    if (!response.ok) { authState.resetError = body.error; render(); return; }
+    authState.resetSuccess = true;
+    authState.resetMode    = false;
+    authState.resetToken   = '';
+    authState.resetPassword = '';
+    render();
+}
+
+async function generateTelegramToken() {
+    profileState.telegramTokenLoading = true;
+    profileState.telegramToken = '';
+    render();
+    const response = await http.post('/api/auth/telegram-token', {});
+    const body = await response.json();
+    profileState.telegramTokenLoading = false;
+    if (!response.ok) { profileState.passwordError = body.error; render(); return; }
+    profileState.telegramToken  = body.token;
+    profileState.telegramTokenExpiry = body.expiresAt;
+    render();
+}
+
+async function unlinkTelegram() {
+    const response = await http.post('/api/auth/telegram-unlink', {});
+    if (!response.ok) { profileState.passwordError = 'Error al desvincular'; render(); return; }
+    profileState.profileData.has_telegram   = false;
+    profileState.profileData.telegram_chat_id = null;
+    profileState.telegramToken = '';
+    render();
+}
 
 window.addEventListener('beforeunload', e => {
     if (appState.activeOutage) { e.preventDefault(); e.returnValue = ''; }
