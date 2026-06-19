@@ -359,3 +359,70 @@ describe('city and zone validation', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 });
+
+describe('reset-token', () => {
+  it('returns 401 if not authenticated', async () => {
+    const req = { method: 'POST', query: { action: 'reset-token' }, body: {}, headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(401);
+  });
+
+  it('returns 405 if not POST', async () => {
+    __setMockUser({ id: '1', username: 'test' });
+    const req = { method: 'GET', query: { action: 'reset-token' }, body: {}, headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(405);
+  });
+
+  it('returns a token on success', async () => {
+    __setMockUser({ id: '1', username: 'test' });
+    mockSql.mockResolvedValueOnce([]);
+    const req = { method: 'POST', query: { action: 'reset-token' }, body: {}, headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.json).toHaveBeenCalledWith({ token: expect.any(String) });
+  });
+});
+
+describe('reset-password', () => {
+  it('returns 400 if token missing', async () => {
+    const req = { method: 'POST', query: { action: 'reset-password' }, body: { password: '123456' }, headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('returns 400 if password missing', async () => {
+    const req = { method: 'POST', query: { action: 'reset-password' }, body: { token: 'ABCD1234' }, headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('returns 400 if password too short', async () => {
+    const req = { method: 'POST', query: { action: 'reset-password' }, body: { token: 'ABCD1234', password: '123' }, headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('returns 400 if token is invalid or expired', async () => {
+    mockSql.mockResolvedValueOnce([]);
+    const req = { method: 'POST', query: { action: 'reset-password' }, body: { token: 'BADTOKEN', password: '123456' }, headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Token inválido o expirado' });
+  });
+
+  it('returns ok on a valid token', async () => {
+    mockSql.mockResolvedValueOnce([{ id: '1' }]);
+    jest.spyOn(bcrypt, 'hash').mockResolvedValueOnce('newhash');
+    mockSql.mockResolvedValueOnce([]);
+    const req = { method: 'POST', query: { action: 'reset-password' }, body: { token: 'GOODTOKEN', password: '123456' }, headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.json).toHaveBeenCalledWith({ ok: true });
+  });
+});
