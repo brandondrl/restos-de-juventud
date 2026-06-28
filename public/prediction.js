@@ -178,7 +178,13 @@ function getConsecutiveOutageStatus(outages, now = new Date()) {
     if (eligible.length < CONSECUTIVE_OUTAGE_MIN_SAMPLE) return null;
 
     const within = eligible.filter(g => g <= hoursElapsed + CONSECUTIVE_OUTAGE_WINDOW_HOURS).length;
-    const probability = (within + 0.5) / (eligible.length + 1);
+    let probability = (within + 0.5) / (eligible.length + 1);
+
+    const median = [...gaps].sort((a, b) => a - b)[Math.floor(gaps.length / 2)];
+    if (hoursElapsed > median) {
+        probability *= Math.exp(-(hoursElapsed - median) / median);
+    }
+
     const percent = Math.round(probability * 100);
     const level = percent < 15 ? 'bajo' : percent < 35 ? 'moderado' : 'alto';
 
@@ -295,7 +301,7 @@ function getDayForecast(predictions, outages) {
 function computeStatistics(outages) {
     const now           = new Date();
     const startOfToday  = new Date(now); startOfToday.setHours(0, 0, 0, 0);
-    const startOfWeek   = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0, 0, 0, 0);
+    const startOfWeek   = new Date(now); startOfWeek.setDate(now.getDate() - (now.getDay() || 7) + 1); startOfWeek.setHours(0, 0, 0, 0);
     const startOfMonth  = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfYear   = new Date(now.getFullYear(), 0, 1);
 
