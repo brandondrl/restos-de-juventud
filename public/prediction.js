@@ -2,6 +2,12 @@ const DAYS_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const DAYS_FULL  = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 const WEEKS_FOR_FULL_CONFIDENCE = 4;
 const HEATMAP_WINDOW_DAYS = 84;
+const RISK_THRESHOLD = 0.13;
+const WILSON_Z = 1.96;
+const ONSET_HINT_MIN_SAMPLES = 3;
+const CONSECUTIVE_OUTAGE_MIN_SAMPLE = 4;
+const CONSECUTIVE_OUTAGE_WINDOW_HOURS = 12;
+const CONSECUTIVE_OUTAGE_MAX_ELAPSED_HOURS = 36;
 
 function padZero(number) {
     return String(number).padStart(2, '0');
@@ -61,19 +67,31 @@ function buildHeatmap(outages) {
         startHitCount[startKey] = (startHitCount[startKey] || 0) + 1;
     });
 
-    const heatmap = {};
+    const raw = {};
     for (let day = 0; day < 7; day++) {
         for (let hour = 0; hour < 24; hour++) {
             const key = `${day}_${hour}`;
             const observations = observationCount[key] || 0;
             const hits = hitCount[key] || 0;
-            heatmap[key] = {
+            raw[key] = {
                 probability: observations > 0 ? (hits + 0.5) / (observations + 1) : 0,
                 confidence:  Math.min(observations / WEEKS_FOR_FULL_CONFIDENCE, 1),
                 hits,
                 startHits: startHitCount[key] || 0,
                 observations,
             };
+        }
+    }
+
+    const heatmap = {};
+    for (let day = 0; day < 7; day++) {
+        for (let hour = 0; hour < 24; hour++) {
+            const key = `${day}_${hour}`;
+            const prevKey = `${day}_${(hour + 23) % 24}`;
+            const nextKey = `${day}_${(hour + 1) % 24}`;
+            const center = raw[key];
+            const smoothedProbability = (raw[prevKey].probability + center.probability * 2 + raw[nextKey].probability) / 4;
+            heatmap[key] = { ...center, probability: smoothedProbability };
         }
     }
     return heatmap;
@@ -109,6 +127,15 @@ function adjustedProbability(rawProbability, confidence) {
     return confidence < 0.15 ? 0 : rawProbability * confidence;
 }
 
+function computeMarginOfError(hits, observations) {
+    if (!observations || observations <= 0) return null;
+    const pHat = hits / observations;
+    const z2 = WILSON_Z * WILSON_Z;
+    const denominator = 1 + z2 / observations;
+    const margin = (WILSON_Z * Math.sqrt((pHat * (1 - pHat)) / observations + z2 / (4 * observations * observations))) / denominator;
+    return Math.round(margin * 100);
+}
+
 function riskColor(probability) {
     if (probability < 0.05) return '#475569';
     if (probability < 0.2)  return '#639922';
@@ -126,6 +153,64 @@ function riskLabel(probability, confidence) {
     return 'Muy alto';
 }
 
+function computeRecoveryGaps(outages) {
+    const completed = outages
+        .filter(o => o.start && o.end && (o.type || 'corte') === 'corte')
+        .map(o => ({ start: new Date(o.start), end: new Date(o.end) }))
+        .sort((a, b) => a.start - b.start);
+    const gaps = [];
+    for (let i = 1; i < completed.length; i++) {
+        const hours = (completed[i].start - completed[i - 1].end) / 3600000;
+        if (hours >= 0) gaps.push(hours);
+    }
+    return { gaps, completed };
+}
+
+function getConsecutiveOutageStatus(outages, now = new Date()) {
+    const { gaps, completed } = computeRecoveryGaps(outages);
+    if (gaps.length < CONSECUTIVE_OUTAGE_MIN_SAMPLE || completed.length === 0) return null;
+
+    const lastEnd = completed[completed.length - 1].end;
+    const hoursElapsed = (now - lastEnd) / 3600000;
+    if (hoursElapsed < 0 || hoursElapsed > CONSECUTIVE_OUTAGE_MAX_ELAPSED_HOURS) return null;
+
+    const eligible = gaps.filter(g => g >= hoursElapsed);
+    if (eligible.length < CONSECUTIVE_OUTAGE_MIN_SAMPLE) return null;
+
+    const within = eligible.filter(g => g <= hoursElapsed + CONSECUTIVE_OUTAGE_WINDOW_HOURS).length;
+    const probability = (within + 0.5) / (eligible.length + 1);
+    const percent = Math.round(probability * 100);
+    const level = percent < 15 ? 'bajo' : percent < 35 ? 'moderado' : 'alto';
+
+    return {
+        percent,
+        level,
+        hoursAhead: CONSECUTIVE_OUTAGE_WINDOW_HOURS,
+        hoursElapsed: Math.round(hoursElapsed * 10) / 10,
+        sampleSize: eligible.length,
+    };
+}
+
+function getOnsetHint(outages, dayOfWeek, hour) {
+    const completed = outages.filter(o => o.start && o.end && (o.type || 'corte') === 'corte');
+    const minutesInHour = completed
+        .filter(o => {
+            const start = new Date(o.start);
+            return start.getDay() === dayOfWeek && start.getHours() === hour;
+        })
+        .map(o => new Date(o.start).getMinutes());
+
+    if (minutesInHour.length < ONSET_HINT_MIN_SAMPLES) return null;
+
+    const sorted = [...minutesInHour].sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)];
+
+    if (median < 15) return 'primeros 15 min';
+    if (median < 30) return 'segundo cuarto';
+    if (median < 45) return 'tercer cuarto';
+    return 'últimos 15 min';
+}
+
 function getDayForecast(predictions, outages) {
     const hasEnoughData = predictions.some(p => p.confidence >= 0.15);
     if (!hasEnoughData) return { type: 'nodata' };
@@ -140,7 +225,7 @@ function getDayForecast(predictions, outages) {
     const activeNow = !!(window._activeOutage);
 
     const riskyHours = predictions.filter(p => {
-        if (adjustedProbability(p.probability, p.confidence) < 0.18) return false;
+        if (adjustedProbability(p.probability, p.confidence) < RISK_THRESHOLD) return false;
         if (p.hour <= 4 && (p.startHits || 0) === 0) return false;
         return true;
     });
@@ -190,6 +275,8 @@ function getDayForecast(predictions, outages) {
         : null;
 
     const peakAdj = adjustedProbability(peakHour.probability, peakHour.confidence);
+    const onsetHint = getOnsetHint(outages, now.getDay(), peakHour.hour);
+    const marginOfError = computeMarginOfError(peakHour.hits, peakHour.observations);
 
     return {
         type: 'risk',
@@ -198,6 +285,10 @@ function getDayForecast(predictions, outages) {
         peakPercent: Math.round(peakAdj * 100),
         peakLevel: peakAdj < 0.4 ? 'moderado' : 'alto',
         estimatedMinutes,
+        onsetHint,
+        marginOfError,
+        peakHits: peakHour.hits,
+        peakObservations: peakHour.observations,
     };
 }
 
@@ -291,7 +382,7 @@ function getTomorrowForecast(outages) {
     if (!hasData) return null;
 
     const riskyHours = tomorrowPredictions.filter(p => {
-        if (adjustedProbability(p.probability, p.confidence) < 0.18) return false;
+        if (adjustedProbability(p.probability, p.confidence) < RISK_THRESHOLD) return false;
         if (p.hour <= 4 && (p.startHits || 0) === 0) return false;
         return true;
     });
@@ -319,6 +410,7 @@ function getTomorrowForecast(outages) {
         : rangeTexts.slice(0, -1).join(', ') + ' y ' + rangeTexts.slice(-1);
 
     const peakAdj = adjustedProbability(peak.probability, peak.confidence);
+    const marginOfError = computeMarginOfError(peak.hits, peak.observations);
 
     return {
         type: 'risk',
@@ -326,5 +418,16 @@ function getTomorrowForecast(outages) {
         peakHour: peak.hour,
         peakPercent: Math.round(peakAdj * 100),
         peakLevel: peakAdj < 0.4 ? 'moderado' : 'alto',
+        marginOfError,
+    };
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        buildHeatmap, getHourlySlots, adjustedProbability, riskColor, riskLabel,
+        getDayForecast, getTomorrowForecast, computeStatistics, computeAverageMood,
+        computeTrainingProgress, averageDurationByHour, computeSurvivalCurve,
+        getOnsetHint, getConsecutiveOutageStatus, computeRecoveryGaps, computeMarginOfError,
+        RISK_THRESHOLD, WEEKS_FOR_FULL_CONFIDENCE, HEATMAP_WINDOW_DAYS,
     };
 }
