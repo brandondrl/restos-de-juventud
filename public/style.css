@@ -126,7 +126,7 @@ input[type=date]{color-scheme:dark;}
 .abanner .al{font-size:13px;color:var(--red-t);}
 .abanner .ad{font-size:20px;font-weight:700;color:var(--red-t);margin-top:3px;}
 
-.barwrap{display:flex;align-items:flex-end;height:48px;gap:2px;margin-bottom:8px;}
+.barwrap{margin-bottom:8px;overflow:hidden;}
 .bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
 .bcol .b{width:100%;border-radius:2px;}
 .bcol .bl{font-size:9px;color:var(--text3);}
