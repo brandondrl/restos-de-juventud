@@ -1,8 +1,10 @@
 jest.mock('../_db');
 jest.mock('../_auth');
+jest.mock('../_config');
 
 const { mockSql } = require('../_db');
 const { __setMockUser } = require('../_auth');
+const config = require('../_config');
 const bcrypt  = require('bcryptjs');
 const handler = require('../auth');
 
@@ -20,6 +22,9 @@ const baseUser = { id: '1', username: 'test', city: '', zone: '', is_public: tru
 beforeEach(() => {
   jest.clearAllMocks();
   __setMockUser(null);
+  config.BOT_URL = null;
+  config.WEBHOOK_SECRET = null;
+  global.fetch = jest.fn().mockResolvedValue({ ok: true });
 });
 
 describe('login', () => {
@@ -257,11 +262,41 @@ describe('telegram-unlink', () => {
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
-  it('returns ok when authenticated', async () => {
+  it('returns ok when authenticated without telegram', async () => {
+    mockSql.mockResolvedValueOnce([{ telegram_chat_id: null }]);
     __setMockUser({ id: '1', username: 'test' });
     const req = { method: 'POST', query: { action: 'telegram-unlink' }, body: {}, headers: {} };
     const res = mockRes();
     await handler(req, res);
+    expect(res.json).toHaveBeenCalledWith({ ok: true });
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('invalidates bot session when telegram linked and bot configured', async () => {
+    config.BOT_URL = 'https://restos-bot.brandondrl.workers.dev';
+    config.WEBHOOK_SECRET = 'webhook-secret';
+    mockSql.mockResolvedValueOnce([{ telegram_chat_id: '999' }]);
+    __setMockUser({ id: '1', username: 'test' });
+    const req = { method: 'POST', query: { action: 'telegram-unlink' }, body: {}, headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://restos-bot.brandondrl.workers.dev/invalidate',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ 'x-internal-secret': 'webhook-secret' }),
+      })
+    );
+    expect(res.json).toHaveBeenCalledWith({ ok: true });
+  });
+
+  it('skips bot invalidation when bot is not configured', async () => {
+    mockSql.mockResolvedValueOnce([{ telegram_chat_id: '999' }]);
+    __setMockUser({ id: '1', username: 'test' });
+    const req = { method: 'POST', query: { action: 'telegram-unlink' }, body: {}, headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    expect(global.fetch).not.toHaveBeenCalled();
     expect(res.json).toHaveBeenCalledWith({ ok: true });
   });
 });

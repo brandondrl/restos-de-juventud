@@ -258,23 +258,43 @@ async function deleteAccount() {
 
 async function generateTelegramToken() {
     profileState.telegramTokenLoading = true;
+    profileState.telegramToken = '';
     render();
-    const response = await http.post('/api/auth/telegram-token', {});
-    if (response.ok) {
+    try {
+        const response = await http.post('/api/auth/telegram-token', {});
+        profileState.telegramTokenLoading = false;
+        if (!response.ok) {
+            const body = await response.json();
+            profileState.passwordError = body.error || 'Error al generar código';
+            render();
+            return;
+        }
         const body = await response.json();
-        profileState.telegramToken       = body.token;
+        profileState.telegramToken = body.token;
         profileState.telegramTokenExpiry = new Date(body.expiresAt);
+    } catch {
+        profileState.telegramTokenLoading = false;
+        profileState.passwordError = 'Error de red. Reintenta.';
     }
-    profileState.telegramTokenLoading = false;
     render();
 }
 
 async function unlinkTelegram() {
-    const response = await http.post('/api/auth/telegram-unlink', {});
-    if (!response.ok) { alert('Error al desvincular. Reintenta.'); return; }
-    profileState.profileData.has_telegram = false;
-    profileState.telegramToken            = null;
-    profileState.telegramTokenExpiry      = null;
+    try {
+        const response = await http.post('/api/auth/telegram-unlink', {});
+        if (!response.ok) {
+            const body = await response.json();
+            profileState.passwordError = body.error || 'Error al desvincular';
+            render();
+            return;
+        }
+        profileState.profileData.has_telegram = false;
+        profileState.profileData.telegram_chat_id = null;
+        profileState.telegramToken = null;
+        profileState.telegramTokenExpiry = null;
+    } catch {
+        profileState.passwordError = 'Error de red. Reintenta.';
+    }
     render();
 }
 
@@ -383,28 +403,6 @@ async function resetPassword() {
     authState.resetMode    = false;
     authState.resetToken   = '';
     authState.resetPassword = '';
-    render();
-}
-
-async function generateTelegramToken() {
-    profileState.telegramTokenLoading = true;
-    profileState.telegramToken = '';
-    render();
-    const response = await http.post('/api/auth/telegram-token', {});
-    const body = await response.json();
-    profileState.telegramTokenLoading = false;
-    if (!response.ok) { profileState.passwordError = body.error; render(); return; }
-    profileState.telegramToken  = body.token;
-    profileState.telegramTokenExpiry = new Date(body.expiresAt);
-    render();
-}
-
-async function unlinkTelegram() {
-    const response = await http.post('/api/auth/telegram-unlink', {});
-    if (!response.ok) { profileState.passwordError = 'Error al desvincular'; render(); return; }
-    profileState.profileData.has_telegram   = false;
-    profileState.profileData.telegram_chat_id = null;
-    profileState.telegramToken = '';
     render();
 }
 
