@@ -67,7 +67,7 @@ function buildConsecutiveOutageCard(outages) {
             <span style="font-size:28px;font-weight:700;color:${color}">${status.percent}%</span>
             <span style="font-size:12px;color:var(--text2)">de otro corte en las próximas ${status.hoursAhead}h</span>
         </div>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px">Basado en tus últimos ${status.sampleSize} cortes consecutivos</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">Basado en ${status.sampleSize} intervalos entre cortes anteriores</div>
     </div>`;
 }
 
