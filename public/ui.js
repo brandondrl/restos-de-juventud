@@ -72,7 +72,7 @@ function buildConsecutiveOutageCard(outages) {
 }
 
 function buildRiskCurve(todayPredictions, now) {
-    const W = 320, H = 90, pad = 4;
+    const W = 320, H = 100, pad = 12;
     const max = Math.max(0.05, ...todayPredictions.map(p => adjustedProbability(p.probability, p.confidence)));
     const points = todayPredictions.map((p, i) => ({
         x: pad + i * (W - 2 * pad) / 23,
@@ -89,8 +89,9 @@ function buildRiskCurve(todayPredictions, now) {
     const peakIndex = todayPredictions.reduce((peak, p, i) =>
         adjustedProbability(p.probability, p.confidence) > adjustedProbability(todayPredictions[peak].probability, todayPredictions[peak].confidence) ? i : peak, 0);
     const peakPoint = points[peakIndex];
+    const peakPercent = Math.round(adjustedProbability(todayPredictions[peakIndex].probability, todayPredictions[peakIndex].confidence) * 100);
     const nowPoint = points[now.getHours()];
-    const hourLabels = [0, 6, 12, 18].map(h =>
+    const hourLabels = [0, 3, 6, 9, 12, 15, 18, 21].map(h =>
         `<text x="${(pad + h * (W - 2 * pad) / 23).toFixed(1)}" y="${H + 10}" fill="#475569" font-size="9" text-anchor="middle">${padZero(h)}</text>`
     ).join('');
     return `<svg viewBox="0 0 ${W} ${H + 16}" style="width:100%;display:block">
@@ -101,7 +102,10 @@ function buildRiskCurve(todayPredictions, now) {
         <path d="${areaPath}" fill="url(#riskCurveGradient)"/>
         <path d="${path}" fill="none" stroke="#f59e0b" stroke-width="2"/>
         <line x1="${nowPoint.x.toFixed(1)}" y1="${pad}" x2="${nowPoint.x.toFixed(1)}" y2="${H - pad}" stroke="#475569" stroke-width="1" stroke-dasharray="2,2"/>
-        <circle cx="${peakPoint.x.toFixed(1)}" cy="${peakPoint.y.toFixed(1)}" r="3.5" fill="#e24b4a"/>
+        <circle cx="${peakPoint.x.toFixed(1)}" cy="${peakPoint.y.toFixed(1)}" r="3.5" fill="#e24b4a">
+            <title>Pico: ${padZero(peakIndex)}:00 — ${peakPercent}%</title>
+        </circle>
+        <text x="${(peakPoint.x + 6).toFixed(1)}" y="${(peakPoint.y - 6).toFixed(1)}" fill="#e24b4a" font-size="10" font-weight="600">${peakPercent}%</text>
         ${hourLabels}
     </svg>`;
 }
