@@ -112,11 +112,11 @@ async function startOutage() {
 
 async function endOutage() {
     if (!appState.activeOutage) return;
-    if (!appState.selectedMood) { alert('Selecciona cómo te sientes antes de registrar el regreso.'); return; }
+    if (!appState.selectedMood) { showToast('Selecciona cómo te sientes antes de registrar el regreso.', 'warn'); return; }
     const endTime   = new Date(`${appState.endDate}T${appState.endTime}`);
     const startTime = new Date(appState.activeOutage.start);
     if (endTime <= startTime) {
-        alert(`La hora de regreso (${appState.endTime}) debe ser posterior a la salida (${formatTime(appState.activeOutage.start)}). Usa el botón "Ahora".`);
+        showToast(`La hora de regreso (${appState.endTime}) debe ser posterior a la salida (${formatTime(appState.activeOutage.start)}). Usa el botón "Ahora".`, 'warn');
         return;
     }
     const completedOutage = {
@@ -128,7 +128,7 @@ async function endOutage() {
         notes:            appState.endNotes.trim() || null,
     };
     const response = await http.post('/api/outages', completedOutage);
-    if (!response.ok) { alert('Error al guardar. Reintenta.'); return; }
+    if (!response.ok) { showToast('Error al guardar. Reintenta.', 'error'); return; }
     await http.delete('/api/active');
     appState.outages.unshift(completedOutage);
     appState.activeOutage = null;
@@ -140,11 +140,11 @@ async function endOutage() {
 }
 
 async function recordFluctuation() {
-    if (appState.activeOutage) { alert('No es posible registrar una fluctuación mientras hay un corte activo.'); return; }
+    if (appState.activeOutage) { showToast('No es posible registrar una fluctuación mientras hay un corte activo.', 'warn'); return; }
     const isoTime     = new Date(`${appState.startDate}T${appState.startTime}`).toISOString();
     const fluctuation = { id: generateId(), start: isoTime, end: isoTime, duration_minutes: 0, type: 'fluctuacion' };
     const response    = await http.post('/api/outages', fluctuation);
-    if (!response.ok) { alert('Error al registrar. Reintenta.'); return; }
+    if (!response.ok) { showToast('Error al registrar. Reintenta.', 'error'); return; }
     appState.outages.unshift(fluctuation);
     appState.outages.sort((a, b) => new Date(b.start) - new Date(a.start));
     const button = document.getElementById('fluctuation-button');
@@ -160,8 +160,8 @@ async function recordFluctuation() {
 
 async function saveManualOutage() {
     const { manualDate, manualStartTime, manualEndTime } = appState;
-    if (!manualDate) { alert('Completa todos los campos'); return; }
-    if (!appState.selectedMood) { alert('Selecciona cómo te sientes antes de guardar.'); return; }
+    if (!manualDate) { showToast('Completa todos los campos', 'warn'); return; }
+    if (!appState.selectedMood) { showToast('Selecciona cómo te sientes antes de guardar.', 'warn'); return; }
     const startTime = new Date(`${manualDate}T${manualStartTime}`);
     let endTime   = new Date(`${manualDate}T${manualEndTime}`);
     if (!isNaN(startTime) && !isNaN(endTime) && endTime <= startTime) {
@@ -170,7 +170,7 @@ async function saveManualOutage() {
         endTime = new Date(`${nextDay.toISOString().slice(0, 10)}T${manualEndTime}`);
     }
     if (isNaN(startTime) || isNaN(endTime) || endTime <= startTime) {
-        alert('La hora de fin debe ser posterior al inicio');
+        showToast('La hora de fin debe ser posterior al inicio', 'warn');
         return;
     }
     const outage = {
@@ -183,7 +183,7 @@ async function saveManualOutage() {
         notes:            appState.manualNotes.trim() || null,
     };
     const response = await http.post('/api/outages', outage);
-    if (!response.ok) { alert('Error al guardar. Reintenta.'); return; }
+    if (!response.ok) { showToast('Error al guardar. Reintenta.', 'error'); return; }
     appState.outages.unshift(outage);
     appState.outages.sort((a, b) => new Date(b.start) - new Date(a.start));
     appState.manualStartTime = '00:00';
@@ -196,7 +196,7 @@ async function saveManualOutage() {
 
 async function deleteOutage(id) {
     const response = await http.delete(`/api/outages/${id}`);
-    if (!response.ok) { alert('Error al borrar. Reintenta.'); return; }
+    if (!response.ok) { showToast('Error al borrar. Reintenta.', 'error'); return; }
     appState.outages       = appState.outages.filter(o => o.id !== id);
     appState.confirmDeleteId = null;
     render();
@@ -248,7 +248,7 @@ async function saveProfile() {
 async function deleteAccount() {
     if (!profileState.confirmDelete) { profileState.confirmDelete = true; render(); return; }
     const response = await http.delete('/api/account');
-    if (!response.ok) { alert('Error al borrar la cuenta. Reintenta.'); return; }
+    if (!response.ok) { showToast('Error al borrar la cuenta. Reintenta.', 'error'); return; }
     authState.currentUser = null;
     appState.outages      = [];
     appState.activeOutage = null;
@@ -286,14 +286,18 @@ async function unlinkTelegram() {
             const body = await response.json();
             profileState.passwordError = body.error || 'Error al desvincular';
             render();
+            showToast(profileState.passwordError, 'error');
             return;
         }
         profileState.profileData.has_telegram = false;
         profileState.profileData.telegram_chat_id = null;
         profileState.telegramToken = null;
         profileState.telegramTokenExpiry = null;
+        profileState.passwordError = '';
+        showToast('Telegram desvinculado', 'success');
     } catch {
         profileState.passwordError = 'Error de red. Reintenta.';
+        showToast(profileState.passwordError, 'error');
     }
     render();
 }
@@ -360,7 +364,7 @@ async function saveEditOutage() {
         endTime = new Date(`${nextDay.toISOString().slice(0, 10)}T${editEndTime}`);
     }
     if (isNaN(startTime) || isNaN(endTime) || endTime <= startTime) {
-        alert('La hora de fin debe ser posterior al inicio');
+        showToast('La hora de fin debe ser posterior al inicio', 'warn');
         return;
     }
     const updated = {
@@ -373,7 +377,7 @@ async function saveEditOutage() {
         notes: editNotes.trim() || null,
     };
     const response = await http.post('/api/outages', updated);
-    if (!response.ok) { alert('Error al guardar. Reintenta.'); return; }
+    if (!response.ok) { showToast('Error al guardar. Reintenta.', 'error'); return; }
     const idx = appState.outages.findIndex(o => o.id === editOutageId);
     if (idx !== -1) appState.outages[idx] = { ...appState.outages[idx], ...updated };
     appState.editOutageId = null;
