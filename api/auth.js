@@ -157,15 +157,23 @@ module.exports = async (req, res) => {
     if (!user) return;
     const [row] = await sql`SELECT telegram_chat_id FROM users WHERE id = ${user.id}`;
     if (row?.telegram_chat_id && config.BOT_URL && config.WEBHOOK_SECRET) {
+      log('info', 'auth.unlink_invalidating', { userId: user.id });
       try {
-        await fetch(`${config.BOT_URL}/invalidate`, {
+        const botRes = await fetch(`${config.BOT_URL}/invalidate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-internal-secret': config.WEBHOOK_SECRET },
           body: JSON.stringify({ chat_id: row.telegram_chat_id }),
         });
+        if (botRes.ok) {
+          log('info', 'auth.unlink_invalidate_ok', { userId: user.id, status: botRes.status });
+        } else {
+          log('warn', 'auth.unlink_invalidate_failed', { userId: user.id, status: botRes.status });
+        }
       } catch (err) {
         log('warn', 'auth.unlink_invalidate_failed', { userId: user.id, error: err.message });
       }
+    } else {
+      log('info', 'auth.unlink_skip', { userId: user.id, hasChatId: !!row?.telegram_chat_id, hasBotUrl: !!config.BOT_URL, hasWebhookSecret: !!config.WEBHOOK_SECRET });
     }
     await sql`UPDATE users SET telegram_chat_id = NULL, telegram_linked_at = NULL WHERE id = ${user.id}`;
     return res.json({ ok: true });
