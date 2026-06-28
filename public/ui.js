@@ -868,3 +868,22 @@ function renderProfileOverlay() {
         </div>
     </div>`;
 }
+
+let _toast;
+function showToast(msg, type = 'success') {
+    if (!_toast) {
+        _toast = new Notyf({
+            duration: 3000,
+            position: { x: 'right', y: 'bottom' },
+            dismissible: true,
+            types: [
+                { type: 'success', backgroundColor: '#22c55e', icon: false },
+                { type: 'error', backgroundColor: '#ef4444', icon: false },
+                { type: 'warn', backgroundColor: '#f59e0b', icon: false },
+            ]
+        });
+    }
+    if (type === 'error') _toast.error(msg);
+    else if (type === 'warn') _toast.open({ type: 'warn', message: msg });
+    else _toast.success(msg);
+}
