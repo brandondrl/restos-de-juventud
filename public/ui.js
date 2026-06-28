@@ -72,7 +72,7 @@ function buildConsecutiveOutageCard(outages) {
 }
 
 function buildRiskCurve(todayPredictions, now) {
-    const W = 320, H = 100, pad = 12;
+    const W = 320, H = 130, pad = 12;
     const max = Math.max(0.05, ...todayPredictions.map(p => adjustedProbability(p.probability, p.confidence)));
     const points = todayPredictions.map((p, i) => ({
         x: pad + i * (W - 2 * pad) / 23,
@@ -94,7 +94,7 @@ function buildRiskCurve(todayPredictions, now) {
     const hourLabels = [0, 3, 6, 9, 12, 15, 18, 21].map(h =>
         `<text x="${(pad + h * (W - 2 * pad) / 23).toFixed(1)}" y="${H + 10}" fill="#475569" font-size="9" text-anchor="middle">${padZero(h)}</text>`
     ).join('');
-    return `<svg viewBox="0 0 ${W} ${H + 16}" style="width:100%;display:block">
+    return `<svg viewBox="0 0 ${W} ${H + 16}" style="width:100%;display:block;overflow:hidden">
         <defs><linearGradient id="riskCurveGradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.3"/>
             <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
