@@ -1,6 +1,20 @@
 const API = 'https://restos-de-juventud.vercel.app';
 const TZ_OFFSET_HOURS = -4;
 const WEEKS_FOR_FULL_CONFIDENCE = 4;
+const RISK_THRESHOLD = 0.13;
+const WILSON_Z = 1.96;
+const CONSECUTIVE_OUTAGE_MIN_SAMPLE = 4;
+const CONSECUTIVE_OUTAGE_WINDOW_HOURS = 12;
+const CONSECUTIVE_OUTAGE_MAX_ELAPSED_HOURS = 36;
+
+function computeMarginOfError(hits, observations) {
+  if (!observations || observations <= 0) return null;
+  const pHat = hits / observations;
+  const z2 = WILSON_Z * WILSON_Z;
+  const denominator = 1 + z2 / observations;
+  const margin = (WILSON_Z * Math.sqrt((pHat * (1 - pHat)) / observations + z2 / (4 * observations * observations))) / denominator;
+  return Math.round(margin * 100);
+}
 
 const MOOD_PROMPT = `¿Cómo te quedaste con este corte?
 
@@ -240,7 +254,11 @@ async function handleUpdate(env, update) {
     await env.KV.put(`closed_today:${userId}:${todayClose}`, '1', { expirationTtl: 86400 });
     const outages = await apiGet('/api/outages', session);
     const summary = outages ? buildDaySummary(outages) : '';
-    await tg(env.BOT_TOKEN, chatId, STRINGS.outageEnded(fmtDuration(mins), moodValue, summary));
+    const consecutiveStatus = outages ? getConsecutiveOutageStatus(outages, endTime) : null;
+    const consecutiveLine = consecutiveStatus
+      ? `\n\n${consecutiveStatus.level === 'bajo' ? '💤' : '⚠️'} Históricamente, *${consecutiveStatus.percent}%* de probabilidad de otro corte en las próximas ${consecutiveStatus.hoursAhead}h.`
+      : '';
+    await tg(env.BOT_TOKEN, chatId, STRINGS.outageEnded(fmtDuration(mins), moodValue, summary) + consecutiveLine);
     return;
   }
 
@@ -395,7 +413,7 @@ async function handleUpdate(env, update) {
     if (!risk) { await tg(env.BOT_TOKEN, chatId, '✅ Sin riesgo significativo hoy según tu historial.'); return; }
     const inRisk = risk.risky.some(p => p.h === currentHour);
     const prefix = inRisk ? '⚠️ *Estás en una hora de riesgo ahora mismo.*\n\n' : '';
-    await tg(env.BOT_TOKEN, chatId, `${prefix}🔮 *Predicción para hoy*\n\n⏰ Riesgo: *${risk.rangeText}*\n📈 Pico: *${String(risk.peak.h).padStart(2, '0')}:00* (${Math.round(risk.peak.prob * 100)}%)\n\n_Basado en tu historial personal._`);
+    await tg(env.BOT_TOKEN, chatId, `${prefix}🔮 *Predicción para hoy*\n\n⏰ Riesgo: *${risk.rangeText}*\n📈 Pico: *${String(risk.peak.h).padStart(2, '0')}:00* (${Math.round(risk.peak.prob * 100)}%${risk.marginOfError != null ? ` ±${risk.marginOfError}%` : ''})\n\n_Basado en tu historial personal._`);
     return;
   }
 
@@ -442,17 +460,24 @@ function calculateDayRisk(outages, localNow) {
       c.setHours(c.getHours() + 1);
     }
   });
+  const rawProbability = h => {
+    const k = `${day}_${h}`;
+    const obs = observations[k] || 0;
+    const hits = slots[k] || 0;
+    return obs > 0 ? (hits + 0.5) / (obs + 1) : 0;
+  };
+  const confidenceOf = h => Math.min((observations[`${day}_${h}`] || 0) / WEEKS_FOR_FULL_CONFIDENCE, 1);
   const risky = [];
   for (let h = 0; h < 24; h++) {
+    const smoothedProbability = (rawProbability((h + 23) % 24) + rawProbability(h) * 2 + rawProbability((h + 1) % 24)) / 4;
+    const conf = confidenceOf(h);
+    const adjusted = conf < 0.15 ? 0 : smoothedProbability * conf;
     const k = `${day}_${h}`;
-    const obs = observations[k] || 1, hits = slots[k] || 0;
-    const conf = Math.min(obs / WEEKS_FOR_FULL_CONFIDENCE, 1);
-    const prob = (hits + 0.5) / (obs + 1);
-    const adjusted = conf < 0.15 ? 0 : prob * conf;
-    if (adjusted >= 0.18) risky.push({ h, prob: adjusted });
+    if (adjusted >= RISK_THRESHOLD) risky.push({ h, prob: adjusted, hits: slots[k] || 0, obs: observations[k] || 0 });
   }
   if (!risky.length) return null;
   const peak = risky.reduce((a, b) => b.prob > a.prob ? b : a);
+  const marginOfError = computeMarginOfError(peak.hits, peak.obs);
   const ranges = []; let rs = null, re = null;
   risky.forEach(({ h }) => {
     if (rs === null) { rs = h; re = h; }
@@ -463,7 +488,31 @@ function calculateDayRisk(outages, localNow) {
   const rangeText = ranges.map(([a, b]) =>
     a === b ? `${String(a).padStart(2, '0')}:00` : `${String(a).padStart(2, '0')}:00–${String(b + 1).padStart(2, '0')}:00`
   ).join(', ');
-  return { risky, peak, rangeText };
+  return { risky, peak, rangeText, marginOfError };
+}
+
+function getConsecutiveOutageStatus(outages, now) {
+  const completed = outages
+    .filter(o => o.start && o.end && (o.type || 'corte') === 'corte')
+    .map(o => ({ start: new Date(o.start), end: new Date(o.end) }))
+    .sort((a, b) => a.start - b.start);
+  if (!completed.length) return null;
+  const gaps = [];
+  for (let i = 1; i < completed.length; i++) {
+    const hours = (completed[i].start - completed[i - 1].end) / 3600000;
+    if (hours >= 0) gaps.push(hours);
+  }
+  if (gaps.length < CONSECUTIVE_OUTAGE_MIN_SAMPLE) return null;
+  const lastEnd = completed[completed.length - 1].end;
+  const hoursElapsed = (now - lastEnd) / 3600000;
+  if (hoursElapsed < 0 || hoursElapsed > CONSECUTIVE_OUTAGE_MAX_ELAPSED_HOURS) return null;
+  const eligible = gaps.filter(g => g >= hoursElapsed);
+  if (eligible.length < CONSECUTIVE_OUTAGE_MIN_SAMPLE) return null;
+  const within = eligible.filter(g => g <= hoursElapsed + CONSECUTIVE_OUTAGE_WINDOW_HOURS).length;
+  const probability = (within + 0.5) / (eligible.length + 1);
+  const percent = Math.round(probability * 100);
+  const level = percent < 15 ? 'bajo' : percent < 35 ? 'moderado' : 'alto';
+  return { percent, level, hoursAhead: CONSECUTIVE_OUTAGE_WINDOW_HOURS, sampleSize: eligible.length };
 }
 
 async function handleCron(env) {

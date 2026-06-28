@@ -57,6 +57,55 @@ function buildMoodGauge(moodData) {
     </svg>`;
 }
 
+function buildConsecutiveOutageCard(outages) {
+    const status = getConsecutiveOutageStatus(outages);
+    if (!status) return '';
+    const color = status.level === 'bajo' ? 'var(--grn-t)' : status.level === 'moderado' ? 'var(--amber2)' : 'var(--red-t)';
+    return `<div class="card" style="margin-bottom:12px">
+        <div class="slabel">RIESGO DE DOBLE CORTE</div>
+        <div style="display:flex;align-items:baseline;gap:8px">
+            <span style="font-size:28px;font-weight:700;color:${color}">${status.percent}%</span>
+            <span style="font-size:12px;color:var(--text2)">de otro corte en las próximas ${status.hoursAhead}h</span>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">Basado en tus últimos ${status.sampleSize} cortes consecutivos</div>
+    </div>`;
+}
+
+function buildRiskCurve(todayPredictions, now) {
+    const W = 320, H = 90, pad = 4;
+    const max = Math.max(0.05, ...todayPredictions.map(p => adjustedProbability(p.probability, p.confidence)));
+    const points = todayPredictions.map((p, i) => ({
+        x: pad + i * (W - 2 * pad) / 23,
+        y: H - pad - (adjustedProbability(p.probability, p.confidence) / max) * (H - 2 * pad),
+    }));
+    let path = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+    for (let i = 1; i < points.length; i++) {
+        const mx = (points[i - 1].x + points[i].x) / 2;
+        const my = (points[i - 1].y + points[i].y) / 2;
+        path += ` Q ${points[i - 1].x.toFixed(1)} ${points[i - 1].y.toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)}`;
+    }
+    path += ` T ${points[points.length - 1].x.toFixed(1)} ${points[points.length - 1].y.toFixed(1)}`;
+    const areaPath = `${path} L ${points[points.length - 1].x.toFixed(1)} ${H - pad} L ${points[0].x.toFixed(1)} ${H - pad} Z`;
+    const peakIndex = todayPredictions.reduce((peak, p, i) =>
+        adjustedProbability(p.probability, p.confidence) > adjustedProbability(todayPredictions[peak].probability, todayPredictions[peak].confidence) ? i : peak, 0);
+    const peakPoint = points[peakIndex];
+    const nowPoint = points[now.getHours()];
+    const hourLabels = [0, 6, 12, 18].map(h =>
+        `<text x="${(pad + h * (W - 2 * pad) / 23).toFixed(1)}" y="${H + 10}" fill="#475569" font-size="9" text-anchor="middle">${padZero(h)}</text>`
+    ).join('');
+    return `<svg viewBox="0 0 ${W} ${H + 16}" style="width:100%;display:block">
+        <defs><linearGradient id="riskCurveGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+        </linearGradient></defs>
+        <path d="${areaPath}" fill="url(#riskCurveGradient)"/>
+        <path d="${path}" fill="none" stroke="#f59e0b" stroke-width="2"/>
+        <line x1="${nowPoint.x.toFixed(1)}" y1="${pad}" x2="${nowPoint.x.toFixed(1)}" y2="${H - pad}" stroke="#475569" stroke-width="1" stroke-dasharray="2,2"/>
+        <circle cx="${peakPoint.x.toFixed(1)}" cy="${peakPoint.y.toFixed(1)}" r="3.5" fill="#e24b4a"/>
+        ${hourLabels}
+    </svg>`;
+}
+
 function buildTelegramSection() {
     const { profileData, telegramToken, telegramTokenExpiry, telegramTokenLoading } = profileState;
     if (!profileData) return '';
@@ -309,7 +358,9 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
             <div style="font-size:12px;color:${levelColor};margin-bottom:${forecast.estimatedMinutes ? '4px' : '0'}">
                 A las: ${padZero(forecast.peakHour)}:00 &middot; ${forecast.peakPercent}% &middot; riesgo ${forecast.peakLevel}
             </div>
-            ${durationLine}`;
+            ${durationLine}
+            ${forecast.onsetHint ? `<div style="font-size:11px;color:var(--text3);margin-top:4px">La mayoría empezó en: ${forecast.onsetHint}</div>` : ''}
+            ${forecast.marginOfError != null ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">±${forecast.marginOfError}% de margen de error · detectado ${forecast.peakHits} de ${forecast.peakObservations} semanas</div>` : ''}`;
     }
     const statCards = [
         { label: 'Esta semana', value: formatDuration(statistics.weekMinutes),  sub: `${statistics.weekCount} cortes` },
@@ -351,19 +402,10 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
     if (heatmap) {
         const currentSlot = heatmap[`${now.getDay()}_${now.getHours()}`] || { probability: 0, confidence: 0 };
         const currentProb = adjustedProbability(currentSlot.probability, currentSlot.confidence);
-        const bars = todayPredictions.map(({ hour, probability, confidence }) => {
-            const prob    = adjustedProbability(probability, confidence);
-            const isNow   = hour === now.getHours();
-            const height  = Math.max(3, prob * 44);
-            const bgColor = isNow ? '#f59e0b' : `rgba(239,68,68,${prob * 0.85 + 0.05})`;
-            const outline = isNow ? 'outline:2px solid #f59e0b;outline-offset:1px' : '';
-            const label   = hour % 6 === 0 ? `<span class="bl">${padZero(hour)}</span>` : '';
-            return `<div class="bcol"><div class="b" style="height:${height}px;background:${bgColor};${outline}"></div>${label}</div>`;
-        }).join('');
         const confidenceInfo = currentSlot.confidence >= 0.15 ? ` &middot; ${Math.round(currentProb * 100)}%` : '';
         hourlyBars = `<div class="card card-last">
             <div class="slabel">DETALLE POR HORA — HOY</div>
-            <div class="barwrap">${bars}</div>
+            <div class="barwrap">${buildRiskCurve(todayPredictions, now)}</div>
             <div style="margin-top:8px;font-size:12px;color:#94a3b8">
                 Ahora (${padZero(now.getHours())}:00):
                 <span style="font-weight:600;color:${riskColor(currentProb)}">${riskLabel(currentProb, currentSlot.confidence)}${confidenceInfo}</span>
@@ -397,6 +439,7 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
                 ${tomorrowContent}
             </div>
         </div>
+        ${buildConsecutiveOutageCard(appState.outages)}
         <div class="sgrid">${statsGrid}</div>
         <div class="card card-ora" style="margin-bottom:12px">
             <div class="slabel" style="color:var(--ora-t)">FLUCTUACIONES</div>

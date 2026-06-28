@@ -41,6 +41,10 @@ Vercel's serverless functions have no persistent filesystem — SQLite resets on
 
 Early on, the dataset is sparse. A slot with 1 observation and 1 hit shouldn't read as 100% probability. Laplace smoothing adds a small prior (α = 0.5) to numerator and denominator, pulling estimates toward uncertainty when data is thin. As observations accumulate the prior fades and the real signal dominates.
 
+### Why neighbor-hour smoothing?
+
+Backtesting against a real month of outages showed that blending each hour's probability with its immediate neighbors (a simple triangular kernel) improves both hit rate and timing margin versus treating each hour in isolation — real outages don't respect clean hour boundaries. The smoothing and the risk threshold were recalibrated together against historical data rather than guessed.
+
 ### Why httpOnly cookies for JWT?
 
 Storing tokens in localStorage exposes them to XSS attacks. httpOnly cookies are inaccessible to JavaScript — only the browser sends them with requests. Combined with SameSite=Lax this covers the main attack vectors for an app at this scale.
