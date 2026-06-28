@@ -395,7 +395,7 @@ async function generateTelegramToken() {
     profileState.telegramTokenLoading = false;
     if (!response.ok) { profileState.passwordError = body.error; render(); return; }
     profileState.telegramToken  = body.token;
-    profileState.telegramTokenExpiry = body.expiresAt;
+    profileState.telegramTokenExpiry = new Date(body.expiresAt);
     render();
 }
 
