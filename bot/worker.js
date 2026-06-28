@@ -277,6 +277,7 @@ async function handleUpdate(env, update) {
       const mins = total.reduce((s, o) => s + (o.duration_minutes || 0), 0);
       summary = `Registraste *${total.length}* cortes · *${fmtDuration(mins)}* sin luz en total.`;
     }
+    await apiPost('/api/auth/telegram-unlink', {}, session);
     await env.KV.delete(`session:${userId}`);
     await env.KV.delete(`pending_mood:${userId}`);
     await tg(env.BOT_TOKEN, chatId, STRINGS.disconnected(summary));
@@ -641,9 +642,6 @@ export default {
         return new Response('forbidden', { status: 403 });
       }
       const { chat_id } = await req.json();
-      if (chat_id) {
-        await tg(env.BOT_TOKEN, chat_id, '🔌 Cuenta desvinculada. Ya no recibirás notificaciones de este bot.\n\nSi quieres vincular de nuevo, genera un código desde tu perfil en la app.');
-      }
       await env.KV.delete(`session:${chat_id}`);
       await env.KV.delete(`pending_mood:${chat_id}`);
       await env.KV.delete(`reminded:${chat_id}`);
