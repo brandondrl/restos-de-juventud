@@ -3,6 +3,7 @@ const { getSql, initDb } = require('./_db');
 const { requireAuth, signToken, setCookie, clearCookie } = require('./_auth');
 const { badRequest, unauthorized, notFound, conflict, methodNotAllowed, log } = require('./_http');
 const { isValidCity, isValidZone } = require('./_cities');
+const config = require('./_config');
 
 const authAttempts = new Map();
 
@@ -154,6 +155,18 @@ module.exports = async (req, res) => {
     if (req.method !== 'POST') return methodNotAllowed(res);
     const user = requireAuth(req, res);
     if (!user) return;
+    const [row] = await sql`SELECT telegram_chat_id FROM users WHERE id = ${user.id}`;
+    if (row?.telegram_chat_id && config.BOT_URL && config.WEBHOOK_SECRET) {
+      try {
+        await fetch(`${config.BOT_URL}/invalidate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-internal-secret': config.WEBHOOK_SECRET },
+          body: JSON.stringify({ chat_id: row.telegram_chat_id }),
+        });
+      } catch (err) {
+        log('warn', 'auth.unlink_invalidate_failed', { userId: user.id, error: err.message });
+      }
+    }
     await sql`UPDATE users SET telegram_chat_id = NULL, telegram_linked_at = NULL WHERE id = ${user.id}`;
     return res.json({ ok: true });
   }

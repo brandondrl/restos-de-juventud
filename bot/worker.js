@@ -641,6 +641,9 @@ export default {
         return new Response('forbidden', { status: 403 });
       }
       const { chat_id } = await req.json();
+      if (chat_id) {
+        await tg(env.BOT_TOKEN, chat_id, '🔌 Cuenta desvinculada. Ya no recibirás notificaciones de este bot.\n\nSi quieres vincular de nuevo, genera un código desde tu perfil en la app.');
+      }
       await env.KV.delete(`session:${chat_id}`);
       await env.KV.delete(`pending_mood:${chat_id}`);
       await env.KV.delete(`reminded:${chat_id}`);
