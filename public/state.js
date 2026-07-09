@@ -57,6 +57,8 @@ let profileState = {
     telegramToken:        null,
     telegramTokenExpiry:  null,
     telegramTokenLoading: false,
+    telegramError:        '',
+    isSaving:             false,
 };
 
 let communityState = {

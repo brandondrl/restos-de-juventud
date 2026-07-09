@@ -94,7 +94,7 @@ describe('PUT', () => {
   });
 
   it('updates city, zone and visibility', async () => {
-    mockSql.mockResolvedValueOnce([]);
+    mockSql.mockImplementation(() => []);
     const req = { method: 'PUT', body: { city: 'Cabudare', zone: 'Norte', is_public: false } };
     const res = mockRes();
     await handler(req, res);
@@ -102,7 +102,6 @@ describe('PUT', () => {
   });
 
   it('returns 400 if newPassword given without currentPassword', async () => {
-    mockSql.mockResolvedValueOnce([]);
     const req = { method: 'PUT', body: { newPassword: 'newpass123' } };
     const res = mockRes();
     await handler(req, res);
@@ -110,7 +109,6 @@ describe('PUT', () => {
   });
 
   it('returns 400 if newPassword is too short', async () => {
-    mockSql.mockResolvedValueOnce([]);
     const req = { method: 'PUT', body: { currentPassword: 'oldpass', newPassword: '123' } };
     const res = mockRes();
     await handler(req, res);
@@ -118,8 +116,7 @@ describe('PUT', () => {
   });
 
   it('returns 400 if current password is incorrect', async () => {
-    mockSql.mockResolvedValueOnce([]);
-    mockSql.mockResolvedValueOnce([{ password_hash: 'hash' }]);
+    mockSql.mockImplementation(() => [{ password_hash: 'hash' }]);
     jest.spyOn(bcrypt, 'compare').mockResolvedValueOnce(false);
     const req = { method: 'PUT', body: { currentPassword: 'wrong', newPassword: 'newpass123' } };
     const res = mockRes();
@@ -128,11 +125,9 @@ describe('PUT', () => {
   });
 
   it('changes password when current password is valid', async () => {
-    mockSql.mockResolvedValueOnce([]);
-    mockSql.mockResolvedValueOnce([{ password_hash: 'hash' }]);
+    mockSql.mockImplementation(() => [{ password_hash: 'hash' }]);
     jest.spyOn(bcrypt, 'compare').mockResolvedValueOnce(true);
     jest.spyOn(bcrypt, 'hash').mockResolvedValueOnce('newhash');
-    mockSql.mockResolvedValueOnce([]);
     const req = { method: 'PUT', body: { currentPassword: 'oldpass', newPassword: 'newpass123' } };
     const res = mockRes();
     await handler(req, res);

@@ -37,6 +37,7 @@ function onCityInput(input) {
     const wrap    = input.closest('.city-select-wrap');
     const drop    = wrap.querySelector('.city-dropdown');
     const query   = input.value.trim().toLowerCase();
+    setNestedValue(wrap.dataset.expr, input.value);
     if (query.length < 1) { drop.style.display = 'none'; return; }
     const results = VENEZUELA_CITIES.filter(c => c.toLowerCase().includes(query)).slice(0, 10);
     if (!results.length) {

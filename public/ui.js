@@ -839,6 +839,7 @@ function renderProfileOverlay() {
             <button class="toggle ${profileState.isPublic ? 'on' : 'off'}" onclick="profileState.isPublic = !profileState.isPublic; render()"></button>
         </div>
         ${buildTelegramSection()}
+        ${profileState.telegramError ? `<div class="auth-err">${escapeHtml(profileState.telegramError)}</div>` : ''}
         <details style="margin-bottom:14px">
             <summary style="cursor:pointer;font-size:13px;color:var(--text2);padding:8px 0">Cambiar contraseña</summary>
             <div style="margin-top:10px">
@@ -853,7 +854,7 @@ function renderProfileOverlay() {
         </details>
         ${savedMessage}
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
-            <button class="bsm" onclick="saveProfile()">Guardar cambios</button>
+            <button class="bsm" onclick="saveProfile()" ${profileState.isSaving ? 'disabled' : ''}>${profileState.isSaving ? 'Guardando...' : 'Guardar cambios'}</button>
             <a class="bsm" href="/api/export" download>${ICONS.download}Exportar CSV</a>
             <button class="bsm" style="color:var(--red-t);border-color:var(--red-bd)" onclick="logout()">${ICONS.logout}Cerrar sesión</button>
             ${authState.currentUser?.username === 'brandon' ? `<a class="bsm" href="/api/admin" target="_blank" style="color:var(--amber);border-color:var(--amber)"><svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Admin</a>` : ''}
@@ -863,6 +864,8 @@ function renderProfileOverlay() {
             <div class="danger-desc">Borra tu cuenta y todos tus registros permanentemente. Sin vuelta atrás.</div>
             ${deleteConfirm}
         </div>`;
+    } else {
+        content = `<p style="color:var(--text3);font-size:14px">Error al cargar perfil. Intenta de nuevo.</p>`;
     }
     return `<div class="overlay" onclick="if (event.target.classList.contains('overlay')) { profileState.isOpen = false; render(); }">
         <div class="overlay-card">
