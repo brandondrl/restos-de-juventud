@@ -13,7 +13,7 @@ function requireAuth(req, res) {
     res.status(401).json({ error: 'No autorizado' });
     return null;
   }
-  return mockUser;
+  return { ...mockUser, exp: Math.floor(Date.now() / 1000) + 86400 * 90 };
 }
 
 function signToken(payload) {
@@ -28,4 +28,8 @@ function clearCookie(res) {
   res.setHeader('Set-Cookie', 'auth=; HttpOnly; Path=/; Max-Age=0');
 }
 
-module.exports = { getUser, requireAuth, signToken, setCookie, clearCookie, __setMockUser };
+function getUserFromBearer(req) {
+  return mockUser ? { ...mockUser, exp: Math.floor(Date.now() / 1000) + 86400 * 90 } : null;
+}
+
+module.exports = { getUser, requireAuth, signToken, setCookie, clearCookie, getUserFromBearer, __setMockUser };

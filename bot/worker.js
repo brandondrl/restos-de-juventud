@@ -55,6 +55,9 @@ const STRINGS = {
   disconnected: (summary) => `🔌 Cuenta desvinculada.\n\n${summary}\n\nHasta la próxima apagón 👋`,
   groupOnly: `Para vincular tu cuenta háblame en privado 👉`,
   unknown: `Comando no reconocido.\n\nUsa /ayuda para ver los comandos disponibles.`,
+  unauthorized: `🔑 Sesión expirada. Usa /renovar para renovarla o /desconectar y vuelve a vincular desde la app.`,
+  renewOk: `✅ Sesión renovada. Tus tokens estarán vigentes por un año más.`,
+  renewFail: `❌ No se pudo renovar la sesión. Usa /desconectar y vuelve a vincular desde la app.`,
   help: `⚡ *Comandos disponibles*\n\n/corte — Se fue la luz\n/volvio — Volvió la luz\n/fluctuacion — Bajón o pico rápido\n/estado — Ver estado actual\n/hoy — Resumen del día\n/semana — Resumen de esta semana\n/mes — Resumen de este mes\n/probabilidad — Riesgo de corte hoy\n/resetpass — Cambiar contraseña\n/ayuda — Esta lista\n/desconectar — Desvincular cuenta`,
 };
 
@@ -127,6 +130,14 @@ async function apiPost(path, body, token) {
   return r.json();
 }
 
+async function apiPostRaw(path, body, token) {
+  return fetch(`${API}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Cookie: `auth=${token}` },
+    body: JSON.stringify(body),
+  });
+}
+
 async function apiDelete(path, token) {
   const r = await fetch(`${API}${path}`, {
     method: 'DELETE',
@@ -137,6 +148,28 @@ async function apiDelete(path, token) {
 
 async function getSession(kv, userId) {
   return kv.get(`session:${userId}`);
+}
+
+function decodeToken(token) {
+  try {
+    const payload = token.split('.')[1];
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+  } catch { return null; }
+}
+
+async function refreshSession(env, userId, currentToken) {
+  const r = await fetch(`${API}/api/auth?action=refresh`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${currentToken}`,
+    },
+  });
+  if (!r.ok) return null;
+  const data = await r.json();
+  if (!data.token) return null;
+  await env.KV.put(`session:${userId}`, data.token, { expirationTtl: 31536000 });
+  return data.token;
 }
 
 async function handleTokenLink(env, userId, token) {
@@ -232,7 +265,19 @@ async function handleUpdate(env, update) {
     return;
   }
 
-  const session = await getSession(env.KV, userId);
+  let session = await getSession(env.KV, userId);
+
+  if (session) {
+    const payload = decodeToken(session);
+    if (payload && payload.exp) {
+      const expIn = payload.exp - Math.floor(Date.now() / 1000);
+      if (expIn < 86400) {
+        const refreshed = await refreshSession(env, userId, session);
+        if (refreshed) session = refreshed;
+        else if (expIn <= 0) session = null;
+      }
+    }
+  }
 
   const pendingMoodRaw = await env.KV.get(`pending_mood:${userId}`);
   if (pendingMoodRaw && session && !cmd.startsWith('/')) {
@@ -244,8 +289,9 @@ async function handleUpdate(env, update) {
     const startTime = new Date(pending.outageStart);
     const mins = (endTime - startTime) / 60000;
     const outage = { id: pending.outageId, start: pending.outageStart, end: endTime.toISOString(), duration_minutes: mins, type: 'corte', mood: moodValue };
-    const saved = await apiPost('/api/outages', outage, session);
-    if (!saved) { await tg(env.BOT_TOKEN, chatId, STRINGS.error); return; }
+    const saveRes = await apiPostRaw('/api/outages', outage, session);
+    if (saveRes.status === 401) { await tg(env.BOT_TOKEN, chatId, STRINGS.unauthorized); return; }
+    if (!saveRes.ok) { await tg(env.BOT_TOKEN, chatId, STRINGS.error); return; }
     await apiDelete('/api/active', session);
     await env.KV.delete(`pending_mood:${userId}`);
     await env.KV.delete(`reminded:${userId}`);
@@ -290,8 +336,9 @@ async function handleUpdate(env, update) {
     if (active) { await tg(env.BOT_TOKEN, chatId, STRINGS.outageAlreadyActive(localTime(new Date(active.start)))); return; }
     const now = new Date();
     const outage = { id: generateId(), start: now.toISOString() };
-    const ok = await apiPost('/api/active', outage, session);
-    if (!ok) { await tg(env.BOT_TOKEN, chatId, STRINGS.error); return; }
+    const startRes = await apiPostRaw('/api/active', outage, session);
+    if (startRes.status === 401) { await tg(env.BOT_TOKEN, chatId, STRINGS.unauthorized); return; }
+    if (!startRes.ok) { await tg(env.BOT_TOKEN, chatId, STRINGS.error); return; }
     await env.KV.delete(`reminded:${userId}`);
     const outages = await apiGet('/api/outages', session);
     const summary = outages ? buildDaySummary(outages) : '';
@@ -346,8 +393,9 @@ async function handleUpdate(env, update) {
     if (active) { await tg(env.BOT_TOKEN, chatId, STRINGS.fluctuationDuringOutage); return; }
     const now = new Date();
     const fluc = { id: generateId(), start: now.toISOString(), end: now.toISOString(), duration_minutes: 0, type: 'fluctuacion' };
-    const ok = await apiPost('/api/outages', fluc, session);
-    if (!ok) { await tg(env.BOT_TOKEN, chatId, STRINGS.error); return; }
+    const flucRes = await apiPostRaw('/api/outages', fluc, session);
+    if (flucRes.status === 401) { await tg(env.BOT_TOKEN, chatId, STRINGS.unauthorized); return; }
+    if (!flucRes.ok) { await tg(env.BOT_TOKEN, chatId, STRINGS.error); return; }
     await tg(env.BOT_TOKEN, chatId, STRINGS.fluctuationSaved(localTime(now)));
     return;
   }
@@ -427,6 +475,16 @@ async function handleUpdate(env, update) {
     if (!r.ok) { await tg(env.BOT_TOKEN, chatId, STRINGS.error); return; }
     const { token } = await r.json();
     await tg(env.BOT_TOKEN, chatId, `🔑 *Cambio de contraseña*\n\nAbre este enlace (válido 15 min):\n${API}?reset=${token}\n\n_No lo compartas con nadie._`);
+    return;
+  }
+
+  if (cmd === '/renovar') {
+    const refreshed = await refreshSession(env, userId, session);
+    if (refreshed) {
+      await tg(env.BOT_TOKEN, chatId, STRINGS.renewOk);
+    } else {
+      await tg(env.BOT_TOKEN, chatId, STRINGS.renewFail);
+    }
     return;
   }
 
@@ -566,8 +624,28 @@ async function handleCron(env) {
 
   for (const user of users) {
     const { telegram_chat_id, push_subscription } = user;
-    const session = await env.KV.get(`session:${telegram_chat_id}`);
+    let session = await env.KV.get(`session:${telegram_chat_id}`);
     if (!session) continue;
+
+    const payload = decodeToken(session);
+    if (payload && payload.exp) {
+      const expIn = payload.exp - Math.floor(Date.now() / 1000);
+      if (expIn < 86400) {
+        const refreshed = await refreshSession(env, telegram_chat_id, session);
+        if (refreshed) {
+          session = refreshed;
+        } else if (expIn > 0) {
+          const notified = await env.KV.get(`renew_notified:${telegram_chat_id}`);
+          if (!notified) {
+            await tgButtons(env.BOT_TOKEN, telegram_chat_id,
+              `🔑 Tu sesión expira en menos de 24h. Usa el botón para renovarla automáticamente.`,
+              [[{ text: '🔄 Renovar sesión', callback_data: '/renovar' }]]
+            );
+            await env.KV.put(`renew_notified:${telegram_chat_id}`, '1', { expirationTtl: 86400 });
+          }
+        }
+      }
+    }
 
     const closedToday = await env.KV.get(`closed_today:${telegram_chat_id}:${today}`);
     if (closedToday) continue;

@@ -290,6 +290,11 @@ function renderApp() {
             <span>⚡ CORTE ACTIVO — ¿Ya regresó la luz?</span>
             <button onclick="setCurrentTab('log')">Registrar →</button>
         </div>` : '';
+    const sessionBanner = authState.sessionExpired
+        ? `<div style="background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red-t);padding:8px 12px;font-size:13px;text-align:center">Sesión expirada. <a href="/" style="color:var(--red-t);font-weight:600">Cierra sesión</a> y vuelve a entrar.</div>`
+        : authState.sessionExpiring
+            ? `<div style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:#fdba74;padding:8px 12px;font-size:13px;text-align:center">La sesión está por expirar. Reintentando renovación automática…</div>`
+            : '';
     return `
         <div class="header">
             <div class="hleft">
@@ -304,6 +309,7 @@ function renderApp() {
                 <button class="profile-btn" onclick="openProfile()">@${escapeHtml(authState.currentUser.username)}</button>
             </div>
         </div>
+        ${sessionBanner}
         <div class="tabs">${tabButtons}</div>
         ${activeBanner}
         <div class="content">${tabContent}</div>
