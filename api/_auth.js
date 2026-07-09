@@ -27,17 +27,27 @@ function requireAuth(req, res) {
   return user;
 }
 
-function signToken(payload) {
-  return jwt.sign(payload, getSecret(), { expiresIn: '72h' });
+function signToken(payload, expiresIn = '90d') {
+  return jwt.sign(payload, getSecret(), { expiresIn });
 }
 
 function setCookie(res, token) {
   const secure = config.VERCEL_ENV === 'production' ? '; Secure' : '';
-  res.setHeader('Set-Cookie', `auth=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=259200${secure}`);
+  res.setHeader('Set-Cookie', `auth=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=7776000${secure}`);
 }
 
 function clearCookie(res) {
   res.setHeader('Set-Cookie', 'auth=; HttpOnly; Path=/; Max-Age=0');
 }
 
-module.exports = { getUser, requireAuth, signToken, setCookie, clearCookie };
+function getUserFromBearer(req) {
+  try {
+    const header = req.headers.authorization;
+    if (!header || !header.startsWith('Bearer ')) return null;
+    return jwt.verify(header.slice(7), getSecret());
+  } catch {
+    return null;
+  }
+}
+
+module.exports = { getUser, requireAuth, signToken, setCookie, clearCookie, getUserFromBearer };

@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const { getSql, initDb } = require('./_db');
-const { requireAuth, signToken, setCookie, clearCookie } = require('./_auth');
+const { requireAuth, signToken, setCookie, clearCookie, getUserFromBearer } = require('./_auth');
 const { badRequest, unauthorized, notFound, conflict, methodNotAllowed, log } = require('./_http');
 const { isValidCity, isValidZone } = require('./_cities');
 const config = require('./_config');
@@ -69,8 +69,9 @@ module.exports = async (req, res) => {
     clearAttempts(`login:${ip}`);
     log('info', 'auth.login.success', { username: user.username, ip });
     const token = signToken({ id: user.id, username: user.username });
+    const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
     setCookie(res, token);
-    return res.json({ ok: true, user: { id: user.id, username: user.username, city: user.city, zone: user.zone, is_public: user.is_public } });
+    return res.json({ ok: true, user: { id: user.id, username: user.username, city: user.city, zone: user.zone, is_public: user.is_public }, expiresAt });
   }
 
   if (action === 'logout') {
@@ -83,7 +84,7 @@ module.exports = async (req, res) => {
     if (!auth) return;
     const rows = await sql`SELECT id, username, city, zone, is_public FROM users WHERE id = ${auth.id}`;
     if (!rows.length) return notFound(res, 'Usuario no encontrado');
-    return res.json(rows[0]);
+    return res.json({ ...rows[0], expiresAt: new Date(auth.exp * 1000).toISOString() });
   }
 
   if (action === 'register') {
@@ -109,8 +110,9 @@ module.exports = async (req, res) => {
     await sql`INSERT INTO users (id, username, password_hash, city, zone) VALUES (${id}, ${username.toLowerCase()}, ${password_hash}, ${city}, ${zone})`;
     log('info', 'auth.register.success', { username: username.toLowerCase(), ip });
     const token = signToken({ id, username: username.toLowerCase() });
+    const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
     setCookie(res, token);
-    return res.json({ ok: true, user: { id, username: username.toLowerCase(), city, zone, is_public: true } });
+    return res.json({ ok: true, user: { id, username: username.toLowerCase(), city, zone, is_public: true }, expiresAt });
   }
 
   if (action === 'telegram-token') {
@@ -147,7 +149,7 @@ module.exports = async (req, res) => {
           telegram_link_token_expires_at = NULL
       WHERE id = ${user.id}
     `;
-    const jwt = signToken({ id: user.id, username: user.username });
+    const jwt = signToken({ id: user.id, username: user.username }, '365d');
     return res.json({ ok: true, token: jwt, username: user.username });
   }
 
@@ -214,6 +216,24 @@ module.exports = async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
     await sql`UPDATE users SET password_hash = ${hash}, reset_token = NULL, reset_token_expires_at = NULL WHERE id = ${rows[0].id}`;
     return res.json({ ok: true });
+  }
+
+  if (action === 'refresh') {
+    if (req.method !== 'POST') return methodNotAllowed(res);
+    let auth = requireAuth(req, res);
+    if (!auth) {
+      auth = getUserFromBearer(req);
+      if (!auth) return;
+    }
+    const ip = getClientIp(req);
+    if (isRateLimited(`refresh:${ip}`, 5)) {
+      return res.status(429).json({ error: 'Demasiadas solicitudes. Espera 15 minutos.' });
+    }
+    incrementAttempts(`refresh:${ip}`);
+    const token = signToken({ id: auth.id, username: auth.username });
+    setCookie(res, token);
+    const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+    return res.json({ ok: true, token, expiresAt });
   }
 
   notFound(res, 'Acción no encontrada');

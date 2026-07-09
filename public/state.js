@@ -1,6 +1,9 @@
 let authState = {
     isLoading:       true,
     currentUser:     null,
+    sessionExpiry:   null,
+    sessionExpiring: false,
+    sessionExpired:  false,
     activeTab:       'login',
     errorMessage:    '',
     loginForm:       { username: '', password: '' },

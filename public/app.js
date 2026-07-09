@@ -11,13 +11,15 @@ async function initialize() {
     }
     try {
         const user = await http.get('/api/auth/me');
-        authState.currentUser = user;
-        authState.isLoading   = false;
+        authState.currentUser  = user;
+        authState.sessionExpiry = user.expiresAt || null;
+        authState.isLoading    = false;
         await loadApplicationData();
     } catch {
         authState.isLoading = false;
         render();
     }
+    setInterval(checkSessionExpiry, 60000);
 }
 
 function checkRiskNotification() {
@@ -78,7 +80,8 @@ async function login() {
     const response = await http.post('/api/auth/login', authState.loginForm);
     const body     = await response.json();
     if (!response.ok) { authState.errorMessage = body.error; render(); return; }
-    authState.currentUser = body.user;
+    authState.currentUser  = body.user;
+    authState.sessionExpiry = body.expiresAt || null;
     await loadApplicationData();
 }
 
@@ -87,7 +90,8 @@ async function register() {
     const response = await http.post('/api/auth/register', authState.registerForm);
     const body     = await response.json();
     if (!response.ok) { authState.errorMessage = body.error; render(); return; }
-    authState.currentUser = body.user;
+    authState.currentUser  = body.user;
+    authState.sessionExpiry = body.expiresAt || null;
     await loadApplicationData();
 }
 
@@ -408,6 +412,45 @@ async function resetPassword() {
     authState.resetToken   = '';
     authState.resetPassword = '';
     render();
+}
+
+async function refreshToken() {
+    try {
+        const response = await http.post('/api/auth/refresh', {});
+        if (!response.ok) {
+            authState.sessionExpiring = true;
+            render();
+            return false;
+        }
+        const body = await response.json();
+        authState.sessionExpiry   = body.expiresAt;
+        authState.sessionExpiring = false;
+        authState.sessionExpired  = false;
+        render();
+        return true;
+    } catch {
+        authState.sessionExpiring = true;
+        render();
+        return false;
+    }
+}
+
+function checkSessionExpiry() {
+    if (!authState.sessionExpiry) return;
+    const remaining = new Date(authState.sessionExpiry) - Date.now();
+    if (remaining <= 0) {
+        authState.sessionExpired  = true;
+        authState.sessionExpiring = false;
+        render();
+        return;
+    }
+    if (remaining < 86400000) {
+        if (!authState.sessionExpiring) {
+            authState.sessionExpiring = true;
+            render();
+        }
+        refreshToken();
+    }
 }
 
 window.addEventListener('beforeunload', e => {

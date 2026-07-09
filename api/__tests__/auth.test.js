@@ -73,10 +73,10 @@ describe('login', () => {
     const req = { method: 'POST', query: { action: 'login' }, body: { username: 'test', password: 'correct' }, headers: { 'x-forwarded-for': '1.0.0.3' } };
     const res = mockRes();
     await handler(req, res);
-    expect(res.json).toHaveBeenCalledWith({
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
       ok: true,
       user: { id: '1', username: 'test', city: '', zone: '', is_public: true },
-    });
+    }));
     expect(res.setHeader).toHaveBeenCalled();
   });
 });
@@ -191,7 +191,7 @@ describe('me', () => {
     const req = { method: 'GET', query: { action: 'me' }, body: {}, headers: {} };
     const res = mockRes();
     await handler(req, res);
-    expect(res.json).toHaveBeenCalledWith(baseUser);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining(baseUser));
   });
 });
 
