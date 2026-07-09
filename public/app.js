@@ -216,69 +216,94 @@ async function openProfile() {
     profileState.telegramToken        = null;
     profileState.telegramTokenExpiry  = null;
     profileState.telegramTokenLoading = false;
+    profileState.currentPassword      = '';
+    profileState.newPassword          = '';
     render();
-    const data = await http.get('/api/profile');
-    profileState.profileData = data;
-    profileState.editCity    = VENEZUELA_CITIES.includes(data.city) ? data.city : '';
-    profileState.editZone    = data.zone;
-    profileState.isPublic    = data.is_public;
-    profileState.isLoading   = false;
+    profileState.profileData = null;
+    try {
+        const data = await http.get('/api/profile');
+        profileState.profileData = data;
+        profileState.editCity    = VENEZUELA_CITIES.includes(data.city) ? data.city : '';
+        profileState.editZone    = data.zone;
+        profileState.isPublic    = data.is_public;
+    } catch {
+        showToast('Error al cargar perfil. Reintenta.', 'error');
+    }
+    profileState.isLoading = false;
     render();
 }
 
 async function saveProfile() {
+    profileState.isSaving       = true;
     profileState.changesSaved   = false;
     profileState.passwordError  = '';
-    const payload = { city: profileState.editCity, zone: profileState.editZone, is_public: profileState.isPublic };
-    if (profileState.newPassword) {
-        payload.currentPassword = profileState.currentPassword;
-        payload.newPassword     = profileState.newPassword;
-    }
-    const response = await http.put('/api/profile', payload);
-    const body     = await response.json();
-    if (!response.ok) { profileState.passwordError = body.error; render(); return; }
-    profileState.currentPassword = '';
-    profileState.newPassword     = '';
-    profileState.passwordError   = '';
-    profileState.passwordUpdated = !!payload.newPassword;
-    profileState.changesSaved    = true;
-    if (authState.currentUser) {
-        authState.currentUser.city = profileState.editCity;
-        authState.currentUser.zone = profileState.editZone;
-    }
     render();
+    try {
+        const payload = { city: profileState.editCity, zone: profileState.editZone, is_public: profileState.isPublic };
+        if (profileState.newPassword) {
+            payload.currentPassword = profileState.currentPassword;
+            payload.newPassword     = profileState.newPassword;
+        }
+        const response = await http.put('/api/profile', payload);
+        const body     = await response.json();
+        if (!response.ok) { profileState.passwordError = body.error; profileState.isSaving = false; render(); return; }
+        profileState.currentPassword = '';
+        profileState.newPassword     = '';
+        profileState.passwordError   = '';
+        profileState.passwordUpdated = !!payload.newPassword;
+        profileState.changesSaved    = !payload.newPassword || profileState.editCity !== (authState.currentUser?.city || '') || profileState.editZone !== (authState.currentUser?.zone || '') || profileState.isPublic !== (authState.currentUser?.is_public ?? true);
+        if (authState.currentUser) {
+            authState.currentUser.city      = profileState.editCity;
+            authState.currentUser.zone      = profileState.editZone;
+            authState.currentUser.is_public = profileState.isPublic;
+        }
+        profileState.isSaving = false;
+        render();
+    } catch {
+        showToast('Error de red. Reintenta.', 'error');
+        profileState.isSaving = false;
+        render();
+    }
 }
 
 async function deleteAccount() {
     if (!profileState.confirmDelete) { profileState.confirmDelete = true; render(); return; }
-    const response = await http.delete('/api/account');
-    if (!response.ok) { showToast('Error al borrar la cuenta. Reintenta.', 'error'); return; }
-    authState.currentUser = null;
-    appState.outages      = [];
-    appState.activeOutage = null;
-    profileState.isOpen   = false;
-    render();
+    try {
+        const response = await http.delete('/api/account');
+        if (!response.ok) { showToast('Error al borrar la cuenta. Reintenta.', 'error'); profileState.confirmDelete = false; render(); return; }
+        authState.currentUser = null;
+        appState.outages      = [];
+        appState.activeOutage = null;
+        profileState.isOpen   = false;
+        render();
+    } catch {
+        showToast('Error de red. Reintenta.', 'error');
+        profileState.confirmDelete = false;
+        render();
+    }
 }
 
 async function generateTelegramToken() {
     profileState.telegramTokenLoading = true;
     profileState.telegramToken = '';
+    profileState.telegramError = '';
     render();
     try {
         const response = await http.post('/api/auth/telegram-token', {});
         profileState.telegramTokenLoading = false;
         if (!response.ok) {
             const body = await response.json();
-            profileState.passwordError = body.error || 'Error al generar código';
+            profileState.telegramError = body.error || 'Error al generar código';
             render();
             return;
         }
         const body = await response.json();
         profileState.telegramToken = body.token;
         profileState.telegramTokenExpiry = new Date(body.expiresAt);
+        profileState.telegramError = '';
     } catch {
         profileState.telegramTokenLoading = false;
-        profileState.passwordError = 'Error de red. Reintenta.';
+        profileState.telegramError = 'Error de red. Reintenta.';
     }
     render();
 }
@@ -288,20 +313,20 @@ async function unlinkTelegram() {
         const response = await http.post('/api/auth/telegram-unlink', {});
         if (!response.ok) {
             const body = await response.json();
-            profileState.passwordError = body.error || 'Error al desvincular';
+            profileState.telegramError = body.error || 'Error al desvincular';
             render();
-            showToast(profileState.passwordError, 'error');
+            showToast(profileState.telegramError, 'error');
             return;
         }
         profileState.profileData.has_telegram = false;
         profileState.profileData.telegram_chat_id = null;
         profileState.telegramToken = null;
         profileState.telegramTokenExpiry = null;
-        profileState.passwordError = '';
+        profileState.telegramError = '';
         showToast('Telegram desvinculado', 'success');
     } catch {
-        profileState.passwordError = 'Error de red. Reintenta.';
-        showToast(profileState.passwordError, 'error');
+        profileState.telegramError = 'Error de red. Reintenta.';
+        showToast(profileState.telegramError, 'error');
     }
     render();
 }

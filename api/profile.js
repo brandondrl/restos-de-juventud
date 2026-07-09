@@ -28,26 +28,34 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'PUT') {
-    const { city, zone, is_public, currentPassword, newPassword } = req.body;
-    if (is_public !== undefined && typeof is_public !== 'boolean') return badRequest(res, 'is_public debe ser booleano');
-    if (city !== undefined && typeof city !== 'string') return badRequest(res, 'city debe ser texto');
-    if (zone !== undefined && typeof zone !== 'string') return badRequest(res, 'zone debe ser texto');
-    if (!isValidCity(city))    return badRequest(res, 'Ciudad no válida');
-    if (!isValidZone(zone))    return badRequest(res, 'Zona no válida');
-    await sql`
-      UPDATE users SET city = ${city || ''}, zone = ${zone || ''}, is_public = ${is_public ?? true}
-      WHERE id = ${user.id}
-    `;
-    if (newPassword) {
-      if (!currentPassword) return badRequest(res, 'Contraseña actual requerida');
-      if (newPassword.length < 6) return badRequest(res, 'Mínimo 6 caracteres');
-      const [row]  = await sql`SELECT password_hash FROM users WHERE id = ${user.id}`;
-      const valid  = await bcrypt.compare(currentPassword, row.password_hash);
-      if (!valid)  return badRequest(res, 'Contraseña actual incorrecta');
-      const hash   = await bcrypt.hash(newPassword, 10);
-      await sql`UPDATE users SET password_hash = ${hash} WHERE id = ${user.id}`;
+    try {
+      const { city, zone, is_public, currentPassword, newPassword } = req.body;
+      if (is_public !== undefined && typeof is_public !== 'boolean') return badRequest(res, 'is_public debe ser booleano');
+      if (city !== undefined && typeof city !== 'string') return badRequest(res, 'city debe ser texto');
+      if (zone !== undefined && typeof zone !== 'string') return badRequest(res, 'zone debe ser texto');
+      if (!isValidCity(city))    return badRequest(res, 'Ciudad no válida');
+      if (!isValidZone(zone))    return badRequest(res, 'Zona no válida');
+      let hash;
+      if (newPassword) {
+        if (!currentPassword) return badRequest(res, 'Contraseña actual requerida');
+        if (newPassword.length < 6) return badRequest(res, 'Mínimo 6 caracteres');
+        const [row]  = await sql`SELECT password_hash FROM users WHERE id = ${user.id}`;
+        const valid  = await bcrypt.compare(currentPassword, row.password_hash);
+        if (!valid)  return badRequest(res, 'Contraseña actual incorrecta');
+        hash = await bcrypt.hash(newPassword, 10);
+      }
+      await sql`UPDATE users SET city = ${city || ''}, zone = ${zone || ''} WHERE id = ${user.id}`;
+      if (is_public !== undefined) {
+        await sql`UPDATE users SET is_public = ${is_public} WHERE id = ${user.id}`;
+      }
+      if (newPassword) {
+        await sql`UPDATE users SET password_hash = ${hash} WHERE id = ${user.id}`;
+      }
+      return res.json({ ok: true });
+    } catch (e) {
+      console.error('PUT /api/profile error', e);
+      return res.status(500).json({ error: 'Error interno del servidor' });
     }
-    return res.json({ ok: true });
   }
 
   methodNotAllowed(res);

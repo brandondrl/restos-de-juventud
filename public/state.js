@@ -1,4 +1,4 @@
-let authState = {
+var authState = {
     isLoading:       true,
     currentUser:     null,
     sessionExpiry:   null,
@@ -15,7 +15,7 @@ let authState = {
     resetError:      '',
 };
 
-let appState = {
+var appState = {
     outages:       [],
     activeOutage:  null,
     currentTab:    'dashboard',
@@ -41,7 +41,7 @@ let appState = {
     selectedMood:     null,
 };
 
-let profileState = {
+var profileState = {
     isOpen:               false,
     profileData:          null,
     isLoading:            false,
@@ -57,11 +57,13 @@ let profileState = {
     telegramToken:        null,
     telegramTokenExpiry:  null,
     telegramTokenLoading: false,
+    telegramError:        '',
+    isSaving:             false,
 };
 
-let communityState = {
+var communityState = {
     isLoading: false,
     data:      null,
 };
 
-let lastNotifiedHour = -1;
+var lastNotifiedHour = -1;
