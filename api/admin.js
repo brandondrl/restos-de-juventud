@@ -99,7 +99,7 @@ module.exports = async (req, res) => {
       <td class="col-date">${createdAt}</td>
       <td>${tgBadge}</td>
       <td>${r.username !== 'brandon'
-        ? `<button class="btn-reset" data-userid="${r.id}" data-username="${r.username}">🔄 Pass</button><button class="btn-del" data-userid="${r.id}" data-username="${r.username}">🗑 Borrar</button>`
+        ? `<button class="btn-reset" data-userid="${r.id}" data-username="${r.username}">🔄 Reset pass</button><button class="btn-del" data-userid="${r.id}" data-username="${r.username}">🗑</button>`
         : '<span class="na">—</span>'}</td>
     </tr>`;
   }).join('');
@@ -210,7 +210,11 @@ tbody tr:hover{background:rgba(255,255,255,.03)}
         });
         var data = await r.json();
         if (!r.ok) { alert('Error: ' + (data.error || 'desconocido')); this.disabled = false; this.textContent = '🔄 Reset pass'; return; }
-        showResetModal(data);
+        showResetModal(data, function() {
+          btn.disabled = false;
+          btn.textContent = '🔄 Reset pass';
+        });
+        return;
       } catch(e) {
         alert('Error de red: ' + e.message);
       }
@@ -234,20 +238,20 @@ tbody tr:hover{background:rgba(255,255,255,.03)}
           body: JSON.stringify({ action: 'delete-account', userId: uid }),
         });
         var data = await r.json();
-        if (!r.ok) { alert('Error: ' + (data.error || 'desconocido')); this.disabled = false; this.textContent = '🗑 Borrar'; return; }
+        if (!r.ok) { alert('Error: ' + (data.error || 'desconocido')); this.disabled = false; this.textContent = '🗑'; return; }
         alert('✅ Cuenta de @' + data.username + ' eliminada permanentemente.');
         location.reload();
       } catch(e) {
         alert('Error de red: ' + e.message);
         this.disabled = false;
-        this.textContent = '🗑 Borrar';
+        this.textContent = '🗑';
       }
     });
   });
 
   function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  function showResetModal(data) {
+  function showResetModal(data, onClose) {
     var old = document.querySelector('.reset-modal');
     if (old) old.remove();
     var overlay = document.createElement('div');
@@ -277,8 +281,12 @@ tbody tr:hover{background:rgba(255,255,255,.03)}
         setTimeout(function() { btn.textContent = 'Copiar'; }, 2000);
       });
     };
-    document.getElementById('reset-link-close').onclick = function() { overlay.remove(); };
-    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+    function closeModal() {
+      overlay.remove();
+      if (onClose) onClose();
+    }
+    document.getElementById('reset-link-close').onclick = closeModal;
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) closeModal(); });
   }
 })();
 </script>
