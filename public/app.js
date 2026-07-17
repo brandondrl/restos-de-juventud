@@ -3,6 +3,7 @@ async function initialize() {
     const resetToken = params.get('reset');
     const resetUser  = params.get('user') || '';
     if (resetToken) {
+        http.post('/api/auth/logout', {}).catch(function(){});
         authState.resetToken    = resetToken;
         authState.resetUsername = resetUser;
         authState.resetMode     = true;

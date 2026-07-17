@@ -215,6 +215,7 @@ module.exports = async (req, res) => {
     if (!rows.length) return badRequest(res, 'Token inválido o expirado');
     const hash = await bcrypt.hash(password, 10);
     await sql`UPDATE users SET password_hash = ${hash}, reset_token = NULL, reset_token_expires_at = NULL WHERE id = ${rows[0].id}`;
+    clearCookie(res);
     return res.json({ ok: true });
   }
 
