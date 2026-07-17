@@ -172,9 +172,9 @@ tbody tr:hover{background:rgba(255,255,255,.03)}
         var data = await r.json();
         if (!r.ok) { alert('Error: ' + (data.error || 'desconocido')); this.disabled = false; this.textContent = '🔄 Reset pass'; return; }
         var msg = data.sentViaTelegram
-          ? '✅ El enlace de reseteo fue enviado a @' + data.username + ' por Telegram.\n\nTambién puedes copiar el enlace manualmente:'
-          : '⚠️ @' + data.username + ' no tiene Telegram vinculado.\n\nCopia este enlace y envíalo manualmente (válido 15 min):';
-        msg += '\n\n' + data.resetUrl;
+          ? '✅ El enlace de reseteo fue enviado a @' + data.username + ' por Telegram.\\n\\nTambién puedes copiar el enlace manualmente:'
+          : '⚠️ @' + data.username + ' no tiene Telegram vinculado.\\n\\nCopia este enlace y envíalo manualmente (válido 15 min):';
+        msg += '\\n\\n' + data.resetUrl;
         prompt(msg, data.resetUrl);
       } catch(e) {
         alert('Error de red: ' + e.message);
