@@ -443,6 +443,32 @@ describe('admin-reset-password', () => {
       sentViaTelegram: false,
     }));
   });
+
+  it('logs via=telegram when sent through bot', async () => {
+    __setMockUser({ id: 'admin1', username: 'brandon' });
+    config.BOT_URL = 'https://restos-bot.test.workers.dev';
+    config.WEBHOOK_SECRET = 'webhook-secret';
+    mockSql.mockResolvedValueOnce([{ id: 'target1', username: 'fulano', telegram_chat_id: '12345' }]);
+    mockSql.mockResolvedValueOnce([]);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const req = { method: 'POST', query: { action: 'admin-reset-password' }, body: { userId: 'target1' }, headers: { host: 'test.vercel.app' } };
+    const res = mockRes();
+    await handler(req, res);
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('"via":"telegram"'));
+    logSpy.mockRestore();
+  });
+
+  it('logs via=manual when user has no telegram', async () => {
+    __setMockUser({ id: 'admin1', username: 'brandon' });
+    mockSql.mockResolvedValueOnce([{ id: 'target1', username: 'fulano', telegram_chat_id: null }]);
+    mockSql.mockResolvedValueOnce([]);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const req = { method: 'POST', query: { action: 'admin-reset-password' }, body: { userId: 'target1' }, headers: { host: 'test.vercel.app' } };
+    const res = mockRes();
+    await handler(req, res);
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('"via":"manual"'));
+    logSpy.mockRestore();
+  });
 });
 
 describe('unknown action', () => {
@@ -574,10 +600,14 @@ describe('reset-password', () => {
     mockSql.mockResolvedValueOnce([{ id: '1' }]);
     jest.spyOn(bcrypt, 'hash').mockResolvedValueOnce('newhash');
     mockSql.mockResolvedValueOnce([]);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     const req = { method: 'POST', query: { action: 'reset-password' }, body: { token: 'GOODTOKEN', password: '123456' }, headers: {} };
     const res = mockRes();
     await handler(req, res);
     expect(res.setHeader).toHaveBeenCalledWith('Set-Cookie', 'auth=; HttpOnly; Path=/; Max-Age=0');
     expect(res.json).toHaveBeenCalledWith({ ok: true });
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('auth.reset_password.success'));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('"userId":"1"'));
+    logSpy.mockRestore();
   });
 });

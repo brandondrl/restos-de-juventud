@@ -216,6 +216,7 @@ module.exports = async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
     await sql`UPDATE users SET password_hash = ${hash}, reset_token = NULL, reset_token_expires_at = NULL WHERE id = ${rows[0].id}`;
     clearCookie(res);
+    log('info', 'auth.reset_password.success', { userId: rows[0].id });
     return res.json({ ok: true });
   }
 
@@ -237,7 +238,6 @@ module.exports = async (req, res) => {
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const appUrl = `${protocol}://${host}`;
     const resetUrl = `${appUrl}?reset=${token}&user=${encodeURIComponent(target.username)}`;
-    log('info', 'auth.admin_reset_password', { adminUsername: admin.username, targetUserId: userId });
     let sentViaTelegram = false;
     if (target.telegram_chat_id && config.BOT_URL && config.WEBHOOK_SECRET) {
       try {
@@ -251,6 +251,7 @@ module.exports = async (req, res) => {
         log('warn', 'auth.admin_reset_telegram_fail', { error: e.message });
       }
     }
+    log('info', 'auth.admin_reset_password', { adminUsername: admin.username, targetUserId: userId, targetUsername: target.username, via: sentViaTelegram ? 'telegram' : 'manual' });
     return res.json({ ok: true, resetUrl, sentViaTelegram, username: target.username });
   }
 
