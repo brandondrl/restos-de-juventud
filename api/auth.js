@@ -235,7 +235,7 @@ module.exports = async (req, res) => {
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'restos-de-juventud.vercel.app';
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const appUrl = `${protocol}://${host}`;
-    const resetUrl = `${appUrl}?reset=${token}`;
+    const resetUrl = `${appUrl}?reset=${token}&user=${encodeURIComponent(target.username)}`;
     log('info', 'auth.admin_reset_password', { adminUsername: admin.username, targetUserId: userId });
     let sentViaTelegram = false;
     if (target.telegram_chat_id && config.BOT_URL && config.WEBHOOK_SECRET) {

@@ -1,10 +1,12 @@
 async function initialize() {
     const params     = new URLSearchParams(window.location.search);
     const resetToken = params.get('reset');
+    const resetUser  = params.get('user') || '';
     if (resetToken) {
-        authState.resetToken  = resetToken;
-        authState.resetMode   = true;
-        authState.isLoading   = false;
+        authState.resetToken    = resetToken;
+        authState.resetUsername = resetUser;
+        authState.resetMode     = true;
+        authState.isLoading     = false;
         window.history.replaceState({}, '', '/');
         render();
         return;

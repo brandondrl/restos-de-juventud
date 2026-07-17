@@ -10,6 +10,7 @@ var authState = {
     registerForm:    { username: '', password: '', city: '', zone: '' },
     resetMode:       false,
     resetToken:      '',
+    resetUsername:   '',
     resetPassword:   '',
     resetSuccess:    false,
     resetError:      '',
