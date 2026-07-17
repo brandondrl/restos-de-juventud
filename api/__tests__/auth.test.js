@@ -382,7 +382,7 @@ describe('admin-reset-password', () => {
     await handler(req, res);
     expect(res.json).toHaveBeenCalledWith({
       ok: true,
-      resetUrl: expect.stringMatching(/^https:\/\/test\.vercel\.app\?reset=[A-Z2-9]{8}$/),
+      resetUrl: expect.stringMatching(/^https:\/\/test\.vercel\.app\?reset=[A-Z2-9]{8}&user=fulano$/),
       sentViaTelegram: false,
       username: 'fulano',
     });

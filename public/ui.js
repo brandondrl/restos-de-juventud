@@ -171,7 +171,7 @@ function renderAuthScreen() {
                 <svg viewBox="0 0 24 24" style="width:26px;height:26px;stroke:#f59e0b;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                 <div>
                     <div class="auth-title">Nueva contraseña</div>
-                    <div style="font-size:12px;color:var(--text2)">Restos de Juventud</div>
+                    <div style="font-size:12px;color:var(--text2)">${authState.resetUsername ? 'Cuenta: @' + escapeHtml(authState.resetUsername) : 'Restos de Juventud'}</div>
                 </div>
             </div>
             ${resetErrorBanner}
