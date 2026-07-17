@@ -577,6 +577,7 @@ describe('reset-password', () => {
     const req = { method: 'POST', query: { action: 'reset-password' }, body: { token: 'GOODTOKEN', password: '123456' }, headers: {} };
     const res = mockRes();
     await handler(req, res);
+    expect(res.setHeader).toHaveBeenCalledWith('Set-Cookie', 'auth=; HttpOnly; Path=/; Max-Age=0');
     expect(res.json).toHaveBeenCalledWith({ ok: true });
   });
 });
