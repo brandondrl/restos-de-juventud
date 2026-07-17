@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const { getSql, initDb } = require('./_db');
 const { requireAuth, signToken, setCookie, clearCookie, getUserFromBearer } = require('./_auth');
-const { badRequest, unauthorized, notFound, conflict, methodNotAllowed, log } = require('./_http');
+const { badRequest, unauthorized, notFound, conflict, forbidden, methodNotAllowed, log } = require('./_http');
 const { isValidCity, isValidZone } = require('./_cities');
 const config = require('./_config');
 
@@ -216,6 +216,41 @@ module.exports = async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
     await sql`UPDATE users SET password_hash = ${hash}, reset_token = NULL, reset_token_expires_at = NULL WHERE id = ${rows[0].id}`;
     return res.json({ ok: true });
+  }
+
+  if (action === 'admin-reset-password') {
+    if (req.method !== 'POST') return methodNotAllowed(res);
+    const admin = requireAuth(req, res);
+    if (!admin) return;
+    if (admin.username !== 'brandon') return forbidden(res, 'Solo el administrador');
+    const { userId } = req.body;
+    if (!userId) return badRequest(res, 'ID de usuario requerido');
+    const [target] = await sql`SELECT id, username, telegram_chat_id FROM users WHERE id = ${userId}`;
+    if (!target) return notFound(res, 'Usuario no encontrado');
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    let token = '';
+    for (let i = 0; i < 8; i++) token += chars[Math.floor(Math.random() * chars.length)];
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    await sql`UPDATE users SET reset_token = ${token}, reset_token_expires_at = ${expiresAt} WHERE id = ${userId}`;
+    const host = req.headers['x-forwarded-host'] || req.headers.host || 'restos-de-juventud.vercel.app';
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    const appUrl = `${protocol}://${host}`;
+    const resetUrl = `${appUrl}?reset=${token}`;
+    log('info', 'auth.admin_reset_password', { adminUsername: admin.username, targetUserId: userId });
+    let sentViaTelegram = false;
+    if (target.telegram_chat_id && config.BOT_URL && config.WEBHOOK_SECRET) {
+      try {
+        const botRes = await fetch(`${config.BOT_URL}/send-reset-link`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-internal-secret': config.WEBHOOK_SECRET },
+          body: JSON.stringify({ chat_id: target.telegram_chat_id, resetUrl, username: target.username }),
+        });
+        if (botRes.ok) sentViaTelegram = true;
+      } catch (e) {
+        log('warn', 'auth.admin_reset_telegram_fail', { error: e.message });
+      }
+    }
+    return res.json({ ok: true, resetUrl, sentViaTelegram, username: target.username });
   }
 
   if (action === 'refresh') {
