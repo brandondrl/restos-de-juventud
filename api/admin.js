@@ -20,30 +20,35 @@ module.exports = async (req, res) => {
   await initDb(sql);
 
   if (req.method === 'POST') {
-    const { action, userId } = req.body || {};
-    if (action === 'delete-account') {
-      if (!userId) return res.status(400).json({ error: 'ID de usuario requerido' });
-      const [target] = await sql`SELECT id, username, telegram_chat_id FROM users WHERE id = ${userId}`;
-      if (!target) return res.status(404).json({ error: 'Usuario no encontrado' });
-      if (target.username === 'brandon') return res.status(403).json({ error: 'No puedes borrar tu propia cuenta' });
-      await sql`DELETE FROM active_outage_v2 WHERE user_id = ${userId}`;
-      await sql`DELETE FROM outages WHERE user_id = ${userId}`;
-      await sql`DELETE FROM users WHERE id = ${userId}`;
-      log('info', 'admin.delete_account', { adminUsername: user.username, targetUserId: userId, targetUsername: target.username });
-      if (target.telegram_chat_id && config.BOT_URL && config.WEBHOOK_SECRET) {
-        try {
-          await fetch(`${config.BOT_URL}/invalidate`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-internal-secret': config.WEBHOOK_SECRET },
-            body: JSON.stringify({ chat_id: target.telegram_chat_id }),
-          });
-        } catch (e) {
-          log('warn', 'admin.delete_account_bot_fail', { error: e.message });
+    try {
+      const { action, userId } = req.body || {};
+      if (action === 'delete-account') {
+        if (!userId) return res.status(400).json({ error: 'ID de usuario requerido' });
+        const [target] = await sql`SELECT id, username, telegram_chat_id FROM users WHERE id = ${userId}`;
+        if (!target) return res.status(404).json({ error: 'Usuario no encontrado' });
+        if (target.username === 'brandon') return res.status(403).json({ error: 'No puedes borrar tu propia cuenta' });
+        await sql`DELETE FROM active_outage_v2 WHERE user_id = ${userId}`;
+        await sql`DELETE FROM outages WHERE user_id = ${userId}`;
+        await sql`DELETE FROM users WHERE id = ${userId}`;
+        log('info', 'admin.delete_account', { adminUsername: user.username, targetUserId: userId, targetUsername: target.username });
+        if (target.telegram_chat_id && config.BOT_URL && config.WEBHOOK_SECRET) {
+          try {
+            await fetch(`${config.BOT_URL}/invalidate`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-internal-secret': config.WEBHOOK_SECRET },
+              body: JSON.stringify({ chat_id: target.telegram_chat_id }),
+            });
+          } catch (e) {
+            log('warn', 'admin.delete_account_bot_fail', { error: e.message });
+          }
         }
+        return res.json({ ok: true, username: target.username });
       }
-      return res.json({ ok: true, username: target.username });
+      return res.status(400).json({ error: 'Acción no válida' });
+    } catch (e) {
+      log('error', 'admin.post_error', { error: e.message });
+      return res.status(500).json({ error: 'Error interno del servidor' });
     }
-    return res.status(400).json({ error: 'Acción no válida' });
   }
 
   const rows = await sql`
@@ -205,11 +210,7 @@ tbody tr:hover{background:rgba(255,255,255,.03)}
         });
         var data = await r.json();
         if (!r.ok) { alert('Error: ' + (data.error || 'desconocido')); this.disabled = false; this.textContent = '🔄 Reset pass'; return; }
-        var msg = data.sentViaTelegram
-          ? '✅ El enlace de reseteo fue enviado a @' + data.username + ' por Telegram.\\n\\nTambién puedes copiar el enlace manualmente:'
-          : '⚠️ @' + data.username + ' no tiene Telegram vinculado.\\n\\nCopia este enlace y envíalo manualmente (válido 15 min):';
-        msg += '\\n\\n' + data.resetUrl;
-        prompt(msg, data.resetUrl);
+        showResetModal(data);
       } catch(e) {
         alert('Error de red: ' + e.message);
       }
@@ -243,6 +244,42 @@ tbody tr:hover{background:rgba(255,255,255,.03)}
       }
     });
   });
+
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function showResetModal(data) {
+    var old = document.querySelector('.reset-modal');
+    if (old) old.remove();
+    var overlay = document.createElement('div');
+    overlay.className = 'dialog-overlay reset-modal';
+    var bodyMsg = data.sentViaTelegram
+      ? '✅ Enlace enviado por Telegram a @' + esc(data.username) + '. También puedes copiarlo:'
+      : '⚠️ @' + esc(data.username) + ' no tiene Telegram. Copia el enlace y envíalo manualmente (válido 15 min):';
+    overlay.innerHTML = '<div class="dialog-card">'
+      + '<div class="dtitle">🔑 Enlace de reseteo — @' + esc(data.username) + '</div>'
+      + '<div class="dbody">' + bodyMsg + '</div>'
+      + '<textarea class="dinput" id="reset-link-input" readonly>' + esc(data.resetUrl) + '</textarea>'
+      + '<div style="display:flex;gap:8px;justify-content:flex-end">'
+      + '<button class="dbtn dbtn-primary" id="reset-link-copy">Copiar</button>'
+      + '<button class="dbtn" id="reset-link-close">Cerrar</button>'
+      + '</div></div>';
+    document.body.appendChild(overlay);
+    document.getElementById('reset-link-copy').onclick = function() {
+      var btn = this;
+      var ta = document.getElementById('reset-link-input');
+      ta.select();
+      navigator.clipboard.writeText(data.resetUrl).then(function() {
+        btn.textContent = '✓ Copiado';
+        setTimeout(function() { btn.textContent = 'Copiar'; }, 2000);
+      }).catch(function() {
+        document.execCommand('copy');
+        btn.textContent = '✓ Copiado';
+        setTimeout(function() { btn.textContent = 'Copiar'; }, 2000);
+      });
+    };
+    document.getElementById('reset-link-close').onclick = function() { overlay.remove(); };
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+  }
 })();
 </script>
 </body>
