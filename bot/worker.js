@@ -726,6 +726,17 @@ export default {
       return new Response('ok');
     }
 
+    if (url.pathname === '/send-reset-link' && req.method === 'POST') {
+      if (req.headers.get('x-internal-secret') !== env.WEBHOOK_SECRET) {
+        return new Response('forbidden', { status: 403 });
+      }
+      const { chat_id, resetUrl, username } = await req.json();
+      await tg(env.BOT_TOKEN, chat_id,
+        `🔑 *Cambio de contraseña*\n\nEl administrador ha iniciado un cambio de contraseña para @${username}.\n\nAbre este enlace (válido 15 min):\n${resetUrl}\n\n_No lo compartas con nadie._`
+      );
+      return new Response('ok');
+    }
+
     if (req.method !== 'POST') return new Response('ok');
     const secret = req.headers.get('X-Telegram-Bot-Api-Secret-Token');
     if (secret !== env.WEBHOOK_SECRET) return new Response('forbidden', { status: 403 });

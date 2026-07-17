@@ -64,6 +64,7 @@ module.exports = async (req, res) => {
       <td class="col-date">${lastActivity}</td>
       <td class="col-date">${createdAt}</td>
       <td>${tgBadge}</td>
+      <td>${r.username !== 'brandon' ? `<button class="btn-reset" data-userid="${r.id}" data-username="${r.username}">🔄 Reset pass</button>` : '<span class="na">—</span>'}</td>
     </tr>`;
   }).join('');
 
@@ -103,6 +104,20 @@ tbody tr:hover{background:rgba(255,255,255,.03)}
 .badge-nobot{background:#1e293b;border:1px solid #334155;color:#475569;padding:2px 8px;border-radius:4px;font-size:11px;white-space:nowrap}
 .back{display:inline-flex;align-items:center;gap:6px;color:#64748b;font-size:13px;text-decoration:none;margin-bottom:20px}
 .back:hover{color:#94a3b8}
+.btn-reset{background:transparent;border:1px solid #64748b;color:#94a3b8;padding:3px 8px;border-radius:4px;font-size:11px;cursor:pointer;white-space:nowrap}
+.btn-reset:hover{border-color:#f59e0b;color:#f59e0b}
+.btn-reset:disabled{opacity:.4;cursor:default}
+.na{color:#334155;font-size:11px}
+.dialog-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:999}
+.dialog-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;max-width:480px;width:90%}
+.dialog-card .dtitle{font-size:15px;font-weight:700;margin-bottom:8px}
+.dialog-card .dbody{font-size:13px;color:#94a3b8;margin-bottom:16px;line-height:1.5;word-break:break-all}
+.dialog-card .dinput{width:100%;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#f1f5f9;font-size:14px;font-family:monospace;margin-bottom:16px}
+.dialog-card .dinput:focus{outline:none;border-color:#f59e0b}
+.dbtn{background:#1e293b;border:1px solid #334155;color:#f1f5f9;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer}
+.dbtn:hover{border-color:#64748b}
+.dbtn-primary{background:#f59e0b;border-color:#f59e0b;color:#0f172a;font-weight:600}
+.dbtn-primary:hover{background:#d97706;border-color:#d97706}
 </style>
 </head>
 <body>
@@ -133,11 +148,43 @@ tbody tr:hover{background:rgba(255,255,255,.03)}
         <th>ÚLTIMA ACT.</th>
         <th>REGISTRO</th>
         <th>TELEGRAM</th>
+        <th>ACCIÓN</th>
       </tr>
     </thead>
     <tbody>${rowsHtml}</tbody>
   </table>
 </div>
+<script>
+(function(){
+  document.querySelectorAll('.btn-reset').forEach(function(btn){
+    btn.addEventListener('click', async function(){
+      var uid = this.dataset.userid;
+      var uname = this.dataset.username;
+      if (!confirm('¿Estás seguro de resetear la contraseña para @' + uname + '?')) return;
+      this.disabled = true;
+      this.textContent = '...';
+      try {
+        var r = await fetch('/api/auth/admin-reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: uid }),
+        });
+        var data = await r.json();
+        if (!r.ok) { alert('Error: ' + (data.error || 'desconocido')); this.disabled = false; this.textContent = '🔄 Reset pass'; return; }
+        var msg = data.sentViaTelegram
+          ? '✅ El enlace de reseteo fue enviado a @' + data.username + ' por Telegram.\n\nTambién puedes copiar el enlace manualmente:'
+          : '⚠️ @' + data.username + ' no tiene Telegram vinculado.\n\nCopia este enlace y envíalo manualmente (válido 15 min):';
+        msg += '\n\n' + data.resetUrl;
+        prompt(msg, data.resetUrl);
+      } catch(e) {
+        alert('Error de red: ' + e.message);
+      }
+      this.disabled = false;
+      this.textContent = '🔄 Reset pass';
+    });
+  });
+})();
+</script>
 </body>
 </html>`;
 

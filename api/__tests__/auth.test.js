@@ -326,6 +326,125 @@ describe('telegram-link', () => {
   });
 });
 
+describe('admin-reset-password', () => {
+  beforeEach(() => {
+    config.BOT_URL = null;
+    config.WEBHOOK_SECRET = null;
+  });
+
+  it('returns 401 if not authenticated', async () => {
+    const req = { method: 'POST', query: { action: 'admin-reset-password' }, body: { userId: 'target1' }, headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(401);
+  });
+
+  it('returns 405 if not POST', async () => {
+    __setMockUser({ id: 'admin1', username: 'brandon' });
+    const req = { method: 'GET', query: { action: 'admin-reset-password' }, body: { userId: 'target1' }, headers: { host: 'test.vercel.app' } };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(405);
+  });
+
+  it('returns 403 if not admin', async () => {
+    __setMockUser({ id: 'user1', username: 'test' });
+    const req = { method: 'POST', query: { action: 'admin-reset-password' }, body: { userId: 'target1' }, headers: { host: 'test.vercel.app' } };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  it('returns 400 if userId missing', async () => {
+    __setMockUser({ id: 'admin1', username: 'brandon' });
+    const req = { method: 'POST', query: { action: 'admin-reset-password' }, body: {}, headers: { host: 'test.vercel.app' } };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'ID de usuario requerido' });
+  });
+
+  it('returns 404 if target user not found', async () => {
+    __setMockUser({ id: 'admin1', username: 'brandon' });
+    mockSql.mockResolvedValueOnce([]);
+    const req = { method: 'POST', query: { action: 'admin-reset-password' }, body: { userId: 'nonexistent' }, headers: { host: 'test.vercel.app' } };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Usuario no encontrado' });
+  });
+
+  it('returns resetUrl and token on success without telegram', async () => {
+    __setMockUser({ id: 'admin1', username: 'brandon' });
+    mockSql.mockResolvedValueOnce([{ id: 'target1', username: 'fulano', telegram_chat_id: null }]);
+    mockSql.mockResolvedValueOnce([]);
+    const req = { method: 'POST', query: { action: 'admin-reset-password' }, body: { userId: 'target1' }, headers: { host: 'test.vercel.app' } };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.json).toHaveBeenCalledWith({
+      ok: true,
+      resetUrl: expect.stringMatching(/^https:\/\/test\.vercel\.app\?reset=[A-Z2-9]{8}$/),
+      sentViaTelegram: false,
+      username: 'fulano',
+    });
+  });
+
+  it('sends via telegram when user has chat_id and bot configured', async () => {
+    __setMockUser({ id: 'admin1', username: 'brandon' });
+    config.BOT_URL = 'https://restos-bot.test.workers.dev';
+    config.WEBHOOK_SECRET = 'webhook-secret';
+    mockSql.mockResolvedValueOnce([{ id: 'target1', username: 'fulano', telegram_chat_id: '12345' }]);
+    mockSql.mockResolvedValueOnce([]);
+    const req = { method: 'POST', query: { action: 'admin-reset-password' }, body: { userId: 'target1' }, headers: { host: 'test.vercel.app' } };
+    const res = mockRes();
+    await handler(req, res);
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://restos-bot.test.workers.dev/send-reset-link',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ 'x-internal-secret': 'webhook-secret' }),
+        body: expect.stringContaining('12345'),
+      })
+    );
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      ok: true,
+      sentViaTelegram: true,
+      username: 'fulano',
+    }));
+  });
+
+  it('does not send via telegram when user has no chat_id even if bot configured', async () => {
+    __setMockUser({ id: 'admin1', username: 'brandon' });
+    config.BOT_URL = 'https://restos-bot.test.workers.dev';
+    config.WEBHOOK_SECRET = 'webhook-secret';
+    mockSql.mockResolvedValueOnce([{ id: 'target1', username: 'fulano', telegram_chat_id: null }]);
+    mockSql.mockResolvedValueOnce([]);
+    const req = { method: 'POST', query: { action: 'admin-reset-password' }, body: { userId: 'target1' }, headers: { host: 'test.vercel.app' } };
+    const res = mockRes();
+    await handler(req, res);
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      ok: true,
+      sentViaTelegram: false,
+    }));
+  });
+
+  it('gracefully handles telegram send failure', async () => {
+    __setMockUser({ id: 'admin1', username: 'brandon' });
+    config.BOT_URL = 'https://restos-bot.test.workers.dev';
+    config.WEBHOOK_SECRET = 'webhook-secret';
+    global.fetch = jest.fn().mockResolvedValue({ ok: false });
+    mockSql.mockResolvedValueOnce([{ id: 'target1', username: 'fulano', telegram_chat_id: '12345' }]);
+    mockSql.mockResolvedValueOnce([]);
+    const req = { method: 'POST', query: { action: 'admin-reset-password' }, body: { userId: 'target1' }, headers: { host: 'test.vercel.app' } };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      ok: true,
+      sentViaTelegram: false,
+    }));
+  });
+});
+
 describe('unknown action', () => {
   it('returns 404', async () => {
     const req = { method: 'GET', query: { action: 'unknown' }, body: {}, headers: {} };
