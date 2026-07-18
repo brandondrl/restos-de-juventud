@@ -19,8 +19,8 @@ function getHourlySlots(outage) {
     cursor.setMinutes(0, 0, 0);
     const endTime = new Date(outage.end);
     while (cursor < endTime) {
-        slots.push({ dayOfWeek: cursor.getDay(), hour: cursor.getHours() });
-        cursor.setHours(cursor.getHours() + 1);
+        slots.push({ dayOfWeek: caracasGetDay(cursor), hour: caracasGetHours(cursor) });
+        cursor.setTime(cursor.getTime() + 3600000);
     }
     return slots;
 }
@@ -35,8 +35,8 @@ function buildHeatmap(outages) {
     const earliestDate = new Date(Math.min(...allDates.map(d => d.getTime())));
 
     const windowStart = new Date();
-    windowStart.setDate(windowStart.getDate() - HEATMAP_WINDOW_DAYS);
-    windowStart.setHours(0, 0, 0, 0);
+    windowStart.setUTCDate(windowStart.getUTCDate() - HEATMAP_WINDOW_DAYS);
+    windowStart.setUTCHours(0, 0, 0, 0);
 
     const effectiveStart = new Date(Math.max(earliestDate.getTime(), windowStart.getTime()));
 
@@ -44,13 +44,14 @@ function buildHeatmap(outages) {
     const hitCount = {};
 
     const cursor = new Date(effectiveStart);
-    cursor.setHours(0, 0, 0, 0);
+    cursor.setUTCHours(0, 0, 0, 0);
     while (cursor <= new Date()) {
         for (let hour = 0; hour < 24; hour++) {
-            const key = `${cursor.getDay()}_${hour}`;
+            const slotDate = new Date(cursor.getTime() + hour * 3600000);
+            const key = `${caracasGetDay(slotDate)}_${caracasGetHours(slotDate)}`;
             observationCount[key] = (observationCount[key] || 0) + 1;
         }
-        cursor.setDate(cursor.getDate() + 1);
+        cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
 
     const windowedCompleted = completed.filter(o => new Date(o.start) >= effectiveStart);
@@ -61,8 +62,8 @@ function buildHeatmap(outages) {
             const key = `${dayOfWeek}_${hour}`;
             hitCount[key] = (hitCount[key] || 0) + 1;
         });
-        const startDay  = new Date(outage.start).getDay();
-        const startHour = new Date(outage.start).getHours();
+        const startDay  = caracasGetDay(new Date(outage.start));
+        const startHour = caracasGetHours(new Date(outage.start));
         const startKey  = `${startDay}_${startHour}`;
         startHitCount[startKey] = (startHitCount[startKey] || 0) + 1;
     });
@@ -103,7 +104,7 @@ function averageDurationByHour(outages) {
     );
     const grouped = {};
     completed.forEach(outage => {
-        const hour = new Date(outage.start).getHours();
+        const hour = caracasGetHours(new Date(outage.start));
         if (!grouped[hour]) grouped[hour] = [];
         grouped[hour].push(outage.duration_minutes);
     });
@@ -202,7 +203,7 @@ function getOnsetHint(outages, dayOfWeek, hour) {
     const minutesInHour = completed
         .filter(o => {
             const start = new Date(o.start);
-            return start.getDay() === dayOfWeek && start.getHours() === hour;
+            return caracasGetDay(start) === dayOfWeek && caracasGetHours(start) === hour;
         })
         .map(o => new Date(o.start).getMinutes());
 
@@ -222,7 +223,9 @@ function getDayForecast(predictions, outages) {
     if (!hasEnoughData) return { type: 'nodata' };
 
     const now = new Date();
-    const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+    const startOfToday = getTodayStartUTC();
+    const caracasNowHour = caracasGetHours(now);
+    const caracasNowDay = caracasGetDay(now);
 
     const todayCortes = outages.filter(o =>
         o.end && (o.type || 'corte') === 'corte' && new Date(o.start) >= startOfToday
@@ -254,8 +257,8 @@ function getDayForecast(predictions, outages) {
     );
 
     const lastRiskyHour = riskyHours[riskyHours.length - 1].hour;
-    const allRiskyPassed = now.getHours() > lastRiskyHour;
-    const inRiskyWindow = riskyHours.some(p => p.hour === now.getHours());
+    const allRiskyPassed = caracasNowHour > lastRiskyHour;
+    const inRiskyWindow = riskyHours.some(p => p.hour === caracasNowHour);
 
     if (hadOutageToday || activeNow) {
         return { type: 'already_hit', ranges, peakHour: peakHour.hour, active: activeNow };
@@ -281,7 +284,7 @@ function getDayForecast(predictions, outages) {
         : null;
 
     const peakAdj = adjustedProbability(peakHour.probability, peakHour.confidence);
-    const onsetHint = getOnsetHint(outages, now.getDay(), peakHour.hour);
+    const onsetHint = getOnsetHint(outages, caracasNowDay, peakHour.hour);
     const marginOfError = computeMarginOfError(peakHour.hits, peakHour.observations);
 
     return {
@@ -299,11 +302,10 @@ function getDayForecast(predictions, outages) {
 }
 
 function computeStatistics(outages) {
-    const now           = new Date();
-    const startOfToday  = new Date(now); startOfToday.setHours(0, 0, 0, 0);
-    const startOfWeek   = new Date(now); startOfWeek.setDate(now.getDate() - (now.getDay() || 7) + 1); startOfWeek.setHours(0, 0, 0, 0);
-    const startOfMonth  = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfYear   = new Date(now.getFullYear(), 0, 1);
+    const startOfToday = getTodayStartUTC();
+    const startOfWeek  = getWeekStartUTC();
+    const startOfMonth = getMonthStartUTC();
+    const startOfYear  = getYearStartUTC();
 
     const completed    = outages.filter(o => o.start && o.end && (o.type || 'corte') === 'corte' && o.duration_minutes != null);
     const fluctuations = outages.filter(o => (o.type || 'corte') === 'fluctuacion');
@@ -320,7 +322,7 @@ function computeStatistics(outages) {
 
     const byDay = {};
     completed.forEach(o => {
-        const key = new Date(o.start).toDateString();
+        const key = caracasToDateString(new Date(o.start));
         if (!byDay[key]) byDay[key] = { minutes: 0, count: 0, date: new Date(o.start) };
         byDay[key].minutes += o.duration_minutes || 0;
         byDay[key].count++;
@@ -335,6 +337,7 @@ function computeStatistics(outages) {
     });
     const peakEntry = Object.entries(slotFrequency).sort((a, b) => b[1] - a[1])[0];
 
+    const now = new Date();
     const daysTracked = completed.length > 0
         ? Math.max(1, Math.ceil((now - new Date(Math.min(...completed.map(o => new Date(o.start).getTime())))) / 86400000))
         : 1;
@@ -372,9 +375,8 @@ function computeTrainingProgress(outages) {
 
 function getTomorrowForecast(outages) {
     const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowDay = tomorrow.getDay();
+    const tomorrow = new Date(now.getTime() + 86400000);
+    const tomorrowDay = caracasGetDay(tomorrow);
 
     const heatmap = buildHeatmap(outages);
     if (!heatmap) return null;

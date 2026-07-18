@@ -1,5 +1,6 @@
 const { getSql } = require('./_db');
 const { requireAuth } = require('./_auth');
+const { getTodayStartISO } = require('./_timezone');
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).end();
@@ -7,11 +8,7 @@ module.exports = async (req, res) => {
   if (!user) return;
   const sql = getSql();
 
-  const TZ_OFFSET_HOURS = -4;
-  const now = new Date();
-  const localMidnight = new Date(now.getTime() + TZ_OFFSET_HOURS * 3600000);
-  localMidnight.setUTCHours(0, 0, 0, 0);
-  const todayISO = new Date(localMidnight.getTime() - TZ_OFFSET_HOURS * 3600000).toISOString();
+  const todayISO = getTodayStartISO();
 
   const active = await sql`
     SELECT u.username, u.city, u.zone, a.start_time
