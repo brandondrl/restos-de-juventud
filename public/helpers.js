@@ -93,23 +93,20 @@ function formatDuration(totalMinutes) {
 
 function formatDate(isoString) {
     if (!isoString) return '';
-    return new Date(isoString).toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: '2-digit', year: '2-digit' });
+    return caracasLocaleDateStr(new Date(isoString), 'es-ES', { weekday: 'short', day: '2-digit', month: '2-digit', year: '2-digit' });
 }
 
 function formatTime(isoString) {
     if (!isoString) return '';
-    const date = new Date(isoString);
-    return `${padZero(date.getHours())}:${padZero(date.getMinutes())}`;
+    return caracasTimeStr(new Date(isoString));
 }
 
 function getTodayDate() {
-    const d = new Date();
-    return `${d.getFullYear()}-${padZero(d.getMonth() + 1)}-${padZero(d.getDate())}`;
+    return caracasDateStr(new Date());
 }
 
 function getCurrentTime() {
-    const d = new Date();
-    return `${padZero(d.getHours())}:${padZero(d.getMinutes())}`;
+    return caracasTimeStr(new Date());
 }
 
 function buildZoneSelect(stateExpr, currentValue) {

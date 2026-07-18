@@ -1,5 +1,6 @@
 const API = 'https://restos-de-juventud.vercel.app';
-const TZ_OFFSET_HOURS = -4;
+const TZ = 'America/Caracas';
+const TZ_OFFSET_HOURS = -4; // America/Caracas = UTC-4 (no DST)
 const WEEKS_FOR_FULL_CONFIDENCE = 4;
 const RISK_THRESHOLD = 0.13;
 const WILSON_Z = 1.96;

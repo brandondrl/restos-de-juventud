@@ -1,5 +1,6 @@
 process.env.TZ = 'America/Caracas';
 
+require('../../public/timezone.js');
 const fs = require('fs');
 const path = require('path');
 

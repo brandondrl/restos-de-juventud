@@ -29,16 +29,16 @@ function checkRiskNotification() {
     if (!appState.outages.length || appState.activeOutage) return;
     if (Notification.permission !== 'granted') return;
     const now  = new Date();
-    const hour = now.getHours();
+    const hour = caracasGetHours(now);
     if (hour === lastNotifiedHour) return;
-    const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+    const startOfToday = getTodayStartUTC();
     const hadOutageToday = appState.outages.some(o =>
         o.end && (o.type || 'corte') === 'corte' && new Date(o.start) >= startOfToday
     );
     if (hadOutageToday) return;
     const heatmap = buildHeatmap(appState.outages);
     if (!heatmap) return;
-    const slot = heatmap[`${now.getDay()}_${hour}`] || { probability: 0, confidence: 0 };
+    const slot = heatmap[`${caracasGetDay(now)}_${hour}`] || { probability: 0, confidence: 0 };
     const prob = adjustedProbability(slot.probability, slot.confidence);
     if (prob >= 0.18) {
         lastNotifiedHour = hour;
@@ -375,9 +375,9 @@ function startEditOutage(outage) {
     const s = new Date(outage.start);
     const e = outage.end ? new Date(outage.end) : null;
     appState.editOutageId  = outage.id;
-    appState.editDate      = s.toLocaleDateString('en-CA');
-    appState.editStartTime = `${padZero(s.getHours())}:${padZero(s.getMinutes())}`;
-    appState.editEndTime   = e ? `${padZero(e.getHours())}:${padZero(e.getMinutes())}` : '00:00';
+    appState.editDate      = caracasDateStr(s);
+    appState.editStartTime = caracasTimeStr(s);
+    appState.editEndTime   = e ? caracasTimeStr(e) : '00:00';
     appState.editMood      = outage.mood || null;
     appState.editNotes     = outage.notes || '';
     appState.confirmDeleteId = null;

@@ -1,3 +1,4 @@
+require('../../public/timezone.js');
 const {
   buildHeatmap, adjustedProbability, getConsecutiveOutageStatus,
   computeRecoveryGaps, getOnsetHint, computeMarginOfError, RISK_THRESHOLD,

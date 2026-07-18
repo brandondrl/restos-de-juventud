@@ -2,6 +2,7 @@ const { getSql, initDb } = require('./_db');
 const { requireAuth } = require('./_auth');
 const config = require('./_config');
 const { log } = require('./_http');
+const { getDaysAgoUTC } = require('./_timezone');
 
 function fmtDuration(mins) {
   if (!mins || mins <= 0) return '—';
@@ -72,9 +73,9 @@ module.exports = async (req, res) => {
   const totalUsers   = rows.length;
   const totalOutages = rows.reduce((s, r) => s + r.outage_count, 0);
   const withTelegram = rows.filter(r => r.telegram_chat_id).length;
+  const cutoff = getDaysAgoUTC(7);
   const activeThisWeek = rows.filter(r => {
     if (!r.last_activity) return false;
-    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
     return new Date(r.last_activity) >= cutoff;
   }).length;
 
