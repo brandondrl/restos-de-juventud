@@ -1,4 +1,4 @@
-const { neon } = require('@neondatabase/serverless');
+const postgres = require('postgres');
 const fs = require('fs');
 const path = require('path');
 const config = require('./_config');
@@ -8,7 +8,13 @@ function getSql() {
     console.error('[Config] DATABASE_URL no configurado');
     throw new Error('Error de configuración del servidor. Contacta con el administrador.');
   }
-  return neon(config.DATABASE_URL);
+  return postgres(config.DATABASE_URL, {
+    max: 1,
+    idle_timeout: 5,
+    max_lifetime: 60,
+    ssl: 'require',
+    keep_alive: 60,
+  });
 }
 
 async function initDb(sql) {
@@ -31,7 +37,7 @@ async function initDb(sql) {
     const content = fs.readFileSync(path.join(dir, file), 'utf8');
     const statements = content.split(';').filter(s => s.trim());
     for (const stmt of statements) {
-      await sql(stmt);
+      await sql.unsafe(stmt);
     }
     await sql`INSERT INTO _migrations (name) VALUES (${file})`;
 

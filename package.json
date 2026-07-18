@@ -9,9 +9,9 @@
     "test": "jest"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^0.9.0",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.3",
+    "postgres": "^3.4.5",
     "web-push": "^3.6.7"
   },
   "devDependencies": {

@@ -1,9 +1,9 @@
-const { neon } = require('@neondatabase/serverless');
+const postgres = require('postgres');
 const fs = require('fs');
 const path = require('path');
 
 async function migrate() {
-  const sql = neon(process.env.DATABASE_URL);
+  const sql = postgres(process.env.DATABASE_URL);
 
   await sql`CREATE TABLE IF NOT EXISTS _migrations (
     name TEXT PRIMARY KEY,
