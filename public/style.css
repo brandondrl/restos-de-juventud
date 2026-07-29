@@ -199,6 +199,7 @@ input[type=date]{color-scheme:dark;}
 .sk-card{height:60px;background:var(--bg3);border-radius:var(--rs);margin-bottom:12px;animation:shimmer 1.5s ease-in-out infinite}
 .sk-card:nth-child(2){animation-delay:.2s}
 .sk-card:nth-child(3){animation-delay:.4s}
+.sk-el{background:var(--bg3);border-radius:var(--rs);animation:shimmer 1.5s ease-in-out infinite;flex-shrink:0}
 
 .community-totals-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
 .community-me-tag{color:var(--amber);font-size:11px;}

@@ -153,10 +153,62 @@ function buildTelegramSection() {
     </div>`;
 }
 
+function skEl(width, height, extra) {
+    return '<div class="sk-el" style="width:' + width + ';height:' + height + (extra ? ';' + extra : '') + '"></div>';
+}
+
+function authSkeleton() {
+    return '<div class="auth-wrap"><div class="auth-card">' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:24px">' +
+            skEl('26px', '26px', 'border-radius:50%') +
+            skEl('160px', '16px') +
+        '</div>' +
+        '<div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:20px">' +
+            skEl('50%', '36px', 'border-radius:0;margin:0') +
+            skEl('50%', '36px', 'border-radius:0;margin:0') +
+        '</div>' +
+        skEl('60px', '12px', 'margin-bottom:4px') +
+        skEl('100%', '42px', 'margin-bottom:12px;border-radius:var(--rs)') +
+        skEl('70px', '12px', 'margin-bottom:4px') +
+        skEl('100%', '42px', 'margin-bottom:16px;border-radius:var(--rs)') +
+        skEl('100%', '50px', 'border-radius:var(--rs)') +
+    '</div></div>';
+}
+
+function dashboardSkeleton() {
+    return '<div class="content">' +
+        '<div class="sgrid" style="margin-bottom:12px">' +
+            skEl('100%', '70px') + skEl('100%', '70px') +
+            skEl('100%', '70px') + skEl('100%', '70px') +
+        '</div>' +
+        '<div class="card" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">' +
+            '<div>' + skEl('100%', '70px') + '</div>' +
+            '<div style="border-left:1px solid var(--border);padding-left:16px">' + skEl('100%', '70px') + '</div>' +
+        '</div>' +
+        '<div class="card" style="display:flex;flex-direction:column;align-items:center;padding:24px 16px">' +
+            skEl('140px', '100px', 'border-radius:50%') +
+            skEl('120px', '14px', 'margin-top:14px') +
+        '</div>' +
+    '</div>';
+}
+
+function profileSkeleton() {
+    return '<div class="sgrid3" style="margin-bottom:16px">' +
+        skEl('100%', '60px') + skEl('100%', '60px') + skEl('100%', '60px') +
+    '</div>' +
+    skEl('100%', '42px', 'margin-bottom:12px') +
+    skEl('100%', '42px', 'margin-bottom:16px') +
+    skEl('70%', '36px', 'border-radius:20px');
+}
+
 function render() {
     const container = document.getElementById('app');
     if (authState.isLoading) {
-        container.innerHTML = '<div class="empty" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center"><p>Cargando...</p></div>';
+        container.innerHTML = authSkeleton();
+        return;
+    }
+    if (appState.isLoading) {
+        container.innerHTML = dashboardSkeleton();
         return;
     }
     container.innerHTML = authState.currentUser ? renderApp() : renderAuthScreen();
@@ -646,11 +698,22 @@ function renderPredictTab(now, heatmap, todayPredictions) {
 }
 
 function communitySkeleton() {
-    return `<div class="content" style="padding:16px">
-        <div class="sk-card"></div>
-        <div class="sk-card" style="height:50px"></div>
-        <div class="sk-card" style="height:90px"></div>
-    </div>`;
+    return '<div class="content">' +
+        '<div class="community-totals-grid" style="margin-bottom:12px">' +
+            skEl('100%', '70px') + skEl('100%', '70px') +
+        '</div>' +
+        '<div class="card" style="margin-bottom:12px">' +
+            skEl('80px', '10px', 'margin-bottom:10px') +
+            skEl('100%', '24px', 'margin-bottom:6px') +
+            skEl('100%', '24px', 'margin-bottom:6px') +
+            skEl('60%', '24px') +
+        '</div>' +
+        '<div class="card card-last">' +
+            skEl('120px', '10px', 'margin-bottom:10px') +
+            skEl('100%', '28px', 'margin-bottom:6px') +
+            skEl('100%', '28px') +
+        '</div>' +
+    '</div>';
 }
 
 function renderCommunityTab(now) {
@@ -822,7 +885,7 @@ function renderProfileOverlay() {
     const stats = profileState.profileData?.stats;
     let content;
     if (profileState.isLoading) {
-        content = `<p style="color:var(--text3);font-size:14px">Cargando...</p>`;
+        content = profileSkeleton();
     } else if (profileState.profileData) {
         const savedMessage    = profileState.changesSaved    ? `<div style="color:var(--grn-t);font-size:13px;margin-bottom:10px">&#10003; Cambios guardados</div>` : '';
         const passwordSuccess = profileState.passwordUpdated ? `<div style="color:var(--grn-t);font-size:13px;margin-bottom:8px">&#10003; Contraseña actualizada</div>` : '';
