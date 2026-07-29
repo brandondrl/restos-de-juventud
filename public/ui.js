@@ -889,10 +889,12 @@ function showToast(msg, type = 'success') {
                 { type: 'success', backgroundColor: '#22c55e', icon: false },
                 { type: 'error', backgroundColor: '#ef4444', icon: false },
                 { type: 'warn', backgroundColor: '#f59e0b', icon: false },
+                { type: 'info', backgroundColor: '#3b82f6', icon: false },
             ]
         });
     }
     if (type === 'error') _toast.error(msg);
     else if (type === 'warn') _toast.open({ type: 'warn', message: msg });
+    else if (type === 'info') _toast.open({ type: 'info', message: msg });
     else _toast.success(msg);
 }
