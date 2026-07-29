@@ -361,6 +361,13 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
                     ${skEl('90%','18px')}${skEl('70%','16px','margin-top:6px')}
                 </div>
             </div>
+            <div class="card" style="margin-bottom:12px">
+                <div class="slabel">RIESGO DE DOBLE CORTE</div>
+                <div style="display:flex;align-items:baseline;gap:8px">
+                    ${skEl('50px','28px')}${skEl('200px','16px')}
+                </div>
+                <div style="margin-top:4px">${skEl('180px','14px')}</div>
+            </div>
             <div class="sgrid">
                 ${[1,2,3,4].map(() =>
                     `<div class="scard">${skEl('60%','24px')}${skEl('50%','16px','margin-top:4px')}${skEl('40%','14px','margin-top:2px')}</div>`
@@ -373,6 +380,15 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
                         `<div class="scard">${skEl('40%','24px')}${skEl('50%','16px','margin-top:4px')}</div>`
                     ).join('')}
                 </div>
+            </div>
+            <div class="rgrid">
+                ${['CORTE MÁS LARGO','DÍA MÁS AFECTADO','HORA PICO HISTÓRICA'].map(label =>
+                    '<div class="rcard">' +
+                        '<div class="slabel">' + label + '</div>' +
+                        skEl(label === 'HORA PICO HISTÓRICA' ? '50px' : '80px', '22px', 'margin-top:5px') +
+                        skEl('100%','16px','margin-top:3px') +
+                    '</div>'
+                ).join('')}
             </div>
             <div class="card" style="margin-bottom:12px">
                 <div class="slabel">ÍNDICE DE ÁNIMO ANTE CORTES</div>
