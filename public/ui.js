@@ -5,7 +5,8 @@ function buildMoodPicker() {
         const labelColor  = isSelected ? mood.color : 'var(--text3)';
         return `<button class="mood-btn${isSelected ? ' selected' : ''}"
             style="border-color:${borderColor}"
-            onclick="appState.selectedMood = appState.selectedMood === ${mood.value} ? null : ${mood.value}; render()">
+            data-mood-value="${mood.value}"
+            onclick="selectMood(${mood.value})">
             <div>${mood.emoji}</div>
             <div style="color:${labelColor}">${mood.label}</div>
         </button>`;
@@ -258,9 +259,15 @@ function renderApp() {
     const now = new Date();
     const { outages, activeOutage, currentTab } = appState;
     const minutesWithoutPower = activeOutage ? (now - new Date(activeOutage.start)) / 60000 : 0;
-    const heatmap          = buildHeatmap(outages);
-    const statistics       = computeStatistics(outages);
-    const moodData         = computeAverageMood(outages);
+    if (appState._cacheVersion !== appState._cachedVersion) {
+        appState._cachedHeatmap    = buildHeatmap(outages);
+        appState._cachedStatistics = computeStatistics(outages);
+        appState._cachedMoodData   = computeAverageMood(outages);
+        appState._cachedVersion    = appState._cacheVersion;
+    }
+    const heatmap          = appState._cachedHeatmap;
+    const statistics       = appState._cachedStatistics;
+    const moodData         = appState._cachedMoodData;
     const todayPredictions = heatmap
         ? Array.from({ length: 24 }, (_, hour) => ({ hour, ...(heatmap[`${caracasGetDay(now)}_${hour}`] || { probability: 0, confidence: 0 }) }))
         : [];
@@ -318,7 +325,7 @@ function renderApp() {
 
 function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions, forecast, minutesWithoutPower) {
     const dayName          = DAYS_FULL[caracasGetDay(now)].toUpperCase();
-    const tomorrowForecast = getTomorrowForecast(appState.outages);
+    const tomorrowForecast = getTomorrowForecast(appState.outages, heatmap);
     let forecastContent;
     if (forecast.type === 'nodata') {
         const progress  = computeTrainingProgress(appState.outages);
@@ -762,9 +769,10 @@ function renderHistoryTab(now) {
         if (isEditing) {
             const editMoodButtons = MOOD_OPTIONS.map(mood => {
                 const sel = appState.editMood === mood.value;
-                return `<button class="mood-btn${sel ? ' selected' : ''}"
+                return `<button class="mood-btn edit-mood-btn${sel ? ' selected' : ''}"
                     style="border-color:${sel ? mood.color : 'var(--border)'}"
-                    onclick="appState.editMood = appState.editMood === ${mood.value} ? null : ${mood.value}; render()">
+                    data-mood-value="${mood.value}"
+                    onclick="selectEditMood(${mood.value})">
                     <div>${mood.emoji}</div>
                     <div style="color:${sel ? mood.color : 'var(--text3)'}">${mood.label}</div>
                 </button>`;

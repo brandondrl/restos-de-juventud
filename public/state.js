@@ -40,6 +40,7 @@ var appState = {
     editNotes:        '',
     historyPage:      1,
     selectedMood:     null,
+    _cacheVersion:    0,
 };
 
 var profileState = {

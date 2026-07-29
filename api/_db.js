@@ -17,7 +17,10 @@ function getSql() {
   });
 }
 
+let _dbInitialized = false;
+
 async function initDb(sql) {
+  if (_dbInitialized) return;
   await sql`CREATE TABLE IF NOT EXISTS _migrations (
     name TEXT PRIMARY KEY,
     applied_at TEXT DEFAULT (NOW()::text)
@@ -47,6 +50,7 @@ async function initDb(sql) {
       timestamp: new Date().toISOString(),
     }));
   }
+  _dbInitialized = true;
 }
 
 module.exports = { getSql, initDb };
