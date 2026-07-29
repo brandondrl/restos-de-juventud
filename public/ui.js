@@ -511,7 +511,7 @@ function renderLogTab(minutesWithoutPower) {
         ${buildMoodPicker()}
         <textarea class="notes-input" maxlength="120" placeholder="Nota opcional..."
             oninput="appState.endNotes = this.value">${escapeHtml(appState.endNotes)}</textarea>
-        <button class="bmain bsuccess" style="margin-top:10px" onclick="endOutage()">${ICONS.bulb}Volvió la luz</button>
+        <button class="bmain bsuccess" style="margin-top:10px" onclick="endOutage()" ${appState._saving ? 'disabled' : ''}>${appState._saving ? ICONS.clock + 'Guardando...' : ICONS.bulb + 'Volvió la luz'}</button>
     </div>`;
     let survivalCard = '';
     if (activeOutage) {
@@ -581,7 +581,7 @@ function renderLogTab(minutesWithoutPower) {
             ${buildMoodPicker()}
             <textarea class="notes-input" maxlength="120" placeholder="Nota opcional..."
                 oninput="appState.manualNotes = this.value">${escapeHtml(appState.manualNotes)}</textarea>
-            <button class="bsm" style="margin-top:10px" onclick="saveManualOutage()">Guardar</button>
+            <button class="bsm" style="margin-top:10px" onclick="saveManualOutage()" ${appState._saving ? 'disabled' : ''}>${appState._saving ? 'Guardando...' : 'Guardar'}</button>
         </div>`;
     }
     const toggleIcon = showManualForm ? ICONS.chevUp : ICONS.chevDown;
@@ -645,12 +645,20 @@ function renderPredictTab(now, heatmap, todayPredictions) {
     </div>`;
 }
 
+function communitySkeleton() {
+    return `<div class="content" style="padding:16px">
+        <div class="sk-card"></div>
+        <div class="sk-card" style="height:50px"></div>
+        <div class="sk-card" style="height:90px"></div>
+    </div>`;
+}
+
 function renderCommunityTab(now) {
     if (!communityState.data && !communityState.isLoading) {
         refreshCommunity();
-        return `<div class="empty"><p>Cargando...</p></div>`;
+        return communitySkeleton();
     }
-    if (communityState.isLoading) return `<div class="empty"><p>Cargando...</p></div>`;
+    if (communityState.isLoading) return communitySkeleton();
     const { active: activeUsers, todayOutages, totals } = communityState.data;
     const myCity = authState.currentUser?.city || '';
     const totalsGrid = `<div class="community-totals-grid">
@@ -758,7 +766,7 @@ function renderHistoryTab(now) {
         const canEdit = !isFluctuation && !isActive && outage.end;
         const deleteControls = isPendingDelete
             ? `<div style="display:flex;gap:4px">
-                <button class="byes" onclick="deleteOutage('${escapeHtml(outage.id)}')">Sí</button>
+                <button class="byes" onclick="deleteOutage('${escapeHtml(outage.id)}')" ${appState._saving ? 'disabled' : ''}>${appState._saving ? 'Borrando...' : 'Sí'}</button>
                 <button class="bno"  onclick="cancelDeleteRequest()">No</button>
               </div>`
             : `<div style="display:flex;gap:4px">
@@ -787,7 +795,7 @@ function renderHistoryTab(now) {
                     <div class="mood-row">${editMoodButtons}</div>
                     <textarea class="notes-input" placeholder="Nota opcional..." maxlength="120" oninput="appState.editNotes = this.value">${escapeHtml(appState.editNotes)}</textarea>
                     <div style="display:flex;gap:8px;margin-top:10px">
-                        <button class="bsm" onclick="saveEditOutage()">Guardar</button>
+                        <button class="bsm" onclick="saveEditOutage()" ${appState._saving ? 'disabled' : ''}>${appState._saving ? 'Guardando...' : 'Guardar'}</button>
                         <button class="bno" onclick="cancelEdit()">Cancelar</button>
                     </div>
                 </div>

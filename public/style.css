@@ -194,6 +194,11 @@ input[type=date]{color-scheme:dark;}
 .disclaimer{margin-top:16px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:var(--rs);font-size:11px;color:var(--text3);line-height:1.6;}
 
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes shimmer{0%,100%{opacity:.3}50%{opacity:.7}}
+
+.sk-card{height:60px;background:var(--bg3);border-radius:var(--rs);margin-bottom:12px;animation:shimmer 1.5s ease-in-out infinite}
+.sk-card:nth-child(2){animation-delay:.2s}
+.sk-card:nth-child(3){animation-delay:.4s}
 
 .community-totals-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
 .community-me-tag{color:var(--amber);font-size:11px;}
