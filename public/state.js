@@ -20,7 +20,7 @@ var appState = {
     outages:       [],
     activeOutage:  null,
     currentTab:    'dashboard',
-    isLoading:     true,
+    isLoading:     false,
     startDate:     getTodayDate(),
     startTime:     getCurrentTime(),
     endDate:       getTodayDate(),
