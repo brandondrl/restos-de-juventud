@@ -122,17 +122,22 @@ async function startOutage() {
 async function endOutage() {
     if (!appState.activeOutage) return;
     if (!appState.selectedMood) { showToast('Selecciona cómo te sientes antes de registrar el regreso.', 'warn'); return; }
+    if (appState._saving) return;
+    appState._saving = true;
+    render();
     var startDate  = new Date(appState.activeOutage.start);
     var startLocal = new Date(caracasDateStr(startDate) + 'T' + caracasTimeStr(startDate));
     var endLocal   = new Date(appState.endDate + 'T' + appState.endTime);
-    if (isNaN(startLocal) || isNaN(endLocal)) { showToast('Fechas inválidas', 'warn'); return; }
+    if (isNaN(startLocal) || isNaN(endLocal)) { appState._saving = false; showToast('Fechas inválidas', 'warn'); render(); return; }
     var midnightCrossing = false;
-    if (endLocal <= startLocal) {
+    if (endLocal < startLocal) {
         endLocal.setDate(endLocal.getDate() + 1);
         midnightCrossing = true;
     }
     if (endLocal <= startLocal) {
+        appState._saving = false;
         showToast('La hora de regreso debe ser posterior a la salida. Usa el botón "Ahora".', 'warn');
+        render();
         return;
     }
     if (midnightCrossing) {
@@ -147,7 +152,7 @@ async function endOutage() {
         notes:            appState.endNotes.trim() || null,
     };
     var response = await http.post('/api/outages', completedOutage);
-    if (!response.ok) { showToast('Error al guardar. Reintenta.', 'error'); return; }
+    if (!response.ok) { appState._saving = false; showToast('Error al guardar. Reintenta.', 'error'); render(); return; }
     await http.delete('/api/active');
     appState.outages.unshift(completedOutage);
     appState._cacheVersion++;
@@ -156,6 +161,7 @@ async function endOutage() {
     appState.endTime      = getCurrentTime();
     appState.selectedMood = null;
     appState.endNotes     = '';
+    appState._saving = false;
     render();
 }
 
@@ -183,8 +189,11 @@ async function saveManualOutage() {
     const { manualDate, manualStartTime, manualEndTime } = appState;
     if (!manualDate) { showToast('Completa todos los campos', 'warn'); return; }
     if (!appState.selectedMood) { showToast('Selecciona cómo te sientes antes de guardar.', 'warn'); return; }
+    if (appState._saving) return;
+    appState._saving = true;
+    render();
     var parsed = parseOutageDateTime(manualDate, manualStartTime, manualEndTime);
-    if (!parsed) { showToast('La hora de fin debe ser posterior al inicio', 'warn'); return; }
+    if (!parsed) { appState._saving = false; showToast('La hora de fin debe ser posterior al inicio', 'warn'); render(); return; }
     const outage = {
         id:               generateId(),
         start:            parsed.start.toISOString(),
@@ -195,7 +204,7 @@ async function saveManualOutage() {
         notes:            appState.manualNotes.trim() || null,
     };
     const response = await http.post('/api/outages', outage);
-    if (!response.ok) { showToast('Error al guardar. Reintenta.', 'error'); return; }
+    if (!response.ok) { appState._saving = false; showToast('Error al guardar. Reintenta.', 'error'); render(); return; }
     appState.outages.unshift(outage);
     appState.outages.sort((a, b) => new Date(b.start) - new Date(a.start));
     appState._cacheVersion++;
@@ -204,15 +213,20 @@ async function saveManualOutage() {
     appState.showManualForm  = false;
     appState.selectedMood    = null;
     appState.manualNotes     = '';
+    appState._saving = false;
     render();
 }
 
 async function deleteOutage(id) {
+    if (appState._saving) return;
+    appState._saving = true;
+    render();
     const response = await http.delete(`/api/outages/${id}`);
-    if (!response.ok) { showToast('Error al borrar. Reintenta.', 'error'); return; }
+    if (!response.ok) { appState._saving = false; showToast('Error al borrar. Reintenta.', 'error'); render(); return; }
     appState.outages       = appState.outages.filter(o => o.id !== id);
     appState._cacheVersion++;
     appState.confirmDeleteId = null;
+    appState._saving = false;
     render();
 }
 
@@ -397,6 +411,9 @@ async function saveEditOutage() {
     const { editOutageId, editDate, editStartTime, editEndTime, editMood, editNotes } = appState;
     var parsed = parseOutageDateTime(editDate, editStartTime, editEndTime);
     if (!parsed) { showToast('La hora de fin debe ser posterior al inicio', 'warn'); return; }
+    if (appState._saving) return;
+    appState._saving = true;
+    render();
     const updated = {
         id: editOutageId,
         start: parsed.start.toISOString(),
@@ -407,10 +424,11 @@ async function saveEditOutage() {
         notes: editNotes.trim() || null,
     };
     const response = await http.post('/api/outages', updated);
-    if (!response.ok) { showToast('Error al guardar. Reintenta.', 'error'); return; }
+    if (!response.ok) { appState._saving = false; showToast('Error al guardar. Reintenta.', 'error'); render(); return; }
     const idx = appState.outages.findIndex(o => o.id === editOutageId);
     if (idx !== -1) { appState.outages[idx] = { ...appState.outages[idx], ...updated }; appState._cacheVersion++; }
     appState.editOutageId = null;
+    appState._saving = false;
     render();
 }
 
