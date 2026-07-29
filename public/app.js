@@ -20,6 +20,7 @@ async function initialize() {
         await loadApplicationData();
     } catch {
         authState.isLoading = false;
+        appState.isLoading = false;
         render();
     }
     setInterval(checkSessionExpiry, 60000);
