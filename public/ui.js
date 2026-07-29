@@ -175,40 +175,10 @@ function authSkeleton() {
     '</div></div>';
 }
 
-function dashboardSkeleton() {
-    return '<div class="content">' +
-        '<div class="sgrid" style="margin-bottom:12px">' +
-            skEl('100%', '70px') + skEl('100%', '70px') +
-            skEl('100%', '70px') + skEl('100%', '70px') +
-        '</div>' +
-        '<div class="card" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">' +
-            '<div>' + skEl('100%', '70px') + '</div>' +
-            '<div style="border-left:1px solid var(--border);padding-left:16px">' + skEl('100%', '70px') + '</div>' +
-        '</div>' +
-        '<div class="card" style="display:flex;flex-direction:column;align-items:center;padding:24px 16px">' +
-            skEl('140px', '100px', 'border-radius:50%') +
-            skEl('120px', '14px', 'margin-top:14px') +
-        '</div>' +
-    '</div>';
-}
-
-function profileSkeleton() {
-    return '<div class="sgrid3" style="margin-bottom:16px">' +
-        skEl('100%', '60px') + skEl('100%', '60px') + skEl('100%', '60px') +
-    '</div>' +
-    skEl('100%', '42px', 'margin-bottom:12px') +
-    skEl('100%', '42px', 'margin-bottom:16px') +
-    skEl('70%', '36px', 'border-radius:20px');
-}
-
 function render() {
     const container = document.getElementById('app');
     if (authState.isLoading) {
         container.innerHTML = authSkeleton();
-        return;
-    }
-    if (appState.isLoading) {
-        container.innerHTML = dashboardSkeleton();
         return;
     }
     container.innerHTML = authState.currentUser ? renderApp() : renderAuthScreen();
@@ -376,6 +346,48 @@ function renderApp() {
 }
 
 function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions, forecast, minutesWithoutPower) {
+    if (appState.isLoading) {
+        const dayName      = DAYS_FULL[caracasGetDay(now)].toUpperCase();
+        const tomorrow     = new Date(now.getTime() + 86400000);
+        const tomorrowName = DAYS_FULL[caracasGetDay(tomorrow)].toUpperCase();
+        return `
+            <div class="forecast-card" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                <div>
+                    <div class="slabel">PRONÓSTICO — ${dayName}</div>
+                    ${skEl('80%','14px')}${skEl('60%','12px','margin-top:8px')}
+                </div>
+                <div style="border-left:1px solid var(--border);padding-left:16px">
+                    <div class="slabel">MAÑANA — ${tomorrowName}</div>
+                    ${skEl('70%','13px')}${skEl('50%','11px','margin-top:6px')}
+                </div>
+            </div>
+            <div class="sgrid">
+                ${[1,2,3,4].map(() =>
+                    `<div class="scard">${skEl('60%','18px')}${skEl('50%','12px','margin-top:4px')}${skEl('40%','10px','margin-top:2px')}</div>`
+                ).join('')}
+            </div>
+            <div class="card card-ora" style="margin-bottom:12px">
+                <div class="slabel" style="color:var(--ora-t)">FLUCTUACIONES</div>
+                <div class="sgrid3">
+                    ${[1,2,3].map(() =>
+                        `<div class="scard">${skEl('40%','16px')}${skEl('50%','12px','margin-top:4px')}</div>`
+                    ).join('')}
+                </div>
+            </div>
+            <div class="card" style="margin-bottom:12px">
+                <div class="slabel">ÍNDICE DE ÁNIMO ANTE CORTES</div>
+                <div style="display:flex;flex-direction:column;align-items:center;padding:12px 0">
+                    ${skEl('140px','100px','border-radius:50%')}
+                    ${skEl('120px','14px','margin-top:12px')}
+                </div>
+            </div>
+            <div class="disclaimer">Herramienta independiente de uso personal. Los datos registrados son exclusivamente tuyos, cifrados en la base de datos y no se cruzan con ningún otro registro. Esta app no pertenece a ningún estudio sociológico, institución ni entidad gubernamental.</div>
+            <div class="disclaimer" style="margin-top:8px;text-align:center">
+                ¿Prefieres registrar desde el teléfono? Usa el bot de Telegram:
+                <a href="https://t.me/RestosDeJuventudBot" target="_blank" style="color:var(--amber);text-decoration:none;font-weight:600">@RestosDeJuventudBot</a>
+            </div>
+            <button class="fab fab-on" onclick="setCurrentTab('log')">${ICONS.plus}</button>`;
+    }
     const dayName          = DAYS_FULL[caracasGetDay(now)].toUpperCase();
     const tomorrowForecast = getTomorrowForecast(appState.outages, heatmap);
     let forecastContent;
@@ -698,22 +710,15 @@ function renderPredictTab(now, heatmap, todayPredictions) {
 }
 
 function communitySkeleton() {
-    return '<div class="content">' +
-        '<div class="community-totals-grid" style="margin-bottom:12px">' +
-            skEl('100%', '70px') + skEl('100%', '70px') +
-        '</div>' +
-        '<div class="card" style="margin-bottom:12px">' +
-            skEl('80px', '10px', 'margin-bottom:10px') +
-            skEl('100%', '24px', 'margin-bottom:6px') +
-            skEl('100%', '24px', 'margin-bottom:6px') +
-            skEl('60%', '24px') +
-        '</div>' +
-        '<div class="card card-last">' +
-            skEl('120px', '10px', 'margin-bottom:10px') +
-            skEl('100%', '28px', 'margin-bottom:6px') +
-            skEl('100%', '28px') +
-        '</div>' +
-    '</div>';
+    return '<div class="community-totals-grid" style="margin-bottom:12px">' +
+        '<div class="scard">' + skEl('50%', '18px') + skEl('60%', '12px', 'margin-top:4px') + '</div>' +
+        '<div class="scard">' + skEl('30%', '18px') + skEl('60%', '12px', 'margin-top:4px') + '</div>' +
+    '</div>' +
+    '<div class="card card-grn" style="margin-bottom:12px;display:flex;align-items:center">' +
+        skEl('16px', '16px', 'border-radius:50%;margin-right:8px') +
+        skEl('160px', '14px') +
+    '</div>' +
+    '<button class="bmore" disabled>&#8635; Cargando...</button>';
 }
 
 function renderCommunityTab(now) {
@@ -885,7 +890,19 @@ function renderProfileOverlay() {
     const stats = profileState.profileData?.stats;
     let content;
     if (profileState.isLoading) {
-        content = profileSkeleton();
+        content = '<div class="sgrid3" style="margin-bottom:16px">' +
+            '<div class="scard">' + skEl('50%','18px') + skEl('60%','12px','margin-top:4px') + '</div>' +
+            '<div class="scard">' + skEl('50%','18px') + skEl('60%','12px','margin-top:4px') + '</div>' +
+            '<div class="scard">' + skEl('30%','18px') + skEl('60%','12px','margin-top:4px') + '</div>' +
+        '</div>' +
+        '<div class="trow" style="margin-bottom:12px">' +
+            '<div class="field" style="margin:0"><label>Ciudad</label>' + skEl('100%','38px') + '</div>' +
+            '<div class="field" style="margin:0"><label>Zona</label>' + skEl('100%','38px') + '</div>' +
+        '</div>' +
+        '<div class="toggle-row">' +
+            '<div><div style="font-size:14px">' + skEl('100px','14px') + '</div><div style="font-size:12px;margin-top:4px">' + skEl('160px','12px') + '</div></div>' +
+            skEl('48px','26px','border-radius:13px') +
+        '</div>';
     } else if (profileState.profileData) {
         const savedMessage    = profileState.changesSaved    ? `<div style="color:var(--grn-t);font-size:13px;margin-bottom:10px">&#10003; Cambios guardados</div>` : '';
         const passwordSuccess = profileState.passwordUpdated ? `<div style="color:var(--grn-t);font-size:13px;margin-bottom:8px">&#10003; Contraseña actualizada</div>` : '';
