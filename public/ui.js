@@ -354,31 +354,31 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
             <div class="forecast-card" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
                 <div>
                     <div class="slabel">PRONÓSTICO — ${dayName}</div>
-                    ${skEl('80%','14px')}${skEl('60%','12px','margin-top:8px')}
+                    ${skEl('100%','20px')}${skEl('80%','16px','margin-top:6px')}${skEl('60%','16px','margin-top:6px')}
                 </div>
                 <div style="border-left:1px solid var(--border);padding-left:16px">
                     <div class="slabel">MAÑANA — ${tomorrowName}</div>
-                    ${skEl('70%','13px')}${skEl('50%','11px','margin-top:6px')}
+                    ${skEl('90%','18px')}${skEl('70%','16px','margin-top:6px')}
                 </div>
             </div>
             <div class="sgrid">
                 ${[1,2,3,4].map(() =>
-                    `<div class="scard">${skEl('60%','18px')}${skEl('50%','12px','margin-top:4px')}${skEl('40%','10px','margin-top:2px')}</div>`
+                    `<div class="scard">${skEl('60%','24px')}${skEl('50%','16px','margin-top:4px')}${skEl('40%','14px','margin-top:2px')}</div>`
                 ).join('')}
             </div>
             <div class="card card-ora" style="margin-bottom:12px">
                 <div class="slabel" style="color:var(--ora-t)">FLUCTUACIONES</div>
                 <div class="sgrid3">
                     ${[1,2,3].map(() =>
-                        `<div class="scard">${skEl('40%','16px')}${skEl('50%','12px','margin-top:4px')}</div>`
+                        `<div class="scard">${skEl('40%','24px')}${skEl('50%','16px','margin-top:4px')}</div>`
                     ).join('')}
                 </div>
             </div>
             <div class="card" style="margin-bottom:12px">
                 <div class="slabel">ÍNDICE DE ÁNIMO ANTE CORTES</div>
                 <div style="display:flex;flex-direction:column;align-items:center;padding:12px 0">
-                    ${skEl('140px','100px','border-radius:50%')}
-                    ${skEl('120px','14px','margin-top:12px')}
+                    ${skEl('150px','150px','border-radius:50%')}
+                    ${skEl('120px','16px','margin-top:12px')}
                 </div>
             </div>
             <div class="disclaimer">Herramienta independiente de uso personal. Los datos registrados son exclusivamente tuyos, cifrados en la base de datos y no se cruzan con ningún otro registro. Esta app no pertenece a ningún estudio sociológico, institución ni entidad gubernamental.</div>
