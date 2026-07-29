@@ -57,6 +57,7 @@ async function loadApplicationData() {
         http.get('/api/active'),
     ]);
     appState.outages      = outages;
+    appState._cacheVersion++;
     appState.activeOutage = activeOutage;
     appState.isLoading    = false;
     if (activeOutage) {
@@ -102,6 +103,7 @@ async function logout() {
     await http.post('/api/auth/logout', {});
     authState.currentUser = null;
     appState.outages      = [];
+    appState._cacheVersion++;
     appState.activeOutage = null;
     profileState.isOpen   = false;
     render();
@@ -148,6 +150,7 @@ async function endOutage() {
     if (!response.ok) { showToast('Error al guardar. Reintenta.', 'error'); return; }
     await http.delete('/api/active');
     appState.outages.unshift(completedOutage);
+    appState._cacheVersion++;
     appState.activeOutage = null;
     appState.endDate      = getTodayDate();
     appState.endTime      = getCurrentTime();
@@ -164,6 +167,7 @@ async function recordFluctuation() {
     if (!response.ok) { showToast('Error al registrar. Reintenta.', 'error'); return; }
     appState.outages.unshift(fluctuation);
     appState.outages.sort((a, b) => new Date(b.start) - new Date(a.start));
+    appState._cacheVersion++;
     const button = document.getElementById('fluctuation-button');
     if (button) {
         button.textContent = '✓ Registrada';
@@ -194,6 +198,7 @@ async function saveManualOutage() {
     if (!response.ok) { showToast('Error al guardar. Reintenta.', 'error'); return; }
     appState.outages.unshift(outage);
     appState.outages.sort((a, b) => new Date(b.start) - new Date(a.start));
+    appState._cacheVersion++;
     appState.manualStartTime = '00:00';
     appState.manualEndTime   = '00:00';
     appState.showManualForm  = false;
@@ -206,6 +211,7 @@ async function deleteOutage(id) {
     const response = await http.delete(`/api/outages/${id}`);
     if (!response.ok) { showToast('Error al borrar. Reintenta.', 'error'); return; }
     appState.outages       = appState.outages.filter(o => o.id !== id);
+    appState._cacheVersion++;
     appState.confirmDeleteId = null;
     render();
 }
@@ -403,7 +409,7 @@ async function saveEditOutage() {
     const response = await http.post('/api/outages', updated);
     if (!response.ok) { showToast('Error al guardar. Reintenta.', 'error'); return; }
     const idx = appState.outages.findIndex(o => o.id === editOutageId);
-    if (idx !== -1) appState.outages[idx] = { ...appState.outages[idx], ...updated };
+    if (idx !== -1) { appState.outages[idx] = { ...appState.outages[idx], ...updated }; appState._cacheVersion++; }
     appState.editOutageId = null;
     render();
 }
@@ -511,6 +517,37 @@ async function unsubscribePush() {
         if (sub) await sub.unsubscribe();
     }
     await http.delete('/api/push');
+}
+
+function selectMood(value) {
+    appState.selectedMood = appState.selectedMood === value ? null : value;
+    document.querySelectorAll('.mood-btn').forEach(btn => {
+        var val = parseInt(btn.dataset.moodValue, 10);
+        if (isNaN(val)) return;
+        var isSelected = appState.selectedMood === val;
+        var mood = MOOD_OPTIONS.find(function(m) { return m.value === val; });
+        if (!mood) return;
+        btn.classList.toggle('selected', isSelected);
+        btn.style.borderColor = isSelected ? mood.color : 'var(--border)';
+        var label = btn.querySelector('div:last-child');
+        if (label) label.style.color = isSelected ? mood.color : 'var(--text3)';
+    });
+}
+
+function selectEditMood(value) {
+    appState.editMood = appState.editMood === value ? null : value;
+    var editBtns = document.querySelectorAll('.edit-mood-btn');
+    editBtns.forEach(function(btn) {
+        var val = parseInt(btn.dataset.moodValue, 10);
+        if (isNaN(val)) return;
+        var isSelected = appState.editMood === val;
+        var mood = MOOD_OPTIONS.find(function(m) { return m.value === val; });
+        if (!mood) return;
+        btn.classList.toggle('selected', isSelected);
+        btn.style.borderColor = isSelected ? mood.color : 'var(--border)';
+        var label = btn.querySelector('div:last-child');
+        if (label) label.style.color = isSelected ? mood.color : 'var(--text3)';
+    });
 }
 
 initialize();

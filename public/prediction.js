@@ -373,12 +373,12 @@ function computeTrainingProgress(outages) {
     return { weeks: Math.floor(weeksElapsed), percent, isReady: weeksElapsed >= WEEKS_FOR_FULL_CONFIDENCE };
 }
 
-function getTomorrowForecast(outages) {
+function getTomorrowForecast(outages, existingHeatmap) {
     const now = new Date();
     const tomorrow = new Date(now.getTime() + 86400000);
     const tomorrowDay = caracasGetDay(tomorrow);
 
-    const heatmap = buildHeatmap(outages);
+    const heatmap = existingHeatmap || buildHeatmap(outages);
     if (!heatmap) return null;
 
     const tomorrowPredictions = Array.from({ length: 24 }, (_, hour) => ({
