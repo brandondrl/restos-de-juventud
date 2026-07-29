@@ -120,21 +120,31 @@ async function startOutage() {
 async function endOutage() {
     if (!appState.activeOutage) return;
     if (!appState.selectedMood) { showToast('Selecciona cómo te sientes antes de registrar el regreso.', 'warn'); return; }
-    const endTime   = new Date(`${appState.endDate}T${appState.endTime}`);
-    const startTime = new Date(appState.activeOutage.start);
-    if (endTime <= startTime) {
-        showToast(`La hora de regreso (${appState.endTime}) debe ser posterior a la salida (${formatTime(appState.activeOutage.start)}). Usa el botón "Ahora".`, 'warn');
+    var startDate  = new Date(appState.activeOutage.start);
+    var startLocal = new Date(caracasDateStr(startDate) + 'T' + caracasTimeStr(startDate));
+    var endLocal   = new Date(appState.endDate + 'T' + appState.endTime);
+    if (isNaN(startLocal) || isNaN(endLocal)) { showToast('Fechas inválidas', 'warn'); return; }
+    var midnightCrossing = false;
+    if (endLocal <= startLocal) {
+        endLocal.setDate(endLocal.getDate() + 1);
+        midnightCrossing = true;
+    }
+    if (endLocal <= startLocal) {
+        showToast('La hora de regreso debe ser posterior a la salida. Usa el botón "Ahora".', 'warn');
         return;
     }
-    const completedOutage = {
+    if (midnightCrossing) {
+        showToast('La hora de finalización se aplicará al día siguiente (' + caracasDateStr(endLocal) + ') porque cruza la medianoche.', 'info');
+    }
+    var completedOutage = {
         ...appState.activeOutage,
-        end:              endTime.toISOString(),
-        duration_minutes: (endTime - startTime) / 60000,
+        end:              endLocal.toISOString(),
+        duration_minutes: (endLocal - startLocal) / 60000,
         type:             'corte',
         mood:             appState.selectedMood || null,
         notes:            appState.endNotes.trim() || null,
     };
-    const response = await http.post('/api/outages', completedOutage);
+    var response = await http.post('/api/outages', completedOutage);
     if (!response.ok) { showToast('Error al guardar. Reintenta.', 'error'); return; }
     await http.delete('/api/active');
     appState.outages.unshift(completedOutage);
@@ -169,22 +179,13 @@ async function saveManualOutage() {
     const { manualDate, manualStartTime, manualEndTime } = appState;
     if (!manualDate) { showToast('Completa todos los campos', 'warn'); return; }
     if (!appState.selectedMood) { showToast('Selecciona cómo te sientes antes de guardar.', 'warn'); return; }
-    const startTime = new Date(`${manualDate}T${manualStartTime}`);
-    let endTime   = new Date(`${manualDate}T${manualEndTime}`);
-    if (!isNaN(startTime) && !isNaN(endTime) && endTime <= startTime) {
-        const nextDay = new Date(startTime);
-        nextDay.setDate(nextDay.getDate() + 1);
-        endTime = new Date(`${nextDay.toISOString().slice(0, 10)}T${manualEndTime}`);
-    }
-    if (isNaN(startTime) || isNaN(endTime) || endTime <= startTime) {
-        showToast('La hora de fin debe ser posterior al inicio', 'warn');
-        return;
-    }
+    var parsed = parseOutageDateTime(manualDate, manualStartTime, manualEndTime);
+    if (!parsed) { showToast('La hora de fin debe ser posterior al inicio', 'warn'); return; }
     const outage = {
         id:               generateId(),
-        start:            startTime.toISOString(),
-        end:              endTime.toISOString(),
-        duration_minutes: (endTime - startTime) / 60000,
+        start:            parsed.start.toISOString(),
+        end:              parsed.end.toISOString(),
+        duration_minutes: parsed.durationMinutes,
         type:             'corte',
         mood:             appState.selectedMood || null,
         notes:            appState.manualNotes.trim() || null,
@@ -388,22 +389,13 @@ function cancelEdit() { appState.editOutageId = null; render(); }
 
 async function saveEditOutage() {
     const { editOutageId, editDate, editStartTime, editEndTime, editMood, editNotes } = appState;
-    const startTime = new Date(`${editDate}T${editStartTime}`);
-    let endTime = new Date(`${editDate}T${editEndTime}`);
-    if (!isNaN(startTime) && !isNaN(endTime) && endTime <= startTime) {
-        const nextDay = new Date(startTime);
-        nextDay.setDate(nextDay.getDate() + 1);
-        endTime = new Date(`${nextDay.toISOString().slice(0, 10)}T${editEndTime}`);
-    }
-    if (isNaN(startTime) || isNaN(endTime) || endTime <= startTime) {
-        showToast('La hora de fin debe ser posterior al inicio', 'warn');
-        return;
-    }
+    var parsed = parseOutageDateTime(editDate, editStartTime, editEndTime);
+    if (!parsed) { showToast('La hora de fin debe ser posterior al inicio', 'warn'); return; }
     const updated = {
         id: editOutageId,
-        start: startTime.toISOString(),
-        end: endTime.toISOString(),
-        duration_minutes: (endTime - startTime) / 60000,
+        start: parsed.start.toISOString(),
+        end: parsed.end.toISOString(),
+        duration_minutes: parsed.durationMinutes,
         type: 'corte',
         mood: editMood,
         notes: editNotes.trim() || null,

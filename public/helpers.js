@@ -91,6 +91,17 @@ function formatDuration(totalMinutes) {
     return hours ? `${hours}h` : `${minutes}m`;
 }
 
+function parseOutageDateTime(dateStr, startTimeStr, endTimeStr) {
+    var start = new Date(dateStr + 'T' + startTimeStr);
+    var end   = new Date(dateStr + 'T' + endTimeStr);
+    if (isNaN(start) || isNaN(end)) return null;
+    if (end <= start) {
+        end.setDate(end.getDate() + 1);
+    }
+    if (end <= start) return null;
+    return { start: start, end: end, durationMinutes: (end - start) / 60000 };
+}
+
 function formatDate(isoString) {
     if (!isoString) return '';
     return caracasLocaleDateStr(new Date(isoString), 'es-ES', { weekday: 'short', day: '2-digit', month: '2-digit', year: '2-digit' });
