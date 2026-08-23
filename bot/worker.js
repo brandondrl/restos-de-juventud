@@ -31,10 +31,42 @@ const MOOD_MAP = { '1': 1, '2': 2, '3': 3, '4': 4, '5': 5 };
 const MOOD_LABELS = { 1: '😡 Arrecho', 2: '😢 Triste', 3: '😤 Frustrado', 4: '😐 Normal', 5: '😊 Feliz' };
 
 const REMINDERS = [
-  { minutes: 120, msg: (d) => `⚡ Llevas *${d}* sin luz. Busca cotufas, va pa' rato.` },
-  { minutes: 240, msg: (d) => `🕯️ *${d}* sin luz. Ya esto es una odisea. Acomodaste el pasaporte?` },
-  { minutes: 300, msg: (d) => `😤 *${d}* sin luz... ¿y el operador? Respira, ya debe faltar poco (aja xD).` },
-  { minutes: 360, msg: (d) => `💀 *${d}* SIN LUZ. Vergación nada que vuelve. Racionamiento o aguebamiento? ni modo...` },
+  {
+    minutes: 120,
+    messages: [
+      (d) => `⚡ Llevas *${d}* sin luz. Busca cotufas, va pa' rato.`,
+      (d) => `⚡ *${d}* sin luz. Momento perfecto para cargar el teléfono... ah no, espera.`,
+      (d) => `⚡ Vas *${d}* a oscuras. ¿Ya chequeaste si el freezer sobrevive?`,
+      (d) => `⚡ *${d}* sin luz. Nivel de paciencia: ""todavía aceptable""(que jode).`,
+    ],
+  },
+  {
+    minutes: 240,
+    messages: [
+      (d) => `🕯️ *${d}* sin luz. Ya esto es una odisea. Acomodaste el pasaporte?`,
+      (d) => `🕯️ *${d}* en la penumbra. Las velas ya tienen nombre propio.`,
+      (d) => `🕯️ Llevas *${d}*. El calor ya pidió la visa pa' irse.`,
+      (d) => `🕯️ *${d}* sin luz y contando. ¿El plan era dormir temprano o qué?`,
+    ],
+  },
+  {
+    minutes: 300,
+    messages: [
+      (d) => `😤 *${d}* sin luz... ¿y el operador? Respira, ya debe faltar poco (aja xD).`,
+      (d) => `😤 *${d}* y ni una señal del operador. La esperanza es lo último que se pierde.`,
+      (d) => `😤 *${d}* sin luz. Ya hasta el hielo de la nevera levantó bandera blanca.`,
+      (d) => `😤 *${d}* sin luz. El silencio del operador ya es un arte.`,
+    ],
+  },
+  {
+    minutes: 360,
+    messages: [
+      (d) => `💀 *${d}* SIN LUZ. Vergación nada que vuelve. Racionamiento o aguebamiento? ni modo...`,
+      (d) => `💀 *${d}* A OSCURAS. Esto ya no es corte, es estilo de vida.`,
+      (d) => `💀 *${d}* sin luz. Hasta las velas ya están cansadas.`,
+      (d) => `💀 *${d}* SIN LUZ. Ya puedes ponerle nombre a los mosquitos.`,
+    ],
+  },
 ];
 
 const STRINGS = {
@@ -604,7 +636,9 @@ async function handleCron(env) {
       for (const reminder of REMINDERS) {
         if (elapsedMins >= reminder.minutes && !sentSet.has(reminder.minutes)) {
           sentSet.add(reminder.minutes);
-          await tg(env.BOT_TOKEN, telegram_chat_id, reminder.msg(fmtDuration(elapsedMins)));
+          const pool = reminder.messages;
+          const pick = pool[Math.floor(Math.random() * pool.length)];
+          await tg(env.BOT_TOKEN, telegram_chat_id, pick(fmtDuration(elapsedMins)));
           sentNew = true;
           break;
         }
@@ -686,7 +720,7 @@ async function handleCron(env) {
     if (localHour === 9 && localMinute < 5) {
       await sendAlert(
         `${notifBase}:morning`,
-        `🌅 *Buenos días*\n\nSegún tu historial, hoy hay riesgo entre las *${risk.rangeText}*\nPico: *${String(risk.peak.h).padStart(2,'0')}:00* (${Math.round(risk.peak.prob * 100)}%)\n\n_Ojo pelao._`,
+        `🌅 *Buenos días*\n\nSegún tu historial, hoy hay riesgo entre las *${risk.rangeText}*\nPico: *${String(risk.peak.h).padStart(2,'0')}:00* (${Math.round(risk.peak.prob * 100)}%)\n\n_Ojo al piojo y pilas con el bombillo_`,
         '🌅 Riesgo de corte hoy',
         `Según tu historial: ${risk.rangeText} — pico ${Math.round(risk.peak.prob * 100)}%`
       );
