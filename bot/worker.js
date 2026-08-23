@@ -720,7 +720,7 @@ async function handleCron(env) {
     if (localHour === 9 && localMinute < 5) {
       await sendAlert(
         `${notifBase}:morning`,
-        `🌅 *Buenos días*\n\nSegún tu historial, hoy hay riesgo entre las *${risk.rangeText}*\nPico: *${String(risk.peak.h).padStart(2,'0')}:00* (${Math.round(risk.peak.prob * 100)}%)\n\n_Ojo pelao._`,
+        `🌅 *Buenos días*\n\nSegún tu historial, hoy hay riesgo entre las *${risk.rangeText}*\nPico: *${String(risk.peak.h).padStart(2,'0')}:00* (${Math.round(risk.peak.prob * 100)}%)\n\n_Ojo al piojo y pilas con el bombillo_`,
         '🌅 Riesgo de corte hoy',
         `Según tu historial: ${risk.rangeText} — pico ${Math.round(risk.peak.prob * 100)}%`
       );
