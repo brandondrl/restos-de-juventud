@@ -761,7 +761,10 @@ function renderCommunityTab(now) {
                     <div class="community-user-name">@${escapeHtml(user.username)}${meTag}</div>
                     <div class="community-user-location">${escapeHtml(user.city)}${user.zone ? ' · ' + escapeHtml(user.zone) : ''}</div>
                 </div>
-                <div class="community-user-elapsed">${formatDuration(minutesActive)}</div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end">
+                    <div class="community-user-elapsed">${formatDuration(minutesActive)}</div>
+                    <div class="community-user-location" style="margin-top:2px">desde las ${formatTime(user.start_time)}</div>
+                </div>
             </div>`;
         }).join('');
         activeUsersCard = `<div class="card" style="margin-bottom:12px"><div class="slabel">SIN LUZ AHORA</div>${userRows}</div>`;
