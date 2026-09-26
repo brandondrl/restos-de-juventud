@@ -1,0 +1,115 @@
+{
+  "description": "6 semanas regulares (lunes tarde + jueves mediodía)",
+  "now": "2026-02-16T12:00:00.000Z",
+  "activeOutage": null,
+  "outages": [
+    {
+      "id": "b-lun0",
+      "start": "2026-01-05T18:10:00.000Z",
+      "end": "2026-01-05T19:40:00.000Z",
+      "duration_minutes": 90,
+      "type": "corte",
+      "mood": 3,
+      "notes": ""
+    },
+    {
+      "id": "b-jue0",
+      "start": "2026-01-08T14:40:00.000Z",
+      "end": "2026-01-08T18:00:00.000Z",
+      "duration_minutes": 200,
+      "type": "corte",
+      "mood": 3,
+      "notes": ""
+    },
+    {
+      "id": "b-lun1",
+      "start": "2026-01-12T18:10:00.000Z",
+      "end": "2026-01-12T19:40:00.000Z",
+      "duration_minutes": 90,
+      "type": "corte",
+      "mood": 3,
+      "notes": ""
+    },
+    {
+      "id": "b-jue1",
+      "start": "2026-01-15T14:40:00.000Z",
+      "end": "2026-01-15T18:00:00.000Z",
+      "duration_minutes": 200,
+      "type": "corte",
+      "mood": 3,
+      "notes": ""
+    },
+    {
+      "id": "b-lun2",
+      "start": "2026-01-19T18:10:00.000Z",
+      "end": "2026-01-19T19:40:00.000Z",
+      "duration_minutes": 90,
+      "type": "corte",
+      "mood": 3,
+      "notes": ""
+    },
+    {
+      "id": "b-jue2",
+      "start": "2026-01-22T14:40:00.000Z",
+      "end": "2026-01-22T18:00:00.000Z",
+      "duration_minutes": 200,
+      "type": "corte",
+      "mood": 3,
+      "notes": ""
+    },
+    {
+      "id": "b-lun3",
+      "start": "2026-01-26T18:10:00.000Z",
+      "end": "2026-01-26T19:40:00.000Z",
+      "duration_minutes": 90,
+      "type": "corte",
+      "mood": 3,
+      "notes": ""
+    },
+    {
+      "id": "b-jue3",
+      "start": "2026-01-29T14:40:00.000Z",
+      "end": "2026-01-29T18:00:00.000Z",
+      "duration_minutes": 200,
+      "type": "corte",
+      "mood": 3,
+      "notes": ""
+    },
+    {
+      "id": "b-lun4",
+      "start": "2026-02-02T18:10:00.000Z",
+      "end": "2026-02-02T19:40:00.000Z",
+      "duration_minutes": 90,
+      "type": "corte",
+      "mood": 3,
+      "notes": ""
+    },
+    {
+      "id": "b-jue4",
+      "start": "2026-02-05T14:40:00.000Z",
+      "end": "2026-02-05T18:00:00.000Z",
+      "duration_minutes": 200,
+      "type": "corte",
+      "mood": 3,
+      "notes": ""
+    },
+    {
+      "id": "b-lun5",
+      "start": "2026-02-09T18:10:00.000Z",
+      "end": "2026-02-09T19:40:00.000Z",
+      "duration_minutes": 90,
+      "type": "corte",
+      "mood": 3,
+      "notes": ""
+    },
+    {
+      "id": "b-jue5",
+      "start": "2026-02-12T14:40:00.000Z",
+      "end": "2026-02-12T18:00:00.000Z",
+      "duration_minutes": 200,
+      "type": "corte",
+      "mood": 3,
+      "notes": ""
+    }
+  ]
+}

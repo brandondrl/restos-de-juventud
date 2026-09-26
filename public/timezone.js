@@ -73,9 +73,9 @@ function getStartOfDayUTC(date, tz) {
     return new Date(Date.UTC(c.year, c.month - 1, c.day, offsetHours, 0, 0));
 }
 
-function getWeekStartUTC(tz) {
+function getWeekStartUTC(tz, now) {
     tz = tz || DEFAULT_TZ;
-    var now = new Date();
+    now = now || new Date();
     var c = tzComponents(now, tz);
     var daysBack = c.dayOfWeek === 0 ? 6 : c.dayOfWeek - 1;
     var mondayDay = c.day - daysBack;
@@ -83,21 +83,21 @@ function getWeekStartUTC(tz) {
     return new Date(Date.UTC(c.year, c.month - 1, mondayDay, offsetHours, 0, 0));
 }
 
-function getTodayStartUTC(tz) {
-    return getStartOfDayUTC(new Date(), tz);
+function getTodayStartUTC(tz, now) {
+    return getStartOfDayUTC(now || new Date(), tz);
 }
 
-function getMonthStartUTC(tz) {
+function getMonthStartUTC(tz, now) {
     tz = tz || DEFAULT_TZ;
-    var now = new Date();
+    now = now || new Date();
     var c = tzComponents(now, tz);
     var offsetHours = -tzOffsetMs(now, tz) / 3600000;
     return new Date(Date.UTC(c.year, c.month - 1, 1, offsetHours, 0, 0));
 }
 
-function getYearStartUTC(tz) {
+function getYearStartUTC(tz, now) {
     tz = tz || DEFAULT_TZ;
-    var now = new Date();
+    now = now || new Date();
     var c = tzComponents(now, tz);
     var offsetHours = -tzOffsetMs(now, tz) / 3600000;
     return new Date(Date.UTC(c.year, 0, 1, offsetHours, 0, 0));
@@ -151,4 +151,5 @@ if (typeof global !== 'undefined' && typeof global.global !== 'undefined') {
     global.getTodayStartUTC = getTodayStartUTC;
     global.getMonthStartUTC = getMonthStartUTC;
     global.getYearStartUTC = getYearStartUTC;
+    global.getStartOfDayUTC = getStartOfDayUTC;
 }

@@ -25,7 +25,13 @@ function getHourlySlots(outage) {
     return slots;
 }
 
-function buildHeatmap(outages) {
+// `now` y `options.windowDays` son opcionales; sin ellos el resultado es el de siempre
+// (reloj real y ventana de HEATMAP_WINDOW_DAYS). El backtest los usa para entrenar en el pasado.
+function buildHeatmap(outages, now, options = {}) {
+    const reference = now ? new Date(now) : null;
+    const currentTime = () => reference ? new Date(reference) : new Date();
+    const windowDays = options.windowDays || HEATMAP_WINDOW_DAYS;
+
     const completed = outages.filter(
         o => o.start && o.end && (o.type || 'corte') === 'corte'
     );
@@ -34,8 +40,8 @@ function buildHeatmap(outages) {
     const allDates = completed.flatMap(o => [new Date(o.start), new Date(o.end)]);
     const earliestDate = new Date(Math.min(...allDates.map(d => d.getTime())));
 
-    const windowStart = new Date();
-    windowStart.setUTCDate(windowStart.getUTCDate() - HEATMAP_WINDOW_DAYS);
+    const windowStart = currentTime();
+    windowStart.setUTCDate(windowStart.getUTCDate() - windowDays);
     windowStart.setUTCHours(0, 0, 0, 0);
 
     const effectiveStart = new Date(Math.max(earliestDate.getTime(), windowStart.getTime()));
@@ -45,7 +51,7 @@ function buildHeatmap(outages) {
 
     const cursor = new Date(effectiveStart);
     cursor.setUTCHours(0, 0, 0, 0);
-    while (cursor <= new Date()) {
+    while (cursor <= currentTime()) {
         for (let hour = 0; hour < 24; hour++) {
             const slotDate = new Date(cursor.getTime() + hour * 3600000);
             const key = `${caracasGetDay(slotDate)}_${caracasGetHours(slotDate)}`;
@@ -218,12 +224,21 @@ function getOnsetHint(outages, dayOfWeek, hour) {
     return 'últimos 15 min';
 }
 
-function getDayForecast(predictions, outages) {
+// Regla única de "hora de riesgo" del forecast (la usan también el backtest y el marcador).
+function isRiskyHour(prediction, threshold = RISK_THRESHOLD) {
+    if (adjustedProbability(prediction.probability, prediction.confidence) < threshold) return false;
+    if (prediction.hour <= 4 && (prediction.startHits || 0) === 0) return false;
+    return true;
+}
+
+// `options.now` y `options.activeOutage` son opcionales; sin ellos se usa el reloj real
+// y `window._activeOutage`, como siempre.
+function getDayForecast(predictions, outages, options = {}) {
     const hasEnoughData = predictions.some(p => p.confidence >= 0.15);
     if (!hasEnoughData) return { type: 'nodata' };
 
-    const now = new Date();
-    const startOfToday = getTodayStartUTC();
+    const now = options.now ? new Date(options.now) : new Date();
+    const startOfToday = getTodayStartUTC(undefined, now);
     const caracasNowHour = caracasGetHours(now);
     const caracasNowDay = caracasGetDay(now);
 
@@ -231,13 +246,12 @@ function getDayForecast(predictions, outages) {
         o.end && (o.type || 'corte') === 'corte' && new Date(o.start) >= startOfToday
     );
     const hadOutageToday = todayCortes.length > 0;
-    const activeNow = !!(window._activeOutage);
+    const activeOutage = options.activeOutage !== undefined
+        ? options.activeOutage
+        : (typeof window !== 'undefined' ? window._activeOutage : null);
+    const activeNow = !!activeOutage;
 
-    const riskyHours = predictions.filter(p => {
-        if (adjustedProbability(p.probability, p.confidence) < RISK_THRESHOLD) return false;
-        if (p.hour <= 4 && (p.startHits || 0) === 0) return false;
-        return true;
-    });
+    const riskyHours = predictions.filter(p => isRiskyHour(p));
 
     if (riskyHours.length === 0) return { type: 'safe' };
 
@@ -301,11 +315,11 @@ function getDayForecast(predictions, outages) {
     };
 }
 
-function computeStatistics(outages) {
-    const startOfToday = getTodayStartUTC();
-    const startOfWeek  = getWeekStartUTC();
-    const startOfMonth = getMonthStartUTC();
-    const startOfYear  = getYearStartUTC();
+function computeStatistics(outages, now = new Date()) {
+    const startOfToday = getTodayStartUTC(undefined, now);
+    const startOfWeek  = getWeekStartUTC(undefined, now);
+    const startOfMonth = getMonthStartUTC(undefined, now);
+    const startOfYear  = getYearStartUTC(undefined, now);
 
     const completed    = outages.filter(o => o.start && o.end && (o.type || 'corte') === 'corte' && o.duration_minutes != null);
     const fluctuations = outages.filter(o => (o.type || 'corte') === 'fluctuacion');
@@ -337,7 +351,6 @@ function computeStatistics(outages) {
     });
     const peakEntry = Object.entries(slotFrequency).sort((a, b) => b[1] - a[1])[0];
 
-    const now = new Date();
     const daysTracked = completed.length > 0
         ? Math.max(1, Math.ceil((now - new Date(Math.min(...completed.map(o => new Date(o.start).getTime())))) / 86400000))
         : 1;
@@ -373,12 +386,12 @@ function computeTrainingProgress(outages) {
     return { weeks: Math.floor(weeksElapsed), percent, isReady: weeksElapsed >= WEEKS_FOR_FULL_CONFIDENCE };
 }
 
-function getTomorrowForecast(outages, existingHeatmap) {
-    const now = new Date();
-    const tomorrow = new Date(now.getTime() + 86400000);
+function getTomorrowForecast(outages, existingHeatmap, now) {
+    const reference = now ? new Date(now) : new Date();
+    const tomorrow = new Date(reference.getTime() + 86400000);
     const tomorrowDay = caracasGetDay(tomorrow);
 
-    const heatmap = existingHeatmap || buildHeatmap(outages);
+    const heatmap = existingHeatmap || buildHeatmap(outages, now);
     if (!heatmap) return null;
 
     const tomorrowPredictions = Array.from({ length: 24 }, (_, hour) => ({
@@ -389,11 +402,7 @@ function getTomorrowForecast(outages, existingHeatmap) {
     const hasData = tomorrowPredictions.some(p => p.confidence >= 0.15);
     if (!hasData) return null;
 
-    const riskyHours = tomorrowPredictions.filter(p => {
-        if (adjustedProbability(p.probability, p.confidence) < RISK_THRESHOLD) return false;
-        if (p.hour <= 4 && (p.startHits || 0) === 0) return false;
-        return true;
-    });
+    const riskyHours = tomorrowPredictions.filter(p => isRiskyHour(p));
 
     if (!riskyHours.length) return { type: 'safe' };
 
@@ -432,7 +441,7 @@ function getTomorrowForecast(outages, existingHeatmap) {
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
-        buildHeatmap, getHourlySlots, adjustedProbability, riskColor, riskLabel,
+        buildHeatmap, getHourlySlots, adjustedProbability, isRiskyHour, riskColor, riskLabel,
         getDayForecast, getTomorrowForecast, computeStatistics, computeAverageMood,
         computeTrainingProgress, averageDurationByHour, computeSurvivalCurve,
         getOnsetHint, getConsecutiveOutageStatus, computeRecoveryGaps, computeMarginOfError,
