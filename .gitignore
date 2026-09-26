@@ -6,3 +6,5 @@ node_modules/
 .env*
 DOCS.md
 /bot/.wrangler
+ROADMAP.md
+scripts/data/
