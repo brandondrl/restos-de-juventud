@@ -99,20 +99,24 @@ function buildForecastDayToggle(selected) {
     return `<div class="seg" role="group" aria-label="Día del pronóstico">${option('today', 'Hoy')}${option('tomorrow', 'Mañana')}</div>`;
 }
 
-function buildTomorrowSummary(forecast) {
+// Líneas de "cuándo" y "cuánto": minuto típico de inicio, margen de error y duración (como el bot).
+function forecastDetailLines(forecast, dayOfWeek) {
+    const line = text => `<div style="font-size:12px;color:var(--text2);margin-top:2px">${text}</div>`;
+    const onset = onsetWindowText(forecast.onsetHint, forecast.peakHour);
+    const margin = marginOfErrorText(forecast, dayOfWeek);
+    return (margin ? line(margin.charAt(0).toUpperCase() + margin.slice(1)) : '')
+        + (onset ? line(`Cuando se va a esa hora, suele ser ${onset}`) : '')
+        + (forecast.estimatedMinutes ? line(`Duración esperada: <strong style="color:var(--text)">${formatDuration(forecast.estimatedMinutes)}</strong> (promedio histórico)`) : '');
+}
+
+function buildTomorrowSummary(forecast, dayOfWeek) {
     if (!forecast) return `<div style="margin-top:8px;font-size:12px;color:var(--text2)">Sin datos suficientes para mañana.</div>`;
     if (forecast.type === 'safe') return `<div style="margin-top:8px;font-size:13px;color:var(--grn-t)">&#10003; Sin riesgo significativo mañana.</div>`;
     const levelColor = forecast.peakLevel === 'alto' ? 'var(--red-t)' : '#fdba74';
-    const duration = forecast.estimatedMinutes
-        ? `<div style="font-size:12px;color:var(--text2);margin-top:2px">Duración esperada: <strong style="color:var(--text)">${formatDuration(forecast.estimatedMinutes)}</strong> (promedio histórico)</div>`
-        : '';
-    const onset = forecast.onsetHint
-        ? `<div style="font-size:12px;color:var(--text2);margin-top:2px">La mayoría empezó en: ${forecast.onsetHint}</div>`
-        : '';
     return `<div style="margin-top:8px">
         <div style="font-size:13px;font-weight:600;margin-bottom:4px">Riesgo: ${escapeHtml(forecast.ranges)}</div>
-        <div style="font-size:12px;color:${levelColor}">Pico ${padZero(forecast.peakHour)}:00 &middot; ${forecast.peakPercent}% &middot; riesgo ${forecast.peakLevel}</div>
-        ${duration}${onset}
+        <div style="font-size:12px;color:${levelColor}">Hora de más riesgo ${padZero(forecast.peakHour)}:00 &middot; ${forecast.peakPercent}% &middot; riesgo ${forecast.peakLevel}</div>
+        ${forecastDetailLines(forecast, dayOfWeek)}
     </div>`;
 }
 
@@ -455,17 +459,12 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
             <div style="font-size:13px;color:var(--text2)">pero no se fue. Sospechoso 👀 — igual podría irse a otra hora.</div>`;
     } else {
         const levelColor  = forecast.peakLevel === 'alto' ? 'var(--red-t)' : '#fdba74';
-        const durationLine = forecast.estimatedMinutes
-            ? `<div style="font-size:12px;color:var(--text2)">Duración esperada: <strong style="color:var(--text)">${formatDuration(forecast.estimatedMinutes)}</strong> (promedio histórico)</div>`
-            : '';
         forecastContent = `
             <div style="font-size:15px;font-weight:600;margin-bottom:6px">${escapeHtml(forecast.message)}</div>
-            <div style="font-size:12px;color:${levelColor};margin-bottom:${forecast.estimatedMinutes ? '4px' : '0'}">
-                A las: ${padZero(forecast.peakHour)}:00 &middot; ${forecast.peakPercent}% &middot; riesgo ${forecast.peakLevel}
+            <div style="font-size:12px;color:${levelColor};margin-bottom:2px">
+                Hora de más riesgo: ${padZero(forecast.peakHour)}:00 &middot; ${forecast.peakPercent}% &middot; riesgo ${forecast.peakLevel}
             </div>
-            ${durationLine}
-            ${forecast.onsetHint ? `<div style="font-size:11px;color:var(--text3);margin-top:4px">La mayoría empezó en: ${forecast.onsetHint}</div>` : ''}
-            ${forecast.marginOfError != null ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">±${forecast.marginOfError}% de margen de error · detectado ${forecast.peakHits} de ${forecast.peakObservations} semanas</div>` : ''}`;
+            ${forecastDetailLines(forecast, caracasGetDay(now))}`;
     }
     const statCards = [
         { label: 'Esta semana', value: formatDuration(statistics.weekMinutes),  sub: `${statistics.weekCount} cortes` },
@@ -519,7 +518,7 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
             ${buildForecastDayToggle(appState.forecastDay)}
             <div class="slabel">${isTomorrowView ? `MAÑANA — ${tomorrowName}` : 'DETALLE POR HORA — HOY'}</div>
             <div class="chart-wrap">${buildRiskCurve(heatmap, now, appState.forecastDay)}</div>
-            ${isTomorrowView ? buildTomorrowSummary(tomorrowForecast) : nowLine}
+            ${isTomorrowView ? buildTomorrowSummary(tomorrowForecast, tomorrowDayOfWeek(now)) : nowLine}
         </div>`;
     }
     const emptyState     = appState.outages.length === 0
