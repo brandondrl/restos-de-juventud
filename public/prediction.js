@@ -16,7 +16,7 @@ function padZero(number) {
 function getHourlySlots(outage) {
     const slots = [];
     const cursor = new Date(outage.start);
-    cursor.setMinutes(0, 0, 0);
+    cursor.setUTCMinutes(0, 0, 0); // Caracas es UTC−4 fijo: la hora en punto UTC es la de Caracas
     const endTime = new Date(outage.end);
     while (cursor < endTime) {
         slots.push({ dayOfWeek: caracasGetDay(cursor), hour: caracasGetHours(cursor) });
@@ -211,7 +211,7 @@ function getOnsetHint(outages, dayOfWeek, hour) {
             const start = new Date(o.start);
             return caracasGetDay(start) === dayOfWeek && caracasGetHours(start) === hour;
         })
-        .map(o => new Date(o.start).getMinutes());
+        .map(o => new Date(o.start).getUTCMinutes());
 
     if (minutesInHour.length < ONSET_HINT_MIN_SAMPLES) return null;
 

@@ -531,33 +531,38 @@ async function handleUpdate(env, update) {
   await tg(env.BOT_TOKEN, chatId, STRINGS.unknown);
 }
 
-// `now` es opcional (reloj real por defecto); los tests de paridad lo fijan.
+// Espejo de buildHeatmap + isRiskyHour de la web (public/prediction.js) para un día de la semana.
+// Todo con aritmética UTC y etiquetas en hora de Caracas (UTC−4 fijo): el resultado no depende
+// de la zona horaria de la máquina. `now` es opcional (reloj real por defecto).
 function calculateDayRisk(outages, localNow, now = new Date()) {
   const day = localNow.getUTCDay();
-  const allDates = outages.filter(o => o.start && o.end && (o.type || 'corte') !== 'fluctuacion').flatMap(o => [new Date(o.start), new Date(o.end)]);
+  const allDates = outages.filter(o => o.start && o.end && (o.type || 'corte') === 'corte').flatMap(o => [new Date(o.start), new Date(o.end)]);
   if (!allDates.length) return null;
   const earliestDate = new Date(Math.min(...allDates.map(d => d.getTime())));
-  const hardWindow = new Date(now); hardWindow.setDate(hardWindow.getDate() - 84);
+  const hardWindow = new Date(now); hardWindow.setUTCDate(hardWindow.getUTCDate() - 84); hardWindow.setUTCHours(0, 0, 0, 0);
   const windowStart = new Date(Math.max(earliestDate.getTime(), hardWindow.getTime()));
-  const completed = outages.filter(o => o.start && o.end && (o.type || 'corte') !== 'fluctuacion' && new Date(o.start) >= windowStart);
-  const slots = {}, observations = {};
-  const cur = new Date(windowStart); cur.setHours(0, 0, 0, 0);
+  const completed = outages.filter(o => o.start && o.end && (o.type || 'corte') === 'corte' && new Date(o.start) >= windowStart);
+  const slots = {}, observations = {}, startSlots = {};
+  const cur = new Date(windowStart); cur.setUTCHours(0, 0, 0, 0);
   while (cur <= now) {
     for (let h = 0; h < 24; h++) {
       const localH = new Date(cur.getTime() + TZ_OFFSET_HOURS * 3600000 + h * 3600000);
       const k = `${localH.getUTCDay()}_${localH.getUTCHours()}`;
       observations[k] = (observations[k] || 0) + 1;
     }
-    cur.setDate(cur.getDate() + 1);
+    cur.setUTCDate(cur.getUTCDate() + 1);
   }
   completed.forEach(o => {
-    const s = new Date(o.start), e = new Date(o.end), c = new Date(s); c.setMinutes(0, 0, 0);
+    const s = new Date(o.start), e = new Date(o.end), c = new Date(s); c.setUTCMinutes(0, 0, 0);
     while (c < e) {
       const localC = new Date(c.getTime() + TZ_OFFSET_HOURS * 3600000);
       const k = `${localC.getUTCDay()}_${localC.getUTCHours()}`;
       slots[k] = (slots[k] || 0) + 1;
-      c.setHours(c.getHours() + 1);
+      c.setTime(c.getTime() + 3600000);
     }
+    const localStart = new Date(s.getTime() + TZ_OFFSET_HOURS * 3600000);
+    const startKey = `${localStart.getUTCDay()}_${localStart.getUTCHours()}`;
+    startSlots[startKey] = (startSlots[startKey] || 0) + 1;
   });
   const rawProbability = h => {
     const k = `${day}_${h}`;
@@ -572,6 +577,8 @@ function calculateDayRisk(outages, localNow, now = new Date()) {
     const conf = confidenceOf(h);
     const adjusted = conf < 0.15 ? 0 : smoothedProbability * conf;
     const k = `${day}_${h}`;
+    // Misma regla que isRiskyHour de la web: de 00 a 04 solo cuenta si algún corte empezó a esa hora.
+    if (h <= 4 && !startSlots[k]) continue;
     if (adjusted >= RISK_THRESHOLD) risky.push({ h, prob: adjusted, hits: slots[k] || 0, obs: observations[k] || 0 });
   }
   if (!risky.length) return null;
@@ -619,7 +626,9 @@ function getConsecutiveOutageStatus(outages, now) {
   const eligible = gaps.filter(g => g >= hoursElapsed);
   if (eligible.length < CONSECUTIVE_OUTAGE_MIN_SAMPLE) return null;
   const within = eligible.filter(g => g <= hoursElapsed + CONSECUTIVE_OUTAGE_WINDOW_HOURS).length;
-  const probability = (within + 0.5) / (eligible.length + 1);
+  let probability = (within + 0.5) / (eligible.length + 1);
+  const median = [...gaps].sort((a, b) => a - b)[Math.floor(gaps.length / 2)];
+  if (hoursElapsed > median) probability *= Math.exp(-(hoursElapsed - median) / median);
   const percent = Math.round(probability * 100);
   const level = percent < 15 ? 'bajo' : percent < 35 ? 'moderado' : 'alto';
   return { percent, level, hoursAhead: CONSECUTIVE_OUTAGE_WINDOW_HOURS, sampleSize: eligible.length };

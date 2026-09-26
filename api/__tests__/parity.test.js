@@ -1,6 +1,6 @@
 process.env.TZ = 'America/Caracas';
 
-require('../../public/timezone.js');
+const { caracasGetDay } = require('../../public/timezone.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -16,7 +16,7 @@ function loadWorkerFunctions() {
 }
 
 const {
-  buildHeatmap, adjustedProbability, RISK_THRESHOLD,
+  buildHeatmap, adjustedProbability, isRiskyHour,
   getConsecutiveOutageStatus: webGetConsecutiveOutageStatus,
 } = require('../../public/prediction.js');
 const {
@@ -25,16 +25,22 @@ const {
 } = loadWorkerFunctions();
 const { buildForecastForDay } = require('../../public/prediction.js');
 
-function webRiskyHours(outages, day) {
-  const heatmap = buildHeatmap(outages);
+// Horas de riesgo de la web con la misma regla que el forecast (umbral + filtro de madrugada).
+function webRiskyHours(outages, day, now) {
+  const heatmap = buildHeatmap(outages, now);
   if (!heatmap) return [];
   const risky = [];
   for (let h = 0; h < 24; h++) {
     const slot = heatmap[`${day}_${h}`];
-    const adjusted = adjustedProbability(slot.probability, slot.confidence);
-    if (adjusted >= RISK_THRESHOLD) risky.push({ h, prob: adjusted });
+    if (isRiskyHour({ hour: h, ...slot })) risky.push({ h, prob: adjustedProbability(slot.probability, slot.confidence) });
   }
   return risky;
+}
+
+function expectSameRisk(web, botResult) {
+  const bot = botResult ? botResult.risky : [];
+  expect(bot.map(p => p.h)).toEqual(web.map(p => p.h));
+  web.forEach((p, i) => expect(bot[i].prob).toBeCloseTo(p.prob, 9));
 }
 
 function outage(id, start, end) {
@@ -54,22 +60,51 @@ function buildFixedDataset() {
 
 describe('web vs bot risk engine parity', () => {
   const outages = buildFixedDataset();
-  const targetDate = new Date('2026-06-15T12:00:00.000Z');
-  const localNow = new Date(targetDate.getTime() + (-4) * 3600000);
-  const day = targetDate.getDay();
+  // `now` fijo justo después de los datos (antes usaba el reloj real y la ventana de 84 días
+  // dejaba los datos fuera: ambos motores daban "sin riesgo" y el test pasaba sin comparar nada).
+  // Lunes 2026-02-16 12:00 VET y los 6 días siguientes: cada día de la semana es "hoy" una vez.
+  const nows = Array.from({ length: 7 }, (_, k) => new Date(Date.UTC(2026, 1, 16 + k, 16, 0, 0)));
 
-  it('flags the exact same risky hours with the exact same probabilities', () => {
-    const web = webRiskyHours(outages, day);
-    const botResult = calculateDayRisk(outages, localNow);
-    const bot = botResult ? botResult.risky : [];
+  it.each(nows.map(now => [now.toISOString(), now]))('flags the exact same risky hours with the exact same probabilities (%s)', (_, now) => {
+    const localNow = new Date(now.getTime() + (-4) * 3600000);
+    expectSameRisk(webRiskyHours(outages, caracasGetDay(now), now), calculateDayRisk(outages, localNow, now));
+  });
 
-    const webMap = new Map(web.map(p => [p.h, p.prob]));
-    const botMap = new Map(bot.map(p => [p.h, p.prob]));
+  it('the comparison is not empty (Monday and Thursday have risk)', () => {
+    const monday = nows[0];
+    const thursday = nows[3];
+    expect(webRiskyHours(outages, caracasGetDay(monday), monday).length).toBeGreaterThan(0);
+    expect(webRiskyHours(outages, caracasGetDay(thursday), thursday).length).toBeGreaterThan(0);
+  });
+});
 
-    expect(botMap.size).toBe(webMap.size);
-    webMap.forEach((prob, hour) => {
-      expect(botMap.get(hour)).toBeCloseTo(prob, 9);
-    });
+describe('web vs bot: filtro de madrugada', () => {
+  // Cortes que empiezan a las 22:30 VET y siguen hasta las 02:00 (arrastre nocturno) y otros
+  // que empiezan a las 03:00 VET. De 00 a 04 solo cuenta la hora en la que un corte empezó.
+  const outages = [];
+  for (let week = 0; week < 6; week++) {
+    const late = new Date(Date.UTC(2026, 0, 6 + week * 7, 2, 30, 0)); // lunes 22:30 VET → martes
+    outages.push(outage(`n${week}`, late.toISOString(), new Date(late.getTime() + 210 * 60000).toISOString()));
+    const early = new Date(Date.UTC(2026, 0, 9 + week * 7, 7, 0, 0)); // viernes 03:00 VET
+    outages.push(outage(`e${week}`, early.toISOString(), new Date(early.getTime() + 180 * 60000).toISOString()));
+  }
+  const now = new Date(Date.UTC(2026, 1, 16, 16, 0, 0));
+
+  it.each([[2, 'martes (arrastre 00–02)'], [5, 'viernes (inicio a las 03)']])('día %s: %s', (day) => {
+    const localDay = new Date(Date.UTC(2026, 1, 15 + day, 12, 0, 0)); // domingo 15 + day
+    const web = webRiskyHours(outages, day, now);
+    expectSameRisk(web, calculateDayRisk(outages, localDay, now));
+  });
+
+  it('el bot ya no marca la madrugada por arrastre de un corte de la noche anterior', () => {
+    const tuesday = calculateDayRisk(outages, new Date(Date.UTC(2026, 1, 17, 12, 0, 0)), now);
+    const early = tuesday ? tuesday.risky.filter(p => p.h <= 4) : [];
+    expect(early).toEqual([]);
+  });
+
+  it('el bot sí marca la hora de madrugada en la que empiezan cortes', () => {
+    const friday = calculateDayRisk(outages, new Date(Date.UTC(2026, 1, 20, 12, 0, 0)), now);
+    expect(friday.risky.map(p => p.h)).toContain(3);
   });
 });
 
@@ -92,7 +127,6 @@ describe('web vs bot consecutive-outage parity', () => {
 });
 
 // Fase 2.2: /manana del bot reutiliza calculateDayRisk para el día siguiente.
-const { caracasGetDay } = require('../../public/timezone.js');
 const FIXTURE_DIR = path.join(__dirname, 'fixtures');
 const loadFixture = name => JSON.parse(fs.readFileSync(path.join(FIXTURE_DIR, `${name}.json`), 'utf8'));
 const TZ_OFFSET_MS = -4 * 3600000;
@@ -109,7 +143,7 @@ function botTomorrow(outages, now) {
   return calculateDayRisk(outages, new Date(now.getTime() + TZ_OFFSET_MS + 86400000), now);
 }
 
-describe.each(['b-seis-semanas', 'c-cambio-patron'])('paridad web == bot para mañana — %s', (name) => {
+describe.each(['b-seis-semanas', 'c-cambio-patron', 'd-cruce-medianoche', 'e-fluctuaciones'])('paridad web == bot para mañana — %s', (name) => {
   const fixture = loadFixture(name);
   // El `now` del fixture y los 6 días siguientes: cada día de la semana es "mañana" una vez.
   const nows = Array.from({ length: 7 }, (_, k) => new Date(new Date(fixture.now).getTime() + k * 86400000));
