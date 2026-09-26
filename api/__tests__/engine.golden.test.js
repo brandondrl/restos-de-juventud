@@ -26,6 +26,17 @@ function todayPredictions(heatmap, now) {
   }));
 }
 
+// 2.2 añade estos campos a getTomorrowForecast. El snapshot congela solo los campos
+// existentes, que deben quedar idénticos (el .snap no se regenera).
+const TOMORROW_FIELDS_ADDED_IN_2_2 = ['estimatedMinutes', 'onsetHint'];
+
+function existingTomorrowFields(forecast) {
+  if (!forecast) return forecast;
+  const copy = { ...forecast };
+  TOMORROW_FIELDS_ADDED_IN_2_2.forEach(field => { delete copy[field]; });
+  return copy;
+}
+
 // Ejecuta las 5 funciones del motor con `now` y `activeOutage` explícitos.
 function computeAll(fixture) {
   const now = new Date(fixture.now);
@@ -77,7 +88,16 @@ describe.each(FIXTURE_FILES)('golden del motor — %s', (name) => {
   });
 
   it('getTomorrowForecast', () => {
-    expect(result.tomorrowForecast).toMatchSnapshot();
+    expect(existingTomorrowFields(result.tomorrowForecast)).toMatchSnapshot();
+  });
+
+  it('getTomorrowForecast solo añade los campos de 2.2 (y solo cuando hay riesgo)', () => {
+    const forecast = result.tomorrowForecast;
+    if (!forecast || forecast.type !== 'risk') {
+      TOMORROW_FIELDS_ADDED_IN_2_2.forEach(field => expect(forecast || {}).not.toHaveProperty(field));
+      return;
+    }
+    TOMORROW_FIELDS_ADDED_IN_2_2.forEach(field => expect(forecast).toHaveProperty(field));
   });
 
   it('computeStatistics', () => {

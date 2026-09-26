@@ -231,17 +231,103 @@ function isRiskyHour(prediction, threshold = RISK_THRESHOLD) {
     return true;
 }
 
+function groupHourRanges(hours) {
+    const ranges = [];
+    hours.forEach(hour => {
+        const last = ranges[ranges.length - 1];
+        if (last && hour === last[1] + 1) last[1] = hour;
+        else ranges.push([hour, hour]);
+    });
+    return ranges;
+}
+
+function describeHourRanges(ranges, prefix = '') {
+    const texts = ranges.map(([start, end]) =>
+        start === end
+            ? `${prefix}${padZero(start)}:00`
+            : `${prefix}${padZero(start)}:00–${padZero(end + 1)}:00`
+    );
+    return texts.length === 1 ? texts[0] : texts.slice(0, -1).join(', ') + ' y ' + texts.slice(-1);
+}
+
+function dayPredictionsFromHeatmap(heatmap, dayOfWeek) {
+    return Array.from({ length: 24 }, (_, hour) => ({
+        hour,
+        ...((heatmap && heatmap[`${dayOfWeek}_${hour}`]) || { probability: 0, confidence: 0, startHits: 0 })
+    }));
+}
+
+// Duración estimada y hora típica de inicio. Aparte porque getOnsetHint es caro (timezone.js)
+// y getDayForecast solo lo necesita en el caso "risk".
+function forecastDetails(outages, riskyHours, dayOfWeek, peakHour) {
+    const durationsByHour = averageDurationByHour(outages);
+    const riskyDurations = riskyHours.map(p => p.hour).filter(h => durationsByHour[h]).map(h => durationsByHour[h]);
+    const estimatedMinutes = riskyDurations.length > 0
+        ? Math.round(riskyDurations.reduce((sum, d) => sum + d, 0) / riskyDurations.length)
+        : null;
+    return { estimatedMinutes, onsetHint: getOnsetHint(outages, dayOfWeek, peakHour) };
+}
+
+// Núcleo común de getDayForecast y getTomorrowForecast (2.2): horas de riesgo, rangos,
+// pico, margen, duración estimada y hora típica de inicio para un día de la semana.
+// `options.predictions` permite pasar las 24 predicciones ya armadas (así las recibe getDayForecast);
+// `options.details: false` omite estimatedMinutes y onsetHint.
+function buildForecastForDay(heatmap, outages, targetDayOfWeek, options = {}) {
+    const predictions = options.predictions || dayPredictionsFromHeatmap(heatmap, targetDayOfWeek);
+    if (!predictions.some(p => p.confidence >= 0.15)) {
+        return { hasData: false, predictions, riskyHours: [], ranges: [] };
+    }
+
+    const riskyHours = predictions.filter(p => isRiskyHour(p));
+    const ranges = groupHourRanges(riskyHours.map(p => p.hour));
+    if (riskyHours.length === 0) return { hasData: true, predictions, riskyHours, ranges };
+
+    const peak = riskyHours.reduce((best, current) =>
+        adjustedProbability(current.probability, current.confidence) >
+        adjustedProbability(best.probability, best.confidence) ? current : best,
+        riskyHours[0]
+    );
+    const peakAdj = adjustedProbability(peak.probability, peak.confidence);
+
+    return {
+        hasData: true,
+        predictions,
+        riskyHours,
+        ranges,
+        peak,
+        peakHour: peak.hour,
+        peakPercent: Math.round(peakAdj * 100),
+        peakLevel: peakAdj < 0.4 ? 'moderado' : 'alto',
+        marginOfError: computeMarginOfError(peak.hits, peak.observations),
+        ...(options.details === false ? {} : forecastDetails(outages, riskyHours, targetDayOfWeek, peak.hour)),
+    };
+}
+
+// 24 puntos listos para gráficas y listas: probabilidad ajustada, confianza y nivel en texto.
+function getDayPredictions(heatmap, dayOfWeek) {
+    return Array.from({ length: 24 }, (_, hour) => {
+        const slot = (heatmap && heatmap[`${dayOfWeek}_${hour}`]) || { probability: 0, confidence: 0, observations: 0 };
+        const adjusted = adjustedProbability(slot.probability, slot.confidence);
+        return {
+            hour,
+            adjusted,
+            confidence: slot.confidence,
+            observations: slot.observations || 0,
+            level: riskLabel(adjusted, slot.confidence),
+        };
+    });
+}
+
 // `options.now` y `options.activeOutage` son opcionales; sin ellos se usa el reloj real
 // y `window._activeOutage`, como siempre.
 function getDayForecast(predictions, outages, options = {}) {
-    const hasEnoughData = predictions.some(p => p.confidence >= 0.15);
-    if (!hasEnoughData) return { type: 'nodata' };
-
     const now = options.now ? new Date(options.now) : new Date();
-    const startOfToday = getTodayStartUTC(undefined, now);
     const caracasNowHour = caracasGetHours(now);
     const caracasNowDay = caracasGetDay(now);
+    const forecast = buildForecastForDay(null, outages, caracasNowDay, { predictions, details: false });
+    if (!forecast.hasData) return { type: 'nodata' };
 
+    const startOfToday = getTodayStartUTC(undefined, now);
     const todayCortes = outages.filter(o =>
         o.end && (o.type || 'corte') === 'corte' && new Date(o.start) >= startOfToday
     );
@@ -251,67 +337,33 @@ function getDayForecast(predictions, outages, options = {}) {
         : (typeof window !== 'undefined' ? window._activeOutage : null);
     const activeNow = !!activeOutage;
 
-    const riskyHours = predictions.filter(p => isRiskyHour(p));
-
+    const { riskyHours, ranges } = forecast;
     if (riskyHours.length === 0) return { type: 'safe' };
-
-    const ranges = [];
-    let rangeStart = null, rangeEnd = null;
-    riskyHours.forEach(({ hour }) => {
-        if (rangeStart === null) { rangeStart = hour; rangeEnd = hour; }
-        else if (hour === rangeEnd + 1) { rangeEnd = hour; }
-        else { ranges.push([rangeStart, rangeEnd]); rangeStart = hour; rangeEnd = hour; }
-    });
-    if (rangeStart !== null) ranges.push([rangeStart, rangeEnd]);
-
-    const peakHour = riskyHours.reduce((peak, current) =>
-        adjustedProbability(current.probability, current.confidence) >
-        adjustedProbability(peak.probability, peak.confidence) ? current : peak,
-        riskyHours[0]
-    );
 
     const lastRiskyHour = riskyHours[riskyHours.length - 1].hour;
     const allRiskyPassed = caracasNowHour > lastRiskyHour;
-    const inRiskyWindow = riskyHours.some(p => p.hour === caracasNowHour);
 
     if (hadOutageToday || activeNow) {
-        return { type: 'already_hit', ranges, peakHour: peakHour.hour, active: activeNow };
+        return { type: 'already_hit', ranges, peakHour: forecast.peakHour, active: activeNow };
     }
 
     if (allRiskyPassed && !hadOutageToday) {
-        return { type: 'missed', ranges, peakHour: peakHour.hour };
+        return { type: 'missed', ranges, peakHour: forecast.peakHour };
     }
 
-    const rangeTexts = ranges.map(([start, end]) =>
-        start === end
-            ? `las ${padZero(start)}:00`
-            : `las ${padZero(start)}:00–${padZero(end + 1)}:00`
-    );
-    const rangeDescription = rangeTexts.length === 1
-        ? rangeTexts[0]
-        : rangeTexts.slice(0, -1).join(', ') + ' y ' + rangeTexts.slice(-1);
-
-    const durationsByHour = averageDurationByHour(outages);
-    const riskyDurations = riskyHours.map(p => p.hour).filter(h => durationsByHour[h]).map(h => durationsByHour[h]);
-    const estimatedMinutes = riskyDurations.length > 0
-        ? Math.round(riskyDurations.reduce((sum, d) => sum + d, 0) / riskyDurations.length)
-        : null;
-
-    const peakAdj = adjustedProbability(peakHour.probability, peakHour.confidence);
-    const onsetHint = getOnsetHint(outages, caracasNowDay, peakHour.hour);
-    const marginOfError = computeMarginOfError(peakHour.hits, peakHour.observations);
+    const { estimatedMinutes, onsetHint } = forecastDetails(outages, riskyHours, caracasNowDay, forecast.peakHour);
 
     return {
         type: 'risk',
-        message: `Es probable que se vaya la luz entre ${rangeDescription}.`,
-        peakHour: peakHour.hour,
-        peakPercent: Math.round(peakAdj * 100),
-        peakLevel: peakAdj < 0.4 ? 'moderado' : 'alto',
+        message: `Es probable que se vaya la luz entre ${describeHourRanges(ranges, 'las ')}.`,
+        peakHour: forecast.peakHour,
+        peakPercent: forecast.peakPercent,
+        peakLevel: forecast.peakLevel,
         estimatedMinutes,
         onsetHint,
-        marginOfError,
-        peakHits: peakHour.hits,
-        peakObservations: peakHour.observations,
+        marginOfError: forecast.marginOfError,
+        peakHits: forecast.peak.hits,
+        peakObservations: forecast.peak.observations,
     };
 }
 
@@ -388,61 +440,31 @@ function computeTrainingProgress(outages) {
 
 function getTomorrowForecast(outages, existingHeatmap, now) {
     const reference = now ? new Date(now) : new Date();
-    const tomorrow = new Date(reference.getTime() + 86400000);
-    const tomorrowDay = caracasGetDay(tomorrow);
+    const tomorrowDay = caracasGetDay(new Date(reference.getTime() + 86400000));
 
     const heatmap = existingHeatmap || buildHeatmap(outages, now);
     if (!heatmap) return null;
 
-    const tomorrowPredictions = Array.from({ length: 24 }, (_, hour) => ({
-        hour,
-        ...(heatmap[`${tomorrowDay}_${hour}`] || { probability: 0, confidence: 0, startHits: 0 })
-    }));
-
-    const hasData = tomorrowPredictions.some(p => p.confidence >= 0.15);
-    if (!hasData) return null;
-
-    const riskyHours = tomorrowPredictions.filter(p => isRiskyHour(p));
-
-    if (!riskyHours.length) return { type: 'safe' };
-
-    const peak = riskyHours.reduce((a, b) =>
-        adjustedProbability(b.probability, b.confidence) > adjustedProbability(a.probability, a.confidence) ? b : a
-    );
-
-    const ranges = [];
-    let rs = null, re = null;
-    riskyHours.forEach(({ hour }) => {
-        if (rs === null) { rs = hour; re = hour; }
-        else if (hour === re + 1) { re = hour; }
-        else { ranges.push([rs, re]); rs = hour; re = hour; }
-    });
-    if (rs !== null) ranges.push([rs, re]);
-
-    const rangeTexts = ranges.map(([a, b]) =>
-        a === b ? `${padZero(a)}:00` : `${padZero(a)}:00–${padZero(b + 1)}:00`
-    );
-    const rangeDescription = rangeTexts.length === 1
-        ? rangeTexts[0]
-        : rangeTexts.slice(0, -1).join(', ') + ' y ' + rangeTexts.slice(-1);
-
-    const peakAdj = adjustedProbability(peak.probability, peak.confidence);
-    const marginOfError = computeMarginOfError(peak.hits, peak.observations);
+    const forecast = buildForecastForDay(heatmap, outages, tomorrowDay);
+    if (!forecast.hasData) return null;
+    if (forecast.riskyHours.length === 0) return { type: 'safe' };
 
     return {
         type: 'risk',
-        ranges: rangeDescription,
-        peakHour: peak.hour,
-        peakPercent: Math.round(peakAdj * 100),
-        peakLevel: peakAdj < 0.4 ? 'moderado' : 'alto',
-        marginOfError,
+        ranges: describeHourRanges(forecast.ranges),
+        peakHour: forecast.peakHour,
+        peakPercent: forecast.peakPercent,
+        peakLevel: forecast.peakLevel,
+        marginOfError: forecast.marginOfError,
+        estimatedMinutes: forecast.estimatedMinutes,
+        onsetHint: forecast.onsetHint,
     };
 }
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         buildHeatmap, getHourlySlots, adjustedProbability, isRiskyHour, riskColor, riskLabel,
-        getDayForecast, getTomorrowForecast, computeStatistics, computeAverageMood,
+        getDayForecast, getTomorrowForecast, buildForecastForDay, getDayPredictions, computeStatistics, computeAverageMood,
         computeTrainingProgress, averageDurationByHour, computeSurvivalCurve,
         getOnsetHint, getConsecutiveOutageStatus, computeRecoveryGaps, computeMarginOfError,
         RISK_THRESHOLD, WEEKS_FOR_FULL_CONFIDENCE, HEATMAP_WINDOW_DAYS,
