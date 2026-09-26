@@ -40,6 +40,7 @@ var appState = {
     editNotes:        '',
     historyPage:      1,
     selectedMood:     null,
+    chartSelection:   {},
     _saving:          false,
     _cacheVersion:    0,
 };
