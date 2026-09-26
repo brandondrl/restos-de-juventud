@@ -141,18 +141,6 @@ input[type=date]{color-scheme:dark;}
 .plabel{width:80px;font-size:11px;text-align:right;flex-shrink:0;}
 @media(max-width:400px){.plabel{display:none;}}
 
-.hmwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-.hm{min-width:320px;}
-.hmrow{display:flex;align-items:center;margin-bottom:3px;}
-.hmday{width:26px;font-size:10px;color:var(--text3);flex-shrink:0;}
-.hmday.today{color:var(--amber);font-weight:700;}
-.hmcells{display:flex;gap:2px;flex:1;}
-.hmcell{flex:1;height:18px;border-radius:2px;}
-.hmcell.now{outline:2px solid var(--amber);outline-offset:1px;}
-.hmhours{display:flex;margin-left:26px;margin-bottom:4px;}
-.hmhours span{flex:1;font-size:10px;color:var(--text3);text-align:center;}
-.hmleg{display:flex;align-items:center;gap:8px;margin-top:8px;justify-content:flex-end;}
-.legbox{width:10px;height:10px;border-radius:2px;}
 /* Gráficas SVG (public/charts.js) */
 .chart-wrap{margin-bottom:8px;}
 .chart{display:block;width:100%;height:auto;max-width:520px;margin:0 auto;overflow:visible;touch-action:pan-y;-webkit-user-select:none;user-select:none;}

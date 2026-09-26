@@ -72,43 +72,13 @@ function buildConsecutiveOutageCard(outages) {
     </div>`;
 }
 
-function buildRiskCurve(todayPredictions, now) {
-    const W = 320, H = 130, pad = 12;
-    const max = Math.max(0.05, ...todayPredictions.map(p => adjustedProbability(p.probability, p.confidence)));
-    const points = todayPredictions.map((p, i) => ({
-        x: pad + i * (W - 2 * pad) / 23,
-        y: H - pad - (adjustedProbability(p.probability, p.confidence) / max) * (H - 2 * pad),
-    }));
-    let path = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
-    for (let i = 1; i < points.length; i++) {
-        const mx = (points[i - 1].x + points[i].x) / 2;
-        const my = (points[i - 1].y + points[i].y) / 2;
-        path += ` Q ${points[i - 1].x.toFixed(1)} ${points[i - 1].y.toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)}`;
-    }
-    path += ` T ${points[points.length - 1].x.toFixed(1)} ${points[points.length - 1].y.toFixed(1)}`;
-    const areaPath = `${path} L ${points[points.length - 1].x.toFixed(1)} ${H - pad} L ${points[0].x.toFixed(1)} ${H - pad} Z`;
-    const peakIndex = todayPredictions.reduce((peak, p, i) =>
-        adjustedProbability(p.probability, p.confidence) > adjustedProbability(todayPredictions[peak].probability, todayPredictions[peak].confidence) ? i : peak, 0);
-    const peakPoint = points[peakIndex];
-    const peakPercent = Math.round(adjustedProbability(todayPredictions[peakIndex].probability, todayPredictions[peakIndex].confidence) * 100);
-    const nowPoint = points[now.getHours()];
-    const hourLabels = [0, 3, 6, 9, 12, 15, 18, 21].map(h =>
-        `<text x="${(pad + h * (W - 2 * pad) / 23).toFixed(1)}" y="${H + 10}" fill="#475569" font-size="9" text-anchor="middle">${padZero(h)}</text>`
-    ).join('');
-    return `<svg viewBox="0 0 ${W} ${H + 16}" style="width:100%;display:block;overflow:hidden">
-        <defs><linearGradient id="riskCurveGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.3"/>
-            <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
-        </linearGradient></defs>
-        <path d="${areaPath}" fill="url(#riskCurveGradient)"/>
-        <path d="${path}" fill="none" stroke="#f59e0b" stroke-width="2"/>
-        <line x1="${nowPoint.x.toFixed(1)}" y1="${pad}" x2="${nowPoint.x.toFixed(1)}" y2="${H - pad}" stroke="#475569" stroke-width="1" stroke-dasharray="2,2"/>
-        <circle cx="${peakPoint.x.toFixed(1)}" cy="${peakPoint.y.toFixed(1)}" r="3.5" fill="#e24b4a">
-            <title>Pico: ${padZero(peakIndex)}:00 — ${peakPercent}%</title>
-        </circle>
-        <text x="${(peakPoint.x + 6).toFixed(1)}" y="${(peakPoint.y - 6).toFixed(1)}" fill="#e24b4a" font-size="10" font-weight="600">${peakPercent}%</text>
-        ${hourLabels}
-    </svg>`;
+function chartSelectedIndex(id) {
+    const index = (appState.chartSelection || {})[id];
+    return Number.isInteger(index) ? index : undefined;
+}
+
+function buildRiskCurve(heatmap, now) {
+    return riskLineChart(buildRiskCurveProps({ id: 'risk-today', heatmap, now, selectedHour: chartSelectedIndex('risk-today') }));
 }
 
 function buildTelegramSection() {
@@ -502,7 +472,7 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
         const confidenceInfo = currentSlot.confidence >= 0.15 ? ` &middot; ${Math.round(currentProb * 100)}%` : '';
         hourlyBars = `<div class="card card-last">
             <div class="slabel">DETALLE POR HORA — HOY</div>
-            <div class="barwrap">${buildRiskCurve(todayPredictions, now)}</div>
+            <div class="chart-wrap">${buildRiskCurve(heatmap, now)}</div>
             <div style="margin-top:8px;font-size:12px;color:#94a3b8">
                 Ahora (${padZero(caracasGetHours(now))}:00):
                 <span style="font-weight:600;color:${riskColor(currentProb)}">${riskLabel(currentProb, currentSlot.confidence)}${confidenceInfo}</span>
@@ -690,38 +660,17 @@ function renderPredictTab(now, heatmap, todayPredictions) {
                 <div class="plabel" style="color:${riskColor(prob)}">${riskLabel(prob, confidence)}</div>
             </div>`;
         }).join('');
-    const heatmapRows = DAYS_SHORT.map((dayLabel, dayIndex) => {
-        const isToday = dayIndex === caracasGetDay(now);
-        const cells   = Array.from({ length: 24 }, (_, hour) => {
-            const slot    = heatmap[`${dayIndex}_${hour}`] || { probability: 0, confidence: 0 };
-            const prob    = adjustedProbability(slot.probability, slot.confidence);
-            const isNow   = isToday && hour === caracasGetHours(now);
-            const bgColor = prob < 0.03 ? 'rgba(255,255,255,.05)' : `rgba(239,68,68,${Math.min(prob * 2, 0.9)})`;
-            return `<div class="hmcell ${isNow ? 'now' : ''}" title="${dayLabel} ${padZero(hour)}:00 — ${Math.round(prob * 100)}%" style="background:${bgColor}"></div>`;
-        }).join('');
-        return `<div class="hmrow">
-            <div class="hmday ${isToday ? 'today' : ''}">${dayLabel}</div>
-            <div class="hmcells">${cells}</div>
-        </div>`;
-    }).join('');
-    const legendItems = [['Bajo', '0.2'], ['Medio', '0.5'], ['Alto', '0.85']].map(([label, opacity]) =>
-        `<div style="display:flex;align-items:center;gap:3px">
-            <div class="legbox" style="background:rgba(239,68,68,${opacity})"></div>
-            <span style="font-size:10px;color:#475569">${label}</span>
-        </div>`
-    ).join('');
+    const weeklyGrid = heatGrid(buildWeeklyHeatGridProps({
+        id: 'heat-week', heatmap, now, dayLabels: DAYS_SHORT, selectedIndex: chartSelectedIndex('heat-week'),
+    }));
     return `<div class="card">
         <div class="slabel">HOY — ${dayName} — RIESGO POR HORA</div>
         ${hourRows}
     </div>
     <div class="card card-last">
         <div class="slabel">MAPA DE CALOR SEMANAL</div>
-        <div class="hmwrap"><div class="hm">
-            <div class="hmhours">${[0,4,8,12,16,20].map(h => `<span>${padZero(h)}</span>`).join('')}</div>
-            ${heatmapRows}
-            <div class="hmleg"><span style="font-size:10px;color:#475569">Riesgo:</span>${legendItems}</div>
-            <div class="infobox">Solo cortes alimentan el modelo. El modelo considera los últimos 3 meses de registros.</div>
-        </div></div>
+        <div class="chart-wrap">${weeklyGrid}</div>
+        <div class="infobox">Solo cortes alimentan el modelo. El modelo considera los últimos 3 meses de registros.</div>
     </div>`;
 }
 

@@ -569,4 +569,88 @@ function selectEditMood(value) {
     });
 }
 
+// Interacción de gráficas (fase 2.1): un único handler delegado en #app para todas.
+// La selección vive en appState.chartSelection = { [id]: index } y sobrevive al re-render.
+const chartPointer = { id: null, pointerId: null, previous: {}, lastAt: 0 };
+let chartRenderQueued = false;
+
+function chartTargetAt(node) {
+    const el = node && node.closest ? node.closest('[data-chart][data-index]') : null;
+    return el ? { id: el.getAttribute('data-chart'), index: Number(el.getAttribute('data-index')) } : null;
+}
+
+// Una sola gráfica con selección a la vez. Devuelve true si cambió algo.
+function setChartSelection(id, index) {
+    const next = id !== undefined && Number.isInteger(index) ? { [id]: index } : {};
+    const current = appState.chartSelection || {};
+    const same = Object.keys(next).length === Object.keys(current).length
+        && Object.keys(next).every(key => current[key] === next[key]);
+    if (same) return false;
+    appState.chartSelection = next;
+    return true;
+}
+
+function queueChartRender() {
+    if (chartRenderQueued) return;
+    chartRenderQueued = true;
+    requestAnimationFrame(() => { chartRenderQueued = false; render(); });
+}
+
+function setupChartInteractions() {
+    const app = document.getElementById('app');
+    app.addEventListener('pointerdown', e => {
+        const target = chartTargetAt(e.target);
+        if (!target) return;
+        chartPointer.id        = target.id;
+        chartPointer.pointerId = e.pointerId;
+        chartPointer.previous  = appState.chartSelection || {};
+        chartPointer.lastAt    = Date.now();
+        // La captura va en #app (que nunca se reemplaza): el arrastre sigue aunque render() cambie el SVG.
+        try { app.setPointerCapture(e.pointerId); } catch { /* sin captura, el tap sigue funcionando */ }
+        if (setChartSelection(target.id, target.index)) queueChartRender();
+    });
+    app.addEventListener('pointermove', e => {
+        if (e.pointerId !== chartPointer.pointerId) return;
+        const target = chartTargetAt(document.elementFromPoint(e.clientX, e.clientY));
+        if (target && target.id === chartPointer.id && setChartSelection(target.id, target.index)) queueChartRender();
+    });
+    const endDrag = cancelled => e => {
+        if (e.pointerId !== chartPointer.pointerId) return;
+        chartPointer.pointerId = null;
+        chartPointer.lastAt    = Date.now();
+        try { app.releasePointerCapture(e.pointerId); } catch { /* ya liberada */ }
+        // pointercancel = el navegador tomó el gesto para hacer scroll: se deshace la selección provisional.
+        if (cancelled) { appState.chartSelection = chartPointer.previous; queueChartRender(); }
+    };
+    app.addEventListener('pointerup', endDrag(false));
+    app.addEventListener('pointercancel', endDrag(true));
+    // Tocar fuera de una gráfica cierra el tooltip (los onclick de botones ya corrieron antes).
+    app.addEventListener('click', e => {
+        if (Date.now() - chartPointer.lastAt < 500) return;
+        if (!e.target.closest || e.target.closest('[data-chart-root]')) return;
+        // En un campo de texto no se re-renderiza (perdería el foco); el tooltip se va en el próximo render.
+        if (setChartSelection() && !e.target.closest('input,textarea,select')) render();
+    });
+    app.addEventListener('keydown', e => {
+        const root = e.target.closest && e.target.closest('[data-chart-root]');
+        if (!root) return;
+        const id      = root.getAttribute('data-chart-root');
+        const count   = Number(root.getAttribute('data-count')) || 0;
+        const current = (appState.chartSelection || {})[id];
+        const has     = Number.isInteger(current);
+        let next;
+        if (e.key === 'ArrowRight')     next = has ? Math.min(current + 1, count - 1) : 0;
+        else if (e.key === 'ArrowLeft') next = has ? Math.max(current - 1, 0) : count - 1;
+        else if (e.key === 'Escape')    next = undefined;
+        else return;
+        if (!count) return;
+        e.preventDefault();
+        setChartSelection(next === undefined ? undefined : id, next);
+        render();
+        const again = document.querySelector(`[data-chart-root="${CSS.escape(id)}"]`);
+        if (again) again.focus();
+    });
+}
+
+setupChartInteractions();
 initialize();
