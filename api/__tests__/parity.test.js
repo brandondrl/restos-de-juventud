@@ -10,7 +10,8 @@ function loadWorkerFunctions() {
   const trimmed = source.slice(0, cutIndex);
   const sandbox = {};
   const wrapped = `${trimmed}\nsandbox.calculateDayRisk = calculateDayRisk;\nsandbox.getConsecutiveOutageStatus = getConsecutiveOutageStatus;`
-    + `\nsandbox.buildTomorrowRiskMessage = buildTomorrowRiskMessage;\nsandbox.STRINGS = STRINGS;`;
+    + `\nsandbox.buildTomorrowRiskMessage = buildTomorrowRiskMessage;\nsandbox.STRINGS = STRINGS;`
+    + `\nsandbox.onsetWindowText = onsetWindowText;\nsandbox.formatRiskMessage = formatRiskMessage;`;
   new Function('sandbox', wrapped)(sandbox);
   return sandbox;
 }
@@ -173,18 +174,25 @@ describe('/manana del bot', () => {
   const fixture = loadFixture('c-cambio-patron');
   const now = new Date(fixture.now); // viernes 06:00 VET → mañana sábado
 
-  it('usa el formato de /probabilidad para el día siguiente', () => {
+  it('mismo formato que /probabilidad: rango, hora más probable, margen explicado y duración', () => {
     const message = buildTomorrowRiskMessage(fixture.outages, now);
-    expect(message).toBe(
-      '🔮 *Predicción para mañana (sábado)*\n\n⏰ Riesgo: *07:00–10:00, 14:00–19:00*\n📈 Pico: *16:00* (65% ±24%)\n\n_Basado en tu historial personal._'
-    );
+    expect(message).toBe([
+      '🔮 *Predicción para mañana (sábado)*',
+      '',
+      '⏰ Riesgo: *07:00–10:00, 14:00–19:00*',
+      '📈 Hora de más riesgo: *16:00* — 65%',
+      '      _margen de error ±24% · se fue a esa hora 8 de 12 sábados_',
+      '⏱ Duración esperada: *2h 15m* (promedio histórico)',
+      '',
+      '_Basado en tu historial personal._',
+    ].join('\n'));
   });
 
   it('coincide con el pronóstico de mañana de la web', () => {
     const message = buildTomorrowRiskMessage(fixture.outages, now);
     const web = webTomorrow(fixture.outages, now);
     expect(message).toContain(formatBotRanges(web.ranges));
-    expect(message).toContain(`*${pad(web.peakHour)}:00* (${web.peakPercent}% ±${web.marginOfError}%)`);
+    expect(message).toContain(`*${pad(web.peakHour)}:00* — ${web.peakPercent}%`);
   });
 
   it('sin riesgo mañana → mensaje de "sin riesgo" con el día', () => {
@@ -221,5 +229,64 @@ describe('/manana del bot', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+});
+
+describe('web == bot en "cuándo" y "cuánto" (hora de inicio típica, margen y duración)', () => {
+  const { onsetWindowText, formatRiskMessage } = loadWorkerFunctions();
+  const { getTomorrowForecast } = require('../../public/prediction.js');
+  const { onsetWindowText: webOnsetWindowText, marginOfErrorText } = require('../../public/chart-data.js');
+
+  it('texto "entre HH:MM y HH:MM" para los 4 cuartos, incluido el cruce 23:45 → 00:00', () => {
+    expect(onsetWindowText('primeros 15 min', 13)).toBe('entre 13:00 y 13:15');
+    expect(onsetWindowText('segundo cuarto', 0)).toBe('entre 00:15 y 00:30');
+    expect(onsetWindowText('tercer cuarto', 9)).toBe('entre 09:30 y 09:45');
+    expect(onsetWindowText('últimos 15 min', 23)).toBe('entre 23:45 y 00:00');
+    expect(onsetWindowText(null, 5)).toBeNull();
+    for (let hour = 0; hour < 24; hour++) {
+      ['primeros 15 min', 'segundo cuarto', 'tercer cuarto', 'últimos 15 min', null].forEach(hint => {
+        expect(onsetWindowText(hint, hour)).toBe(webOnsetWindowText(hint, hour));
+      });
+    }
+  });
+
+  // Un corte corto todos los lunes a las 14:05–14:15 VET: la hora de más riesgo es la de inicio.
+  const weekly = [];
+  for (let week = 0; week < 6; week++) {
+    const start = new Date(Date.UTC(2026, 0, 5 + week * 7, 18, 5 + (week % 3) * 5));
+    weekly.push({ id: `w${week}`, start: start.toISOString(), end: new Date(start.getTime() + 50 * 60000).toISOString(), type: 'corte', duration_minutes: 50 });
+  }
+  const cases = [
+    ...['b-seis-semanas', 'c-cambio-patron', 'd-cruce-medianoche', 'e-fluctuaciones'].map(name => {
+      const fixture = loadFixture(name);
+      return [name, fixture.outages, new Date(fixture.now)];
+    }),
+    ['lunes 14:05 semanal', weekly, new Date(Date.UTC(2026, 1, 15, 16, 0))], // domingo → mañana lunes
+  ];
+
+  it.each(cases)('%s: duración esperada, minuto de inicio y margen iguales a la web en 7 días seguidos', (_, outages, start) => {
+    for (let k = 0; k < 7; k++) {
+      const now = new Date(start.getTime() + k * 86400000);
+      const web = getTomorrowForecast(outages, buildHeatmap(outages, now), now);
+      const core = webTomorrow(outages, now);
+      const bot = botTomorrow(outages, now);
+      if (!web || web.type !== 'risk') { expect(bot).toBeNull(); continue; }
+      expect(bot.estimatedMinutes).toBe(web.estimatedMinutes);
+      expect(bot.onsetHint).toBe(web.onsetHint);
+      expect([bot.peak.hits, bot.peak.obs]).toEqual([core.peak.hits, core.peak.observations]);
+      const day = new Date(now.getTime() + TZ_OFFSET_MS + 86400000).getUTCDay();
+      const message = formatRiskMessage('x', day, bot);
+      // El bot muestra exactamente los mismos textos que la web.
+      expect(message).toContain(marginOfErrorText(web, day));
+      const webOnset = webOnsetWindowText(web.onsetHint, web.peakHour);
+      if (webOnset) expect(message).toContain(`Cuando se va a esa hora, suele ser ${webOnset}`);
+    }
+  });
+
+  it('el caso semanal muestra minuto de inicio y duración (la comparación no es vacía)', () => {
+    const message = buildTomorrowRiskMessage(weekly, new Date(Date.UTC(2026, 1, 15, 16, 0)));
+    expect(message).toMatch(/Cuando se va a esa hora, suele ser entre 14:00 y 14:15/);
+    expect(message).toMatch(/Duración esperada: \*50m\*/);
+    expect(message).toMatch(/se fue a esa hora \d+ de \d+ lunes/);
   });
 });

@@ -458,6 +458,8 @@ function getTomorrowForecast(outages, existingHeatmap, now) {
         marginOfError: forecast.marginOfError,
         estimatedMinutes: forecast.estimatedMinutes,
         onsetHint: forecast.onsetHint,
+        peakHits: forecast.peak.hits,
+        peakObservations: forecast.peak.observations,
     };
 }
 

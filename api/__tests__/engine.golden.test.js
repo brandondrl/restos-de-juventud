@@ -28,7 +28,7 @@ function todayPredictions(heatmap, now) {
 
 // 2.2 añade estos campos a getTomorrowForecast. El snapshot congela solo los campos
 // existentes, que deben quedar idénticos (el .snap no se regenera).
-const TOMORROW_FIELDS_ADDED_IN_2_2 = ['estimatedMinutes', 'onsetHint'];
+const TOMORROW_FIELDS_ADDED_IN_2_2 = ['estimatedMinutes', 'onsetHint', 'peakHits', 'peakObservations'];
 
 function existingTomorrowFields(forecast) {
   if (!forecast) return forecast;

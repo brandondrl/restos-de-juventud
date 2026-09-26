@@ -109,6 +109,25 @@ function buildWeeklyHeatGridProps({ id, heatmap, now = new Date(), dayLabels = C
     };
 }
 
+// --- Textos de detalle del pronóstico (mismos que el bot) ---
+
+const FORECAST_DAY_PLURALS = ['domingos', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábados'];
+const ONSET_QUARTER_START = { 'primeros 15 min': 0, 'segundo cuarto': 15, 'tercer cuarto': 30, 'últimos 15 min': 45 };
+
+// "entre 13:00 y 13:15" a partir del cuarto de hora de getOnsetHint y la hora del pico.
+function onsetWindowText(onsetHint, hour) {
+    if (!(onsetHint in ONSET_QUARTER_START)) return null;
+    const start = hour * 60 + ONSET_QUARTER_START[onsetHint];
+    const clock = total => `${chartDataPad(Math.floor(total / 60) % 24)}:${chartDataPad(total % 60)}`;
+    return `entre ${clock(start)} y ${clock(start + 15)}`;
+}
+
+// "margen de error ±22% · se fue a esa hora 3 de 12 domingos"
+function marginOfErrorText(forecast, dayOfWeek) {
+    if (!forecast || forecast.marginOfError == null) return null;
+    return `margen de error ±${forecast.marginOfError}% · se fue a esa hora ${forecast.peakHits} de ${forecast.peakObservations} ${FORECAST_DAY_PLURALS[dayOfWeek]}`;
+}
+
 // --- Selección Hoy / Mañana (2.2) ---
 
 const FORECAST_DAY_STORAGE_KEY = 'rdj_forecast_day';
@@ -160,6 +179,6 @@ if (typeof module !== 'undefined' && module.exports) {
         predictionsForDay, riskRangesFromPredictions, riskCurvePoints,
         buildRiskCurveProps, buildWeeklyHeatGridProps, CHART_DAY_LABELS, tomorrowDayOfWeek,
         restOfTodayHasRisk, resolveForecastDay, readStoredForecastDay, saveForecastDayChoice,
-        FORECAST_DAY_STORAGE_KEY,
+        FORECAST_DAY_STORAGE_KEY, onsetWindowText, marginOfErrorText,
     };
 }
