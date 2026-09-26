@@ -495,7 +495,7 @@ async function handleUpdate(env, update) {
     if (!risk) { await tg(env.BOT_TOKEN, chatId, '✅ Sin riesgo significativo hoy según tu historial.'); return; }
     const inRisk = risk.risky.some(p => p.h === currentHour);
     const prefix = inRisk ? '⚠️ *Estás en una hora de riesgo ahora mismo.*\n\n' : '';
-    await tg(env.BOT_TOKEN, chatId, `${prefix}🔮 *Predicción para hoy*\n\n⏰ Riesgo: *${risk.rangeText}*\n📈 Pico: *${String(risk.peak.h).padStart(2, '0')}:00* (${Math.round(risk.peak.prob * 100)}%${risk.marginOfError != null ? ` ±${risk.marginOfError}%` : ''})\n\n_Basado en tu historial personal._`);
+    await tg(env.BOT_TOKEN, chatId, prefix + formatRiskMessage('Predicción para hoy', localNow.getUTCDay(), risk));
     return;
   }
 
@@ -594,10 +594,71 @@ function calculateDayRisk(outages, localNow, now = new Date()) {
   const rangeText = ranges.map(([a, b]) =>
     a === b ? `${String(a).padStart(2, '0')}:00` : `${String(a).padStart(2, '0')}:00–${String(b + 1).padStart(2, '0')}:00`
   ).join(', ');
-  return { risky, peak, rangeText, marginOfError };
+  const estimatedMinutes = estimatedDurationForHours(outages, risky.map(p => p.h));
+  const onsetHint = onsetHintFor(outages, day, peak.h);
+  return { risky, peak, rangeText, marginOfError, estimatedMinutes, onsetHint };
+}
+
+// Espejo de averageDurationByHour + estimatedMinutes de la web: promedio de duración de los
+// cortes (todo el historial) según su hora de inicio en Caracas, sobre las horas de riesgo.
+function estimatedDurationForHours(outages, hours) {
+  const grouped = {};
+  outages
+    .filter(o => o.start && o.end && (o.type || 'corte') === 'corte' && o.duration_minutes > 0)
+    .forEach(o => {
+      const hour = new Date(new Date(o.start).getTime() + TZ_OFFSET_HOURS * 3600000).getUTCHours();
+      (grouped[hour] = grouped[hour] || []).push(o.duration_minutes);
+    });
+  const averages = hours.filter(h => grouped[h]).map(h => grouped[h].reduce((s, d) => s + d, 0) / grouped[h].length);
+  return averages.length ? Math.round(averages.reduce((s, d) => s + d, 0) / averages.length) : null;
+}
+
+// Espejo de getOnsetHint de la web: en qué cuarto de la hora suelen empezar los cortes
+// de ese día y hora (mínimo 3 casos, mediana de los minutos).
+function onsetHintFor(outages, day, hour) {
+  const minutes = outages
+    .filter(o => o.start && o.end && (o.type || 'corte') === 'corte')
+    .map(o => new Date(new Date(o.start).getTime() + TZ_OFFSET_HOURS * 3600000))
+    .filter(local => local.getUTCDay() === day && local.getUTCHours() === hour)
+    .map(local => local.getUTCMinutes());
+  if (minutes.length < 3) return null;
+  const median = [...minutes].sort((a, b) => a - b)[Math.floor(minutes.length / 2)];
+  if (median < 15) return 'primeros 15 min';
+  if (median < 30) return 'segundo cuarto';
+  if (median < 45) return 'tercer cuarto';
+  return 'últimos 15 min';
+}
+
+const ONSET_QUARTER_START = { 'primeros 15 min': 0, 'segundo cuarto': 15, 'tercer cuarto': 30, 'últimos 15 min': 45 };
+
+// "entre 13:00 y 13:15" (mismo texto que la web).
+function onsetWindowText(onsetHint, hour) {
+  if (!(onsetHint in ONSET_QUARTER_START)) return null;
+  const start = hour * 60 + ONSET_QUARTER_START[onsetHint];
+  const clock = total => `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+  return `entre ${clock(start)} y ${clock(start + 15)}`;
 }
 
 const DAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const DAY_PLURALS = ['domingos', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábados'];
+
+// Mensaje de /probabilidad y /manana: cuándo (rango, hora más probable, minuto típico) y cuánto dura.
+function formatRiskMessage(title, day, risk) {
+  const lines = [
+    `🔮 *${title}*`,
+    '',
+    `⏰ Riesgo: *${risk.rangeText}*`,
+    `📈 Hora de más riesgo: *${String(risk.peak.h).padStart(2, '0')}:00* — ${Math.round(risk.peak.prob * 100)}%`,
+  ];
+  if (risk.marginOfError != null) {
+    lines.push(`      _margen de error ±${risk.marginOfError}% · se fue a esa hora ${risk.peak.hits} de ${risk.peak.obs} ${DAY_PLURALS[day]}_`);
+  }
+  const onset = onsetWindowText(risk.onsetHint, risk.peak.h);
+  if (onset) lines.push(`🕐 Cuando se va a esa hora, suele ser ${onset}`);
+  if (risk.estimatedMinutes) lines.push(`⏱ Duración esperada: *${fmtDuration(risk.estimatedMinutes)}* (promedio histórico)`);
+  lines.push('', '_Basado en tu historial personal._');
+  return lines.join('\n');
+}
 
 // /manana: el formato de /probabilidad para el día siguiente en hora de Caracas.
 function buildTomorrowRiskMessage(outages, now = new Date()) {
@@ -605,7 +666,7 @@ function buildTomorrowRiskMessage(outages, now = new Date()) {
   const dayName = DAY_NAMES[localTomorrow.getUTCDay()];
   const risk = calculateDayRisk(outages, localTomorrow, now);
   if (!risk) return `✅ Sin riesgo significativo mañana (${dayName}) según tu historial.`;
-  return `🔮 *Predicción para mañana (${dayName})*\n\n⏰ Riesgo: *${risk.rangeText}*\n📈 Pico: *${String(risk.peak.h).padStart(2, '0')}:00* (${Math.round(risk.peak.prob * 100)}%${risk.marginOfError != null ? ` ±${risk.marginOfError}%` : ''})\n\n_Basado en tu historial personal._`;
+  return formatRiskMessage(`Predicción para mañana (${dayName})`, localTomorrow.getUTCDay(), risk);
 }
 
 function getConsecutiveOutageStatus(outages, now) {
