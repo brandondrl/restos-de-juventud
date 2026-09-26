@@ -690,8 +690,8 @@ function renderPredictTab(now, heatmap) {
     const isTomorrowView = appState.forecastDay === 'tomorrow';
     const shownDay = isTomorrowView ? tomorrowDayOfWeek(now) : caracasGetDay(now);
     const dayName  = DAYS_FULL[shownDay].toUpperCase();
+    // Las 24 horas: los cortes de madrugada (00–04) también se ven, igual que en la curva y el mapa.
     const hourRows = getDayPredictions(heatmap, shownDay)
-        .filter(p => p.hour >= 5 && p.hour <= 23)
         .map(({ hour, adjusted: prob, confidence, level }) => {
             const isCurrentHour = !isTomorrowView && hour === caracasGetHours(now);
             const percentText   = confidence >= 0.15 ? `${Math.round(prob * 100)}%` : '—';
