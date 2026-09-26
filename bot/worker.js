@@ -91,7 +91,7 @@ const STRINGS = {
   unauthorized: `🔑 Sesión expirada. Usa /renovar para renovarla o /desconectar y vuelve a vincular desde la app.`,
   renewOk: `✅ Sesión renovada. Tus tokens estarán vigentes por un año más.`,
   renewFail: `❌ No se pudo renovar la sesión. Usa /desconectar y vuelve a vincular desde la app.`,
-  help: `⚡ *Comandos disponibles*\n\n/corte — Se fue la luz\n/volvio — Volvió la luz\n/fluctuacion — Bajón o pico rápido\n/estado — Ver estado actual\n/hoy — Resumen del día\n/semana — Resumen de esta semana\n/mes — Resumen de este mes\n/probabilidad — Riesgo de corte hoy\n/resetpass — Cambiar contraseña\n/ayuda — Esta lista\n/desconectar — Desvincular cuenta`,
+  help: `⚡ *Comandos disponibles*\n\n/corte — Se fue la luz\n/volvio — Volvió la luz\n/fluctuacion — Bajón o pico rápido\n/estado — Ver estado actual\n/hoy — Resumen del día\n/semana — Resumen de esta semana\n/mes — Resumen de este mes\n/probabilidad — Riesgo de corte hoy\n/manana — Riesgo de corte mañana\n/resetpass — Cambiar contraseña\n/ayuda — Esta lista\n/desconectar — Desvincular cuenta`,
 };
 
 function localTime(date = new Date()) {
@@ -499,6 +499,13 @@ async function handleUpdate(env, update) {
     return;
   }
 
+  if (cmd === '/manana' || cmd === '/mañana') {
+    const outages = await apiGet('/api/outages', session);
+    if (!outages || outages.length < 3) { await tg(env.BOT_TOKEN, chatId, 'ℹ️ Necesitas más registros para calcular probabilidades.'); return; }
+    await tg(env.BOT_TOKEN, chatId, buildTomorrowRiskMessage(outages));
+    return;
+  }
+
   if (cmd === '/resetpass') {
     if (!session) { await tg(env.BOT_TOKEN, chatId, STRINGS.notLinked); return; }
     const r = await fetch(`${API}/api/auth/reset-token`, {
@@ -524,9 +531,9 @@ async function handleUpdate(env, update) {
   await tg(env.BOT_TOKEN, chatId, STRINGS.unknown);
 }
 
-function calculateDayRisk(outages, localNow) {
+// `now` es opcional (reloj real por defecto); los tests de paridad lo fijan.
+function calculateDayRisk(outages, localNow, now = new Date()) {
   const day = localNow.getUTCDay();
-  const now = new Date();
   const allDates = outages.filter(o => o.start && o.end && (o.type || 'corte') !== 'fluctuacion').flatMap(o => [new Date(o.start), new Date(o.end)]);
   if (!allDates.length) return null;
   const earliestDate = new Date(Math.min(...allDates.map(d => d.getTime())));
@@ -581,6 +588,17 @@ function calculateDayRisk(outages, localNow) {
     a === b ? `${String(a).padStart(2, '0')}:00` : `${String(a).padStart(2, '0')}:00–${String(b + 1).padStart(2, '0')}:00`
   ).join(', ');
   return { risky, peak, rangeText, marginOfError };
+}
+
+const DAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+
+// /manana: el formato de /probabilidad para el día siguiente en hora de Caracas.
+function buildTomorrowRiskMessage(outages, now = new Date()) {
+  const localTomorrow = new Date(now.getTime() + TZ_OFFSET_HOURS * 3600000 + 86400000);
+  const dayName = DAY_NAMES[localTomorrow.getUTCDay()];
+  const risk = calculateDayRisk(outages, localTomorrow, now);
+  if (!risk) return `✅ Sin riesgo significativo mañana (${dayName}) según tu historial.`;
+  return `🔮 *Predicción para mañana (${dayName})*\n\n⏰ Riesgo: *${risk.rangeText}*\n📈 Pico: *${String(risk.peak.h).padStart(2, '0')}:00* (${Math.round(risk.peak.prob * 100)}%${risk.marginOfError != null ? ` ±${risk.marginOfError}%` : ''})\n\n_Basado en tu historial personal._`;
 }
 
 function getConsecutiveOutageStatus(outages, now) {

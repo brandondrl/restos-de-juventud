@@ -141,6 +141,12 @@ input[type=date]{color-scheme:dark;}
 .plabel{width:80px;font-size:11px;text-align:right;flex-shrink:0;}
 @media(max-width:400px){.plabel{display:none;}}
 
+/* Control segmentado Hoy | Mañana (2.2) */
+.seg{display:flex;gap:4px;padding:3px;background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:12px;}
+.seg-btn{flex:1;min-height:44px;border:none;border-radius:4px;background:transparent;color:var(--text2);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;touch-action:manipulation;}
+.seg-btn.active{background:var(--bg3);color:var(--text);}
+.seg-btn:focus-visible{outline:2px solid var(--amber);outline-offset:1px;}
+
 /* Gráficas SVG (public/charts.js) */
 .chart-wrap{margin-bottom:8px;}
 .chart{display:block;width:100%;height:auto;max-width:520px;margin:0 auto;overflow:visible;touch-action:pan-y;-webkit-user-select:none;user-select:none;}
