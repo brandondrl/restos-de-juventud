@@ -374,6 +374,12 @@ function setCurrentTab(tab) {
     render();
 }
 
+function setForecastDay(day) {
+    let storage = null;
+    try { storage = window.localStorage; } catch { storage = null; }
+    if (saveForecastDayChoice(appState, day, storage)) render();
+}
+
 function updateAppState(key, value) { appState[key] = value; render(); }
 function updateAuthState(key, value) { authState[key] = value; authState.errorMessage = ''; render(); }
 

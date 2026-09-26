@@ -41,6 +41,11 @@ var appState = {
     historyPage:      1,
     selectedMood:     null,
     chartSelection:   {},
+    forecastDay:       'today',
+    forecastDayManual: null,
+    forecastDayStored: (function () {
+        try { return readStoredForecastDay(window.localStorage); } catch { return null; }
+    })(),
     _saving:          false,
     _cacheVersion:    0,
 };

@@ -77,8 +77,43 @@ function chartSelectedIndex(id) {
     return Number.isInteger(index) ? index : undefined;
 }
 
-function buildRiskCurve(heatmap, now) {
-    return riskLineChart(buildRiskCurveProps({ id: 'risk-today', heatmap, now, selectedHour: chartSelectedIndex('risk-today') }));
+function buildRiskCurve(heatmap, now, day = 'today') {
+    const id = day === 'tomorrow' ? 'risk-tomorrow' : 'risk-today';
+    return riskLineChart(buildRiskCurveProps({ id, heatmap, now, day, selectedHour: chartSelectedIndex(id) }));
+}
+
+// getTomorrowForecast calcula onsetHint (lento con timezone.js); render() corre en cada cuadro
+// durante el arrastre de una gráfica, así que se memoiza por datos y por día de mañana.
+function cachedTomorrowForecast(heatmap, now) {
+    const key = appState._cachedVersion + '_' + tomorrowDayOfWeek(now);
+    if (appState._cachedTomorrowKey !== key) {
+        appState._cachedTomorrowForecast = getTomorrowForecast(appState.outages, heatmap, now);
+        appState._cachedTomorrowKey = key;
+    }
+    return appState._cachedTomorrowForecast;
+}
+
+function buildForecastDayToggle(selected) {
+    const option = (day, label) =>
+        `<button type="button" class="seg-btn${selected === day ? ' active' : ''}" aria-pressed="${selected === day}" onclick="setForecastDay('${day}')">${label}</button>`;
+    return `<div class="seg" role="group" aria-label="Día del pronóstico">${option('today', 'Hoy')}${option('tomorrow', 'Mañana')}</div>`;
+}
+
+function buildTomorrowSummary(forecast) {
+    if (!forecast) return `<div style="margin-top:8px;font-size:12px;color:var(--text2)">Sin datos suficientes para mañana.</div>`;
+    if (forecast.type === 'safe') return `<div style="margin-top:8px;font-size:13px;color:var(--grn-t)">&#10003; Sin riesgo significativo mañana.</div>`;
+    const levelColor = forecast.peakLevel === 'alto' ? 'var(--red-t)' : '#fdba74';
+    const duration = forecast.estimatedMinutes
+        ? `<div style="font-size:12px;color:var(--text2);margin-top:2px">Duración esperada: <strong style="color:var(--text)">${formatDuration(forecast.estimatedMinutes)}</strong> (promedio histórico)</div>`
+        : '';
+    const onset = forecast.onsetHint
+        ? `<div style="font-size:12px;color:var(--text2);margin-top:2px">La mayoría empezó en: ${forecast.onsetHint}</div>`
+        : '';
+    return `<div style="margin-top:8px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Riesgo: ${escapeHtml(forecast.ranges)}</div>
+        <div style="font-size:12px;color:${levelColor}">Pico ${padZero(forecast.peakHour)}:00 &middot; ${forecast.peakPercent}% &middot; riesgo ${forecast.peakLevel}</div>
+        ${duration}${onset}
+    </div>`;
 }
 
 function buildTelegramSection() {
@@ -264,6 +299,9 @@ function renderApp() {
         ? Array.from({ length: 24 }, (_, hour) => ({ hour, ...(heatmap[`${caracasGetDay(now)}_${hour}`] || { probability: 0, confidence: 0 }) }))
         : [];
     window._activeOutage = activeOutage;
+    appState.forecastDay = resolveForecastDay({
+        stored: appState.forecastDayStored, manual: appState.forecastDayManual, heatmap, now,
+    });
     const forecast = heatmap ? getDayForecast(todayPredictions, outages) : { type: 'nodata' };
     const navTabs = [
         { id: 'dashboard', icon: ICONS.dashboard, label: 'Panel' },
@@ -280,7 +318,7 @@ function renderApp() {
     let tabContent = '';
     if (currentTab === 'dashboard') tabContent = renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions, forecast, minutesWithoutPower);
     if (currentTab === 'log')       tabContent = renderLogTab(minutesWithoutPower);
-    if (currentTab === 'predict')   tabContent = renderPredictTab(now, heatmap, todayPredictions);
+    if (currentTab === 'predict')   tabContent = renderPredictTab(now, heatmap);
     if (currentTab === 'community') tabContent = renderCommunityTab(now);
     if (currentTab === 'history')   tabContent = renderHistoryTab(now);
     const profileOverlay = profileState.isOpen ? renderProfileOverlay() : '';
@@ -375,7 +413,7 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
             <button class="fab fab-on" onclick="setCurrentTab('log')">${ICONS.plus}</button>`;
     }
     const dayName          = DAYS_FULL[caracasGetDay(now)].toUpperCase();
-    const tomorrowForecast = getTomorrowForecast(appState.outages, heatmap);
+    const tomorrowForecast = cachedTomorrowForecast(heatmap, now);
     let forecastContent;
     if (forecast.type === 'nodata') {
         const progress  = computeTrainingProgress(appState.outages);
@@ -465,25 +503,28 @@ function renderDashboardTab(now, heatmap, statistics, moodData, todayPredictions
         </div>` : '';
         recordCards = `<div class="rgrid">${longestCard}${worstDayCard}${peakHourCard}</div>`;
     }
+    const tomorrow     = new Date(now.getTime() + 86400000);
+    const tomorrowName = DAYS_FULL[caracasGetDay(tomorrow)].toUpperCase();
     let hourlyBars = '';
     if (heatmap) {
+        const isTomorrowView = appState.forecastDay === 'tomorrow';
         const currentSlot = heatmap[`${caracasGetDay(now)}_${caracasGetHours(now)}`] || { probability: 0, confidence: 0 };
         const currentProb = adjustedProbability(currentSlot.probability, currentSlot.confidence);
         const confidenceInfo = currentSlot.confidence >= 0.15 ? ` &middot; ${Math.round(currentProb * 100)}%` : '';
-        hourlyBars = `<div class="card card-last">
-            <div class="slabel">DETALLE POR HORA — HOY</div>
-            <div class="chart-wrap">${buildRiskCurve(heatmap, now)}</div>
-            <div style="margin-top:8px;font-size:12px;color:#94a3b8">
+        const nowLine = `<div style="margin-top:8px;font-size:12px;color:#94a3b8">
                 Ahora (${padZero(caracasGetHours(now))}:00):
                 <span style="font-weight:600;color:${riskColor(currentProb)}">${riskLabel(currentProb, currentSlot.confidence)}${confidenceInfo}</span>
-            </div>
+            </div>`;
+        hourlyBars = `<div class="card card-last">
+            ${buildForecastDayToggle(appState.forecastDay)}
+            <div class="slabel">${isTomorrowView ? `MAÑANA — ${tomorrowName}` : 'DETALLE POR HORA — HOY'}</div>
+            <div class="chart-wrap">${buildRiskCurve(heatmap, now, appState.forecastDay)}</div>
+            ${isTomorrowView ? buildTomorrowSummary(tomorrowForecast) : nowLine}
         </div>`;
     }
     const emptyState     = appState.outages.length === 0
         ? `<div class="empty">${ICONS.plugOff}<p>Sin registros. Toca + para comenzar.</p></div>` : '';
     const floatingButton = `<button class="fab ${appState.activeOutage ? 'fab-off' : 'fab-on'}" onclick="setCurrentTab('log')">${appState.activeOutage ? ICONS.bulb : ICONS.plus}</button>`;
-    const tomorrow     = new Date(now.getTime() + 86400000);
-    const tomorrowName = DAYS_FULL[caracasGetDay(tomorrow)].toUpperCase();
     let tomorrowContent;
     if (!tomorrowForecast) {
         tomorrowContent = `<div style="font-size:12px;color:var(--text3)">Sin datos suficientes.</div>`;
@@ -642,29 +683,32 @@ function renderLogTab(minutesWithoutPower) {
     return (activeOutage ? endCard : startCard) + survivalCard + fluctuationCard + manualCard;
 }
 
-function renderPredictTab(now, heatmap, todayPredictions) {
+function renderPredictTab(now, heatmap) {
     if (!heatmap) {
         return `<div class="empty">${ICONS.chart}<p>Necesitas al menos 1 corte para ver predicciones.</p></div>`;
     }
-    const dayName  = DAYS_FULL[caracasGetDay(now)].toUpperCase();
-    const hourRows = todayPredictions
+    const isTomorrowView = appState.forecastDay === 'tomorrow';
+    const shownDay = isTomorrowView ? tomorrowDayOfWeek(now) : caracasGetDay(now);
+    const dayName  = DAYS_FULL[shownDay].toUpperCase();
+    const hourRows = getDayPredictions(heatmap, shownDay)
         .filter(p => p.hour >= 5 && p.hour <= 23)
-        .map(({ hour, probability, confidence }) => {
-            const prob          = adjustedProbability(probability, confidence);
-            const isCurrentHour = hour === caracasGetHours(now);
-            const percentText   = probability > 0 && confidence >= 0.15 ? `${Math.round(prob * 100)}%` : '—';
+        .map(({ hour, adjusted: prob, confidence, level }) => {
+            const isCurrentHour = !isTomorrowView && hour === caracasGetHours(now);
+            const percentText   = confidence >= 0.15 ? `${Math.round(prob * 100)}%` : '—';
             return `<div class="prow ${isCurrentHour ? 'now' : ''}">
                 <div class="phour ${isCurrentHour ? 'now' : ''}">${padZero(hour)}:00${isCurrentHour ? ' ◀' : ''}</div>
                 <div class="ptrack"><div class="pfill" style="width:${Math.round(prob * 100)}%;background:${riskColor(prob)}"></div></div>
                 <div class="ppct">${percentText}</div>
-                <div class="plabel" style="color:${riskColor(prob)}">${riskLabel(prob, confidence)}</div>
+                <div class="plabel" style="color:${riskColor(prob)}">${level}</div>
             </div>`;
         }).join('');
     const weeklyGrid = heatGrid(buildWeeklyHeatGridProps({
         id: 'heat-week', heatmap, now, dayLabels: DAYS_SHORT, selectedIndex: chartSelectedIndex('heat-week'),
+        highlightDay: shownDay,
     }));
     return `<div class="card">
-        <div class="slabel">HOY — ${dayName} — RIESGO POR HORA</div>
+        ${buildForecastDayToggle(appState.forecastDay)}
+        <div class="slabel">${isTomorrowView ? 'MAÑANA' : 'HOY'} — ${dayName} — RIESGO POR HORA</div>
         ${hourRows}
     </div>
     <div class="card card-last">
