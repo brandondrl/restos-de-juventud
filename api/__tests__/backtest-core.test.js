@@ -1,6 +1,6 @@
 process.env.TZ = 'America/Caracas';
 
-require('../../public/timezone.js');
+const { caracasGetDay } = require('../../public/timezone.js');
 const fs = require('fs');
 const path = require('path');
 const engine = require('../../public/prediction.js');
